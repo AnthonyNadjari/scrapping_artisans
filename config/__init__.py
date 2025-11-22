@@ -1,0 +1,4 @@
+"""
+Module de configuration
+"""
+
