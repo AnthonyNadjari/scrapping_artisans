@@ -16,22 +16,7 @@ DATA_DIR.mkdir(exist_ok=True)
 # Chemin base de données
 DB_PATH = DATA_DIR / "whatsapp_artisans.db"
 
-# Fichier de configuration WhatsApp
-WHATSAPP_CONFIG_FILE = CONFIG_DIR / "whatsapp_config.json"
-
-# Charger configuration WhatsApp
-def load_whatsapp_config() -> dict:
-    """Charge la configuration WhatsApp depuis le fichier"""
-    if WHATSAPP_CONFIG_FILE.exists():
-        with open(WHATSAPP_CONFIG_FILE, 'r') as f:
-            return json.load(f)
-    return {
-        "access_token": "",
-        "phone_number_id": "",
-        "business_account_id": ""
-    }
-
-WHATSAPP_CONFIG = load_whatsapp_config()
+# Pas besoin de configuration WhatsApp - On utilise WhatsApp Web directement
 
 # Métiers d'artisans (même liste que le système email)
 METIERS = [

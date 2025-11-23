@@ -35,10 +35,11 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Initialiser la base de données
-if 'db_initialized' not in st.session_state:
+# Initialiser la base de données automatiquement
+try:
     init_database()
-    st.session_state.db_initialized = True
+except:
+    pass  # Déjà initialisée
 
 # Header
 st.markdown("""

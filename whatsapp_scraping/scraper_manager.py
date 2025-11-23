@@ -9,7 +9,7 @@ from whatsapp_database.queries import ajouter_artisan
 from config.whatsapp_settings import DEPARTEMENTS_PRIORITAIRES
 
 GEO_API_BASE = "https://geo.api.gouv.fr"
-from whatsapp.whatsapp_manager import WhatsAppManager
+from whatsapp.whatsapp_web_manager import WhatsAppWebManager
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -18,9 +18,9 @@ logger = logging.getLogger(__name__)
 class WhatsAppScraperManager:
     """Gère le scraping et la vérification WhatsApp"""
     
-    def __init__(self, verifier_whatsapp: bool = True):
+    def __init__(self, verifier_whatsapp: bool = True, whatsapp_manager: Optional[WhatsAppWebManager] = None):
         self.verifier_whatsapp = verifier_whatsapp
-        self.whatsapp_manager = WhatsAppManager() if verifier_whatsapp else None
+        self.whatsapp_manager = whatsapp_manager
         self.stats = {
             'total_trouves': 0,
             'total_ajoutes': 0,
