@@ -1,4 +1,0 @@
-"""
-Module de synchronisation Gmail
-"""
-

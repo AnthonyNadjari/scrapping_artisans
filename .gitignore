@@ -34,6 +34,7 @@ data/*.db
 
 # Configuration sensible
 config/gmail_config.json
+config/whatsapp_config.json
 .env
 *.key
 *.pem

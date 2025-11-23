@@ -1,5 +1,5 @@
 """
-Page de scraping - Interface de scraping des artisans
+Page Scraping - Scraping téléphones et vérification WhatsApp
 """
 import streamlit as st
 import sys
@@ -7,26 +7,28 @@ from pathlib import Path
 import time
 import threading
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
-from scraping.scraper_manager import ScraperManager
-from config.settings import METIERS, DEPARTEMENTS_PRIORITAIRES
-from database.queries import get_statistiques
-
+# Configuration de la page
 st.set_page_config(page_title="Scraping Artisans", page_icon="🔍", layout="wide")
 
-st.title("🔍 Scraping d'Artisans")
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+from whatsapp_scraping.scraper_manager import WhatsAppScraperManager
+from config.whatsapp_settings import METIERS, DEPARTEMENTS_PRIORITAIRES
+from whatsapp_database.queries import get_statistiques
+
+st.title("🔍 Scraping d'Artisans - Téléphones uniquement")
 
 # Configuration scraping
 col1, col2 = st.columns(2)
 
 with col1:
     st.subheader("📡 Sources de données")
-    source_google = st.checkbox("Google Maps", value=True, help="Scraping via Playwright")
-    source_sirene = st.checkbox("Base SIRENE", value=False, help="API publique gratuite (nécessite clé API)")
+    source_google = st.checkbox("Google Maps", value=True)
+    source_pj = st.checkbox("Pages Jaunes", value=False)
     
-    if source_sirene:
-        sirene_api_key = st.text_input("Clé API SIRENE", type="password", help="Inscription: https://api.insee.fr/")
+    st.subheader("✅ Vérification WhatsApp")
+    verifier_whatsapp = st.checkbox("Vérifier automatiquement WhatsApp", value=True,
+                                   help="Vérifie si chaque numéro est sur WhatsApp après scraping")
 
 with col2:
     st.subheader("🗺️ Zones géographiques")
@@ -34,15 +36,13 @@ with col2:
     dept_selection = st.multiselect(
         "Départements",
         options=DEPARTEMENTS_PRIORITAIRES,
-        default=DEPARTEMENTS_PRIORITAIRES[:4],
-        help="Sélectionnez les départements à scraper"
+        default=DEPARTEMENTS_PRIORITAIRES[:4]
     )
     
     st.subheader("🎯 Priorité ciblage")
     priorite = st.radio(
         "Taille des communes",
-        ["Villages < 5,000 hab (PRIORITÉ)", "Villes 5,000-20,000", "Toutes tailles"],
-        help="Les petites communes sont souvent moins prospectées"
+        ["Villages < 5,000 hab (PRIORITÉ)", "Villes 5,000-20,000", "Toutes tailles"]
     )
 
 # Métiers à scraper
@@ -50,21 +50,20 @@ st.subheader("🔧 Métiers à scraper")
 metiers_selectionnes = st.multiselect(
     "Sélectionnez les métiers",
     options=METIERS,
-    default=["plombier", "électricien", "menuisier", "peintre"],
-    help="Sélectionnez un ou plusieurs métiers"
+    default=["plombier", "électricien", "menuisier", "peintre"]
 )
 
 # Boutons de contrôle
 col_btn1, col_btn2, col_btn3 = st.columns(3)
 
 with col_btn1:
-    lancer_scraping = st.button("🚀 LANCER LE SCRAPING", type="primary", use_container_width=True)
+    lancer_scraping = st.button("🚀 LANCER LE SCRAPING")
 
 with col_btn2:
-    pause_scraping = st.button("⏸️ PAUSE", use_container_width=True)
+    pause_scraping = st.button("⏸️ PAUSE")
 
 with col_btn3:
-    stop_scraping = st.button("⏹️ STOP", use_container_width=True)
+    stop_scraping = st.button("⏹️ STOP")
 
 # Initialiser session state
 if 'scraping_actif' not in st.session_state:
@@ -75,7 +74,8 @@ if 'scraping_stats' not in st.session_state:
     st.session_state.scraping_stats = {
         'total_trouves': 0,
         'total_ajoutes': 0,
-        'doublons_evites': 0,
+        'avec_whatsapp': 0,
+        'sans_whatsapp': 0,
         'erreurs': 0,
     }
 if 'scraping_logs' not in st.session_state:
@@ -96,53 +96,47 @@ if stop_scraping:
 
 # Affichage en temps réel
 if st.session_state.scraping_actif:
-    st.divider()
+    st.markdown("---")
     st.subheader("📊 Scraping en cours...")
     
-    # Métriques en temps réel
-    col_m1, col_m2, col_m3, col_m4 = st.columns(4)
+    # Métriques
+    col_m1, col_m2, col_m3, col_m4, col_m5 = st.columns(5)
     
     stats = st.session_state.scraping_stats
     
     with col_m1:
-        st.metric("Artisans trouvés", f"{stats['total_trouves']:,}", 
-                 f"+{stats['total_ajoutes']}")
+        st.metric("Artisans trouvés", f"{stats['total_trouves']:,}")
     
     with col_m2:
         st.metric("Artisans ajoutés", f"{stats['total_ajoutes']:,}")
     
     with col_m3:
-        st.metric("Doublons évités", f"{stats['doublons_evites']:,}")
+        st.metric("Avec WhatsApp", f"{stats['avec_whatsapp']:,}")
     
     with col_m4:
-        st.metric("Erreurs", f"{stats['erreurs']:,}")
+        st.metric("Sans WhatsApp", f"{stats['sans_whatsapp']:,}")
     
-    # Progress bar
-    if 'current_metier' in st.session_state and 'current_ville' in st.session_state:
-        progress_text = f"Scraping : {st.session_state.current_metier} à {st.session_state.current_ville}"
-        st.progress(0.5, text=progress_text)
+    with col_m5:
+        taux_whatsapp = (stats['avec_whatsapp'] / max(1, stats['avec_whatsapp'] + stats['sans_whatsapp'])) * 100
+        st.metric("Taux WhatsApp", f"{taux_whatsapp:.1f}%")
     
     # Statut actuel
     status_container = st.empty()
     if 'current_status' in st.session_state:
         status_container.info(st.session_state.current_status)
     
-    # Logs en direct
+    # Logs
     with st.expander("📝 Logs détaillés", expanded=True):
-        logs_text = "\n".join(st.session_state.scraping_logs[-50:])  # Derniers 50 logs
+        logs_text = "\n".join(st.session_state.scraping_logs[-50:])
         st.text_area("", value=logs_text, height=300, disabled=True, label_visibility="collapsed")
     
-    # Lancer le scraping dans un thread
+    # Lancer le scraping
     if 'scraping_thread_started' not in st.session_state:
         st.session_state.scraping_thread_started = True
         
         def run_scraping():
             try:
-                manager = ScraperManager(
-                    use_google_maps=source_google,
-                    use_sirene=source_sirene,
-                    sirene_api_key=sirene_api_key if source_sirene else None
-                )
+                manager = WhatsAppScraperManager(verifier_whatsapp=verifier_whatsapp)
                 
                 priorite_villages = priorite == "Villages < 5,000 hab (PRIORITÉ)"
                 
@@ -162,6 +156,8 @@ if st.session_state.scraping_actif:
                     metiers_selectionnes,
                     dept_selection,
                     priorite_villages=priorite_villages,
+                    use_google_maps=source_google,
+                    use_pages_jaunes=source_pj,
                     callback_progress=callback
                 )
                 
@@ -176,12 +172,10 @@ if st.session_state.scraping_actif:
         thread = threading.Thread(target=run_scraping, daemon=True)
         thread.start()
     
-    # Auto-refresh
     time.sleep(2)
     st.rerun()
 
 else:
-    # Afficher les stats actuelles
     stats_globales = get_statistiques()
-    st.info(f"📊 Base actuelle : {stats_globales.get('total', 0)} artisans")
+    st.info(f"📊 Base actuelle : {stats_globales.get('total', 0)} artisans, {stats_globales.get('avec_whatsapp', 0)} avec WhatsApp")
 
