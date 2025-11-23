@@ -1,6 +1,6 @@
 # 📱 Système de Prospection WhatsApp pour Artisans
 
-Système simplifié de prospection par WhatsApp - **Utilise votre numéro WhatsApp Business existant**
+Système ultra-simple de prospection par WhatsApp utilisant des **liens wa.me (click-to-chat)**
 
 ## ⚡ Démarrage Ultra-Rapide
 
@@ -22,7 +22,7 @@ streamlit run whatsapp_app/Accueil.py --server.port 8501
 
 ### 3. C'est tout !
 
-L'application s'ouvre dans votre navigateur. Tout est automatique.
+L'application s'ouvre dans votre navigateur.
 
 ---
 
@@ -32,32 +32,35 @@ L'application s'ouvre dans votre navigateur. Tout est automatique.
 1. Page **🔍 Scraping** → Choisissez métiers/départements → **LANCER**
 2. Les téléphones sont collectés automatiquement
 
-### Envoyer des messages
-1. Page **📱 Campagne** → **Se connecter à WhatsApp Web**
-2. Scannez le QR code avec votre téléphone (une fois)
-3. Configurez votre message → **DÉMARRER**
+### Contacter des artisans
+1. Page **📱 Campagne** → Configurez votre message template
+2. Cliquez sur **💬 WhatsApp** → WhatsApp s'ouvre avec message pré-rempli
+3. Envoyez le message dans WhatsApp
+4. Cliquez sur **✓ Contacté** dans le dashboard
+5. Répétez pour l'artisan suivant !
 
-### Voir les réponses
-1. Page **💬 Réponses** → Marquez manuellement les réponses
+### Suivre les réponses
+1. Page **💬 Réponses** → Marquez les statuts (intéressé/pas intéressé/à relancer)
 
 ---
 
 ## ✅ Avantages
 
-- ✅ **Gratuit** - Pas besoin de Meta/Facebook
-- ✅ **Votre numéro** - Utilise votre WhatsApp Business existant
-- ✅ **Automatique** - Tout se configure tout seul
+- ✅ **Gratuit** - Pas besoin d'API, pas de coût
+- ✅ **Sans risque** - Pas d'automatisation, 0% risque de ban
+- ✅ **Rapide** - 5-10 secondes par artisan
 - ✅ **Simple** - Interface claire et intuitive
+- ✅ **Efficace** - 100 artisans = 10-15 minutes
 
 ---
 
 ## ⚠️ Important
 
-- Respectez les limites (10 msg/min, 200/heure, 1000/jour)
-- Activez le délai aléatoire pour éviter les bans
-- Commencez petit pour tester (10-20 messages)
+- Workflow manuel mais très rapide
+- Messages personnalisés automatiquement
+- Tracking complet des contacts et réponses
 
 ---
 
-**C'est tout ! Pas de configuration complexe, utilisez simplement votre téléphone WhatsApp Business ! 🚀**
+**Système basé sur les liens wa.me - Simple, rapide et sans risque ! 🚀**
 

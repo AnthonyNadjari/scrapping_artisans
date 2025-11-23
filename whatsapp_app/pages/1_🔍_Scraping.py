@@ -128,7 +128,7 @@ if st.session_state.scraping_actif:
     # Logs
     with st.expander("📝 Logs détaillés", expanded=True):
         logs_text = "\n".join(st.session_state.scraping_logs[-50:])
-        st.text_area("", value=logs_text, height=300, disabled=True, label_visibility="collapsed")
+        st.text_area("", value=logs_text, height=300, disabled=True)
     
     # Lancer le scraping
     if 'scraping_thread_started' not in st.session_state:
@@ -173,7 +173,7 @@ if st.session_state.scraping_actif:
         thread.start()
     
     time.sleep(2)
-    st.rerun()
+    st.experimental_rerun()
 
 else:
     stats_globales = get_statistiques()

@@ -1,22 +1,16 @@
 """
-Configuration WhatsApp Business API
+Configuration système de prospection WhatsApp (liens wa.me)
 """
-import os
-import json
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent.parent
-CONFIG_DIR = BASE_DIR / "config"
 DATA_DIR = BASE_DIR / "data"
 
 # Créer les dossiers
-CONFIG_DIR.mkdir(exist_ok=True)
 DATA_DIR.mkdir(exist_ok=True)
 
 # Chemin base de données
 DB_PATH = DATA_DIR / "whatsapp_artisans.db"
-
-# Pas besoin de configuration WhatsApp - On utilise WhatsApp Web directement
 
 # Métiers d'artisans (même liste que le système email)
 METIERS = [

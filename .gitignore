@@ -32,6 +32,9 @@ wheels/
 *.sqlite3
 data/*.db
 
+# Session WhatsApp (obsolète - plus utilisé)
+data/whatsapp_session/
+
 # Configuration sensible
 config/gmail_config.json
 .env

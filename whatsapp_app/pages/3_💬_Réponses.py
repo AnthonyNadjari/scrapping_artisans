@@ -54,7 +54,7 @@ with col_refresh1:
     """)
 
 with col_refresh2:
-    if st.button("🔄 Refresh", type="primary"):
+    if st.button("🔄 Refresh"):
         st.info("⚠️ Récupération automatique non disponible avec WhatsApp Web")
         st.info("Consultez WhatsApp Web manuellement et marquez les réponses ci-dessous")
 
