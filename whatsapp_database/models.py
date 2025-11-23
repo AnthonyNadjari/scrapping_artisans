@@ -20,22 +20,30 @@ def init_database():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
-    # Table artisans (ultra-simple)
+    # Table artisans (avec données SIRENE)
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS artisans (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             
-            -- Identité minimale
+            -- Données SIRENE
+            siret TEXT,
             nom_entreprise TEXT,
+            nom TEXT,
+            prenom TEXT,
+            code_naf TEXT,
             type_artisan TEXT,
             
             -- Localisation
+            adresse TEXT,
+            code_postal TEXT,
             ville TEXT,
             departement TEXT,
             
-            -- Contact (CLÉ PRINCIPALE)
-            telephone TEXT UNIQUE NOT NULL,
+            -- Contact (enrichi)
+            telephone TEXT UNIQUE,
             telephone_formate TEXT,
+            source_telephone TEXT,  -- 'pages_blanches', '118712', 'google_maps', etc.
+            site_web TEXT,  -- URL du site web (si disponible)
             
             -- WhatsApp
             a_whatsapp BOOLEAN DEFAULT NULL,
@@ -49,8 +57,12 @@ def init_database():
             date_reponse DATETIME,
             derniere_reponse TEXT,
             
+            -- Statut réponse
+            statut_reponse TEXT,  -- 'acceptation', 'off', 'en_cours', 'a_relancer', NULL
+            commentaire TEXT,
+            
             -- Meta
-            source TEXT,
+            source TEXT,  -- 'sirene', 'google_maps', 'pages_jaunes'
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     """)
@@ -80,11 +92,36 @@ def init_database():
         )
     """)
     
+    # Ajouter les nouvelles colonnes si elles n'existent pas (migration)
+    nouvelles_colonnes = [
+        ("siret", "TEXT"),
+        ("nom", "TEXT"),
+        ("prenom", "TEXT"),
+        ("code_naf", "TEXT"),
+        ("adresse", "TEXT"),
+        ("code_postal", "TEXT"),
+        ("source_telephone", "TEXT"),
+        ("statut_reponse", "TEXT"),
+        ("commentaire", "TEXT"),
+        ("site_web", "TEXT")
+    ]
+    
+    for colonne, type_col in nouvelles_colonnes:
+        try:
+            cursor.execute(f"ALTER TABLE artisans ADD COLUMN {colonne} {type_col}")
+        except sqlite3.OperationalError:
+            pass  # Colonne existe déjà
+    
     # Index pour performance
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_telephone ON artisans(telephone)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_departement ON artisans(departement)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_type_artisan ON artisans(type_artisan)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_siret ON artisans(siret)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_a_whatsapp ON artisans(a_whatsapp)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_message_envoye ON artisans(message_envoye)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_a_repondu ON artisans(a_repondu)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_statut_reponse ON artisans(statut_reponse)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_source_telephone ON artisans(source_telephone)")
     
     conn.commit()
     conn.close()

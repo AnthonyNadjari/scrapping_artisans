@@ -26,54 +26,91 @@ def formater_telephone_fr(telephone: str) -> str:
 
 def ajouter_artisan(data: Dict) -> int:
     """
-    Ajoute un artisan ou met à jour si doublon (par téléphone)
+    Ajoute un artisan ou met à jour si doublon (par téléphone ou SIRET)
     Retourne l'ID de l'artisan
     """
     conn = get_connection()
     cursor = conn.cursor()
     
-    # Formater le téléphone
+    # Formater le téléphone si présent
     if data.get('telephone'):
         data['telephone_formate'] = formater_telephone_fr(data['telephone'])
     
-    # Vérifier doublon par téléphone
-    cursor.execute("SELECT id FROM artisans WHERE telephone = ?", (data['telephone'],))
-    result = cursor.fetchone()
+    # Vérifier doublon par téléphone (si téléphone présent)
+    existing_id = None
+    if data.get('telephone'):
+        cursor.execute("SELECT id FROM artisans WHERE telephone = ?", (data['telephone'],))
+        result = cursor.fetchone()
+        if result:
+            existing_id = result[0]
     
-    if result:
+    # Vérifier doublon par SIRET (si SIRET présent et pas déjà trouvé par téléphone)
+    if not existing_id and data.get('siret'):
+        cursor.execute("SELECT id FROM artisans WHERE siret = ?", (data['siret'],))
+        result = cursor.fetchone()
+        if result:
+            existing_id = result[0]
+    
+    if existing_id:
         # Mettre à jour l'artisan existant
-        doublon_id = result[0]
         update_fields = []
         update_values = []
         
         for key, value in data.items():
-            if value and key != 'id' and key != 'telephone':
+            # Ne pas écraser les champs existants si la nouvelle valeur est vide
+            # Sauf pour les champs qui peuvent être mis à jour (nom, prenom, adresse, etc.)
+            if value is not None and value != '' and key not in ['id', 'created_at']:
+                # Ne pas écraser un téléphone existant si le nouveau est vide
+                if key == 'telephone' and not value:
+                    continue
                 update_fields.append(f"{key} = ?")
                 update_values.append(value)
         
         if update_fields:
-            update_values.append(doublon_id)
+            update_values.append(existing_id)
             query = f"UPDATE artisans SET {', '.join(update_fields)} WHERE id = ?"
             cursor.execute(query, update_values)
         
         conn.commit()
         conn.close()
-        return doublon_id
+        return existing_id
     else:
         # Nouvel artisan
         data['created_at'] = datetime.now().isoformat()
         
-        fields = list(data.keys())
-        values = list(data.values())
+        # Filtrer les champs None ou vides pour éviter erreurs
+        fields = []
+        values = []
+        for key, value in data.items():
+            if value is not None and value != '':
+                fields.append(key)
+                values.append(value)
+        
+        if not fields:
+            conn.close()
+            raise ValueError("Aucune donnée valide à insérer")
+        
         placeholders = ', '.join(['?' for _ in fields])
-        
         query = f"INSERT INTO artisans ({', '.join(fields)}) VALUES ({placeholders})"
-        cursor.execute(query, values)
         
-        artisan_id = cursor.lastrowid
-        conn.commit()
-        conn.close()
-        return artisan_id
+        try:
+            cursor.execute(query, values)
+            artisan_id = cursor.lastrowid
+            conn.commit()
+            conn.close()
+            return artisan_id
+        except sqlite3.IntegrityError as e:
+            conn.close()
+            # Si erreur d'intégrité (doublon), essayer de récupérer l'ID existant
+            if 'telephone' in str(e).lower() or 'unique' in str(e).lower():
+                # Réessayer avec recherche de doublon
+                if data.get('telephone'):
+                    cursor2 = conn.cursor()
+                    cursor2.execute("SELECT id FROM artisans WHERE telephone = ?", (data['telephone'],))
+                    result = cursor2.fetchone()
+                    if result:
+                        return result[0]
+            raise
 
 def get_artisans(filtres: Optional[Dict] = None, limit: int = 10000) -> List[Dict]:
     """Récupère les artisans avec filtres optionnels"""
@@ -100,10 +137,25 @@ def get_artisans(filtres: Optional[Dict] = None, limit: int = 10000) -> List[Dic
         if filtres.get('non_contactes'):
             query += " AND message_envoye = 0"
         
+        if filtres.get('message_envoye'):
+            query += " AND message_envoye = 1"
+        
+        if filtres.get('a_repondu'):
+            query += " AND a_repondu = 1"
+        
+        if filtres.get('statut_reponse'):
+            query += " AND statut_reponse = ?"
+            params.append(filtres['statut_reponse'])
+        
+        if filtres.get('exclude_statuts'):
+            placeholders = ','.join(['?' for _ in filtres['exclude_statuts']])
+            query += f" AND (statut_reponse NOT IN ({placeholders}) OR statut_reponse IS NULL)"
+            params.extend(filtres['exclude_statuts'])
+        
         if filtres.get('recherche'):
-            query += " AND (nom_entreprise LIKE ? OR ville LIKE ? OR telephone LIKE ?)"
+            query += " AND (nom_entreprise LIKE ? OR nom LIKE ? OR prenom LIKE ? OR ville LIKE ? OR telephone LIKE ?)"
             search_term = f"%{filtres['recherche']}%"
-            params.extend([search_term, search_term, search_term])
+            params.extend([search_term, search_term, search_term, search_term, search_term])
     
     query += " ORDER BY created_at DESC LIMIT ?"
     params.append(limit)
@@ -127,6 +179,9 @@ def get_statistiques() -> Dict:
     cursor.execute("SELECT COUNT(*) FROM artisans WHERE telephone IS NOT NULL AND telephone != ''")
     stats['avec_telephone'] = cursor.fetchone()[0]
     
+    cursor.execute("SELECT COUNT(*) FROM artisans WHERE telephone IS NOT NULL AND telephone != ''")
+    stats['avec_telephone'] = cursor.fetchone()[0]
+    
     cursor.execute("SELECT COUNT(*) FROM artisans WHERE a_whatsapp = 1")
     stats['avec_whatsapp'] = cursor.fetchone()[0]
     
@@ -135,6 +190,17 @@ def get_statistiques() -> Dict:
     
     cursor.execute("SELECT COUNT(*) FROM artisans WHERE a_repondu = 1")
     stats['repondus'] = cursor.fetchone()[0]
+    
+    # Sites web (si la colonne existe)
+    try:
+        cursor.execute("SELECT COUNT(*) FROM artisans WHERE site_web IS NOT NULL AND site_web != ''")
+        stats['avec_site_web'] = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM artisans WHERE (site_web IS NULL OR site_web = '') AND telephone IS NOT NULL")
+        stats['sans_site_web'] = cursor.fetchone()[0]
+    except:
+        stats['avec_site_web'] = 0
+        stats['sans_site_web'] = 0
     
     # Messages envoyés aujourd'hui
     cursor.execute("""

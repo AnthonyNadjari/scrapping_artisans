@@ -1,0 +1,23 @@
+{
+    "plombier": "43.22A",
+    "electricien": "43.21A",
+    "menuisier": "16.23Z",
+    "peintre": "43.34Z",
+    "macon": "43.99A",
+    "couvreur": "43.91A",
+    "chauffagiste": "43.22B",
+    "carreleur": "43.33Z",
+    "platrier": "43.31Z",
+    "serrurier": "43.29B",
+    "vitrier": "23.12Z",
+    "paysagiste": "81.30Z",
+    "charpentier": "16.23Z",
+    "zinguier": "43.91B",
+    "ravalement": "43.34Z",
+    "isolation": "43.32Z",
+    "climatisation": "43.22B",
+    "sanitaire": "43.22A",
+    "chauffage": "43.22B",
+    "renovation": "43.99A"
+}
+
