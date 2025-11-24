@@ -63,3 +63,12 @@ temp/
 tmp/
 *.tmp
 
+# Fichiers de debug
+data/debug/
+data/debug_scraping/
+
+# Fichiers de scraping temporaires
+data/scraping_results_temp.json
+data/scraping_status.json
+data/scraping_progress.json
+

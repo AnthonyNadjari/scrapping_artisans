@@ -1,0 +1,40 @@
+# Fichiers à ignorer par OneDrive pour éviter l'ouverture automatique
+# Ces fichiers resteront toujours disponibles en local
+
+# Fichiers Python
+*.py
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.so
+
+# Fichiers de données temporaires
+data/scraping_results_temp.json
+data/scraping_status.json
+data/scraping_progress.json
+
+# Fichiers de debug
+data/debug/
+data/debug_scraping/
+
+# Base de données
+*.db
+*.sqlite
+*.sqlite3
+
+# Fichiers de configuration
+config/*.json
+
+# Logs
+*.log
+logs/
+
+# Fichiers temporaires
+*.tmp
+temp/
+tmp/
+
+# Fichiers de session
+.streamlit/
+

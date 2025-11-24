@@ -151,19 +151,142 @@ class GoogleMapsScraper:
             pass
         return None
     
-    def _scroller_panneau_lateral(self, max_scrolls: int = 15):
+    def _scroller_panneau_lateral(self, max_scrolls: int = 15, selector: str = 'div[role="feed"]'):
         """
         Scroll le panneau latéral pour charger plus de résultats
         
         Args:
             max_scrolls: Nombre maximum de scrolls à effectuer
+            selector: Sélecteur CSS du panneau (par défaut 'div[role="feed"]')
         """
         try:
-            # Trouver le panneau de résultats
-            panneau = self.wait.until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, 'div[role="feed"]'))
-            )
+            # Trouver le panneau de résultats avec le sélecteur fourni
+            # Essayer plusieurs sélecteurs si celui fourni ne fonctionne pas
+            selecteurs_essai = [selector, 'div[role="feed"]', 'div[role="main"]', 'div[jsaction]']
+            panneau = None
+            selector_utilise = None
             
+            for sel in selecteurs_essai:
+                try:
+                    panneau = WebDriverWait(self.driver, 10).until(  # Timeout augmenté à 10s
+                        EC.presence_of_element_located((By.CSS_SELECTOR, sel))
+                    )
+                    logger.info(f"   📜 Panneau trouvé pour scroll avec: {sel}")
+                    selector_utilise = sel
+                    break
+                except:
+                    continue
+            
+            if not panneau:
+                logger.warning("⚠️ Panneau principal non trouvé, tentative avec méthode alternative...")
+                # Méthode alternative : chercher un élément scrollable dans la page
+                try:
+                    # Chercher un élément avec overflow scroll ou auto
+                    scrollable_selector = self.driver.execute_script("""
+                        var elements = document.querySelectorAll('div[role="main"] div, div[role="feed"] div');
+                        for (var i = 0; i < elements.length; i++) {
+                            var style = window.getComputedStyle(elements[i]);
+                            if (style.overflowY === 'scroll' || style.overflowY === 'auto' || 
+                                style.overflow === 'scroll' || style.overflow === 'auto') {
+                                // Retourner un sélecteur unique si possible
+                                if (elements[i].id) {
+                                    return '#' + elements[i].id;
+                                }
+                                // Sinon retourner un XPath approximatif
+                                return 'div[role="main"] div, div[role="feed"] div';
+                            }
+                        }
+                        return null;
+                    """)
+                    if scrollable_selector:
+                        # Essayer de trouver l'élément avec le sélecteur retourné
+                        try:
+                            panneau = WebDriverWait(self.driver, 5).until(
+                                EC.presence_of_element_located((By.CSS_SELECTOR, scrollable_selector))
+                            )
+                            logger.info("   📜 Élément scrollable trouvé avec méthode alternative")
+                        except:
+                            # Si ça ne marche pas, utiliser le scroll de page
+                            raise TimeoutException("Scrollable trouvé mais non accessible")
+                    else:
+                        raise TimeoutException("Aucun panneau scrollable trouvé")
+                except:
+                    raise TimeoutException("Aucun panneau trouvé pour le scroll")
+            
+            # Vérifier si le panneau est scrollable
+            is_scrollable = self.driver.execute_script("""
+                var elem = arguments[0];
+                return elem.scrollHeight > elem.clientHeight;
+            """, panneau)
+            
+            if not is_scrollable:
+                logger.warning("   ⚠️ Le panneau trouvé n'est pas scrollable directement")
+                logger.info("   🔍 Recherche d'un sous-élément scrollable...")
+                
+                # Chercher un sous-élément scrollable dans le panneau
+                scrollable_child = None
+                try:
+                    # Chercher un div scrollable à l'intérieur
+                    children = panneau.find_elements(By.CSS_SELECTOR, 'div')
+                    for child in children[:20]:  # Limiter à 20 pour performance
+                        try:
+                            is_child_scrollable = self.driver.execute_script("""
+                                var elem = arguments[0];
+                                return elem.scrollHeight > elem.clientHeight;
+                            """, child)
+                            if is_child_scrollable:
+                                scrollable_child = child
+                                logger.info("   ✅ Sous-élément scrollable trouvé")
+                                break
+                        except:
+                            continue
+                    
+                    if scrollable_child:
+                        panneau = scrollable_child
+                        is_scrollable = True
+                    else:
+                        logger.warning("   ⚠️ Aucun sous-élément scrollable trouvé, utilisation du scroll de page")
+                        # Si aucun sous-élément scrollable, scroller la page entière
+                        last_height = self.driver.execute_script("return document.body.scrollHeight")
+                        scrolls = 0
+                        
+                        while scrolls < max_scrolls:
+                            # Scroller la page
+                            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                            time.sleep(2)
+                            
+                            new_height = self.driver.execute_script("return document.body.scrollHeight")
+                            if new_height == last_height:
+                                logger.info(f"✅ Fin du scroll de page (hauteur stable après {scrolls} scrolls)")
+                                break
+                            
+                            last_height = new_height
+                            scrolls += 1
+                            time.sleep(random.uniform(1, 2))
+                        
+                        logger.info(f"📜 {scrolls} scrolls de page effectués")
+                        return
+                except Exception as e:
+                    logger.warning(f"   ⚠️ Erreur recherche sous-élément: {e}")
+                    # Fallback : scroll de page
+                    logger.info("   📜 Utilisation du scroll de page comme fallback")
+                    last_height = self.driver.execute_script("return document.body.scrollHeight")
+                    scrolls = 0
+                    
+                    while scrolls < max_scrolls:
+                        self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                        time.sleep(2)
+                        new_height = self.driver.execute_script("return document.body.scrollHeight")
+                        if new_height == last_height:
+                            break
+                        last_height = new_height
+                        scrolls += 1
+                        time.sleep(random.uniform(1, 2))
+                    
+                    logger.info(f"📜 {scrolls} scrolls de page effectués")
+                    return
+            
+            # Le panneau est scrollable, utiliser la méthode normale
             last_height = 0
             scrolls = 0
             
@@ -194,10 +317,12 @@ class GoogleMapsScraper:
             
             logger.info(f"📜 {scrolls} scrolls effectués")
             
-        except TimeoutException:
-            logger.warning("⚠️ Panneau de résultats non trouvé")
+        except TimeoutException as e:
+            logger.warning(f"⚠️ Panneau de résultats non trouvé: {e}")
         except Exception as e:
             logger.error(f"❌ Erreur lors du scroll: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
     
     def _attendre_chargement_complet(self, timeout: int = 30) -> bool:
         """
@@ -287,19 +412,101 @@ class GoogleMapsScraper:
             logger.error(f"   ❌ Timeout chargement Google Maps: {e}")
             return False
     
+    def _est_page_consentement(self) -> bool:
+        """Vérifie si on est sur la page de consentement Google"""
+        try:
+            current_url = self.driver.current_url.lower()
+            page_title = self.driver.title.lower()
+            
+            is_consent = (
+                'consent.google.com' in current_url or
+                'consentement' in page_title or
+                'avant d\'accéder' in page_title or
+                'before accessing' in page_title or
+                'consentui' in current_url
+            )
+            
+            if is_consent:
+                logger.info(f"   🍪 Page de consentement détectée: {self.driver.current_url[:80]}...")
+            
+            return is_consent
+        except:
+            return False
+    
+    def _accepter_consentement(self) -> bool:
+        """Accepte le consentement Google et redirige vers Google Maps"""
+        
+        max_tentatives = 3
+        
+        for tentative in range(1, max_tentatives + 1):
+            logger.info(f"   🍪 Tentative {tentative}/{max_tentatives} d'acceptation du consentement...")
+            
+            # Sélecteurs pour le bouton "Tout accepter"
+            selecteurs = [
+                # XPath français
+                "//button[contains(., 'Tout accepter')]",
+                "//button[contains(., 'Accepter tout')]",
+                "//button[contains(., 'J'accepte')]",
+                "//button[contains(., 'Accepter')]",
+                
+                # XPath anglais
+                "//button[contains(., 'Accept all')]",
+                "//button[contains(., 'I agree')]",
+                "//button[contains(., 'Accept')]",
+                
+                # CSS
+                "button[id*='accept']",
+                "button[class*='accept']",
+                "button[aria-label*='Accept']",
+                "button[aria-label*='Accepter']",
+            ]
+            
+            for selector in selecteurs:
+                try:
+                    if selector.startswith("//"):
+                        buttons = self.driver.find_elements(By.XPATH, selector)
+                    else:
+                        buttons = self.driver.find_elements(By.CSS_SELECTOR, selector)
+                    
+                    for btn in buttons:
+                        try:
+                            if btn.is_displayed() and btn.is_enabled():
+                                logger.info(f"   ✅ Bouton consentement trouvé, clic...")
+                                btn.click()
+                                time.sleep(5)  # Attendre la redirection
+                                
+                                # Vérifier qu'on est maintenant sur Google Maps
+                                new_url = self.driver.current_url.lower()
+                                if 'maps.google.com' in new_url or 'google.com/maps' in new_url:
+                                    logger.info("   ✅ Redirection vers Google Maps réussie")
+                                    return True
+                                
+                                # Si toujours sur consentement, réessayer
+                                if self._est_page_consentement():
+                                    logger.info("   ⏳ Toujours sur consentement, nouvelle tentative...")
+                                    continue
+                                else:
+                                    # Peut-être redirigé ailleurs, vérifier
+                                    logger.info(f"   📍 URL actuelle: {self.driver.current_url[:80]}...")
+                                    return True  # On continue quand même
+                        except:
+                            continue
+                except:
+                    continue
+            
+            if tentative < max_tentatives:
+                time.sleep(2)
+                continue
+        
+        logger.error("   ❌ Impossible d'accepter le consentement après 3 tentatives")
+        return False
+    
     def _fermer_tous_popups(self):
-        """Ferme absolument tous les popups possibles"""
+        """Ferme absolument tous les popups possibles (sauf consentement, géré séparément)"""
         popups_fermes = 0
         
-        # Liste EXHAUSTIVE des sélecteurs de popups
+        # Liste EXHAUSTIVE des sélecteurs de popups (sans consentement)
         selecteurs_popup = [
-            # Cookies
-            ("//button[contains(text(), 'Tout accepter')]", By.XPATH),
-            ("//button[contains(text(), 'Accept all')]", By.XPATH),
-            ("//button[contains(text(), 'Accepter')]", By.XPATH),
-            ("L2AGLb", By.ID),
-            ("button[aria-label*='Accept'], button[aria-label*='Accepter']", By.CSS_SELECTOR),
-            
             # Géolocalisation
             ("//button[contains(text(), 'Refuser')]", By.XPATH),
             ("//button[contains(text(), 'Deny')]", By.XPATH),
@@ -545,7 +752,7 @@ class GoogleMapsScraper:
         
         return None, None
     
-    def _rechercher_etablissements(self, recherche: str, ville: str) -> bool:
+    def _rechercher_etablissements(self, recherche: str, ville: str) -> tuple[bool, Optional[str]]:
         """
         Effectue une recherche sur Google Maps - MÉTHODE URL DIRECTE
         Utilise directement https://www.google.com/maps/search/{REQUÊTE}
@@ -576,6 +783,19 @@ class GoogleMapsScraper:
                 logger.info("   ⏳ Chargement de la page de résultats...")
                 time.sleep(5)  # Attendre le chargement
                 
+                # ✅ ÉTAPE 1.5 : Vérifier et accepter le consentement Google si nécessaire
+                if self._est_page_consentement():
+                    logger.info("   🍪 Page de consentement détectée, acceptation...")
+                    if not self._accepter_consentement():
+                        logger.error("   ❌ Échec acceptation consentement")
+                        if tentative < max_tentatives:
+                            time.sleep(3)
+                            continue
+                        return False, None
+                    # Attendre que Google Maps se charge après consentement
+                    logger.info("   ⏳ Attente chargement Google Maps après consentement...")
+                    time.sleep(5)
+                
                 # ÉTAPE 2 : Fermer les popups (cookies, géolocalisation, etc.)
                 logger.info("   🗑️  Fermeture des popups...")
                 self._fermer_tous_popups()
@@ -583,42 +803,47 @@ class GoogleMapsScraper:
                 
                 # ÉTAPE 3 : Attendre que le panneau de résultats soit chargé
                 logger.info("   ⏳ Attente du panneau de résultats...")
-                try:
-                    WebDriverWait(self.driver, 20).until(
-                        EC.presence_of_element_located((By.CSS_SELECTOR, 'div[role="feed"]'))
-                    )
-                    logger.info("   ✅ Panneau de résultats chargé avec succès!")
-                    return True
-                    
-                except TimeoutException:
-                    logger.warning(f"   ⚠️ Timeout: panneau non détecté (tentative {tentative})")
-                    # Essayer avec un autre sélecteur
+                
+                # Essayer plusieurs sélecteurs avec timeouts progressifs
+                selecteurs_panneau = [
+                    ('div[role="feed"]', 20),
+                    ('div[role="main"]', 10),
+                    ('div[jsaction]', 10),
+                    ('div[data-value]', 10),
+                    ('div[class*="result"]', 10),
+                ]
+                
+                panneau_trouve = False
+                selector_utilise = None
+                for selector, timeout in selecteurs_panneau:
                     try:
-                        WebDriverWait(self.driver, 10).until(
-                            EC.presence_of_element_located((By.CSS_SELECTOR, 'div[role="main"]'))
+                        WebDriverWait(self.driver, timeout).until(
+                            EC.presence_of_element_located((By.CSS_SELECTOR, selector))
                         )
-                        logger.info("   ✅ Panneau de résultats détecté (sélecteur alternatif)!")
-                        return True
-                    except:
-                        pass
-                    
-                    if tentative < max_tentatives:
-                        logger.info("   🔄 Nouvelle tentative...")
-                        time.sleep(3)
+                        logger.info(f"   ✅ Panneau de résultats détecté avec: {selector}")
+                        panneau_trouve = True
+                        selector_utilise = selector
+                        break
+                    except TimeoutException:
+                        logger.debug(f"   ⏱️  Timeout pour: {selector}")
                         continue
-                    else:
-                        logger.error("   ❌ Échec: panneau de résultats introuvable après 3 tentatives")
-                        # Sauvegarder screenshot pour debug
-                        try:
-                            from pathlib import Path
-                            debug_dir = Path(__file__).parent.parent / "data" / "debug"
-                            debug_dir.mkdir(parents=True, exist_ok=True)
-                            screenshot_path = debug_dir / "debug_panneau_introuvable.png"
-                            self.driver.save_screenshot(str(screenshot_path))
-                            logger.info(f"   💾 Screenshot sauvegardé: {screenshot_path}")
-                        except:
-                            pass
-                        return False
+                
+                if panneau_trouve:
+                    return True, selector_utilise
+                
+                # Si aucun panneau trouvé, lancer le debug
+                logger.warning(f"   ⚠️ Aucun panneau détecté (tentative {tentative})")
+                
+                if tentative == max_tentatives:
+                    # Dernière tentative : lancer le debug complet
+                    logger.error("   ❌ Échec: panneau de résultats introuvable après 3 tentatives")
+                    logger.info("   🔍 Lancement du debug complet...")
+                    self._debug_panneau_resultats()
+                    return False, None
+                else:
+                    logger.info("   🔄 Nouvelle tentative...")
+                    time.sleep(3)
+                    continue
                 
             except Exception as e:
                 logger.error(f"   ❌ Erreur inattendue: {str(e)}")
@@ -627,9 +852,280 @@ class GoogleMapsScraper:
                 if tentative < max_tentatives:
                     time.sleep(3)
                     continue
-                return False
+                return False, None
         
-        return False
+        return False, None
+    
+    def _debug_panneau_resultats(self):
+        """
+        Fonction de debug pour comprendre pourquoi le panneau n'est pas trouvé
+        Version améliorée basée sur l'analyse du problème
+        """
+        from pathlib import Path
+        
+        debug_dir = Path(__file__).parent.parent / "data" / "debug"
+        debug_dir.mkdir(parents=True, exist_ok=True)
+        
+        logger.info("")
+        logger.info("   " + "="*80)
+        logger.info("   🔍 DEBUG PANNEAU DE RÉSULTATS - ANALYSE COMPLÈTE")
+        logger.info("   " + "="*80)
+        logger.info("")
+        
+        try:
+            # 1. Screenshot
+            screenshot_path = debug_dir / "debug_panneau_attente.png"
+            self.driver.save_screenshot(str(screenshot_path))
+            logger.info(f"   📸 Screenshot sauvegardé: {screenshot_path}")
+            
+            # 2. URL actuelle
+            current_url = self.driver.current_url
+            logger.info(f"   🌐 URL actuelle: {current_url}")
+            
+            # 3. Titre de la page
+            page_title = self.driver.title
+            logger.info(f"   📄 Titre de la page: {page_title}")
+            
+            # 4. Vérifier document.readyState
+            ready_state = self.driver.execute_script("return document.readyState")
+            logger.info(f"   📊 Document readyState: {ready_state}")
+            
+            # 5. Chercher TOUS les div avec role
+            divs_with_role = self.driver.execute_script("""
+                var divs = document.querySelectorAll('div[role]');
+                var result = [];
+                for (var i = 0; i < Math.min(divs.length, 20); i++) {
+                    result.push({
+                        role: divs[i].getAttribute('role'),
+                        id: divs[i].id || 'N/A',
+                        className: divs[i].className || 'N/A'
+                    });
+                }
+                return result;
+            """)
+            logger.info(f"   🔍 Divs avec role trouvés ({len(divs_with_role)}):")
+            for div in divs_with_role:
+                logger.info(f"      - role='{div['role']}' | id='{div['id']}' | class='{div['className'][:50]}'")
+            
+            # 6. Chercher spécifiquement div[role="feed"]
+            feed_exists = self.driver.execute_script("""
+                return document.querySelector('div[role="feed"]') !== null;
+            """)
+            logger.info(f"   🔍 div[role='feed'] existe: {feed_exists}")
+            
+            # 7. Chercher div[role="main"]
+            main_exists = self.driver.execute_script("""
+                return document.querySelector('div[role="main"]') !== null;
+            """)
+            logger.info(f"   🔍 div[role='main'] existe: {main_exists}")
+            
+            # 8. Chercher des éléments avec des classes Google Maps
+            google_maps_elements = self.driver.execute_script("""
+                var elements = document.querySelectorAll('[class*="maps"], [class*="search"], [class*="result"]');
+                var result = [];
+                for (var i = 0; i < Math.min(elements.length, 10); i++) {
+                    result.push({
+                        tag: elements[i].tagName,
+                        role: elements[i].getAttribute('role') || 'N/A',
+                        className: elements[i].className || 'N/A',
+                        id: elements[i].id || 'N/A'
+                    });
+                }
+                return result;
+            """)
+            logger.info(f"   🗺️  Éléments Google Maps trouvés ({len(google_maps_elements)}):")
+            for elem in google_maps_elements:
+                logger.info(f"      - {elem['tag']} | role='{elem['role']}' | class='{elem['className'][:50]}'")
+            
+            # 9. Vérifier s'il y a des iframes
+            iframes = self.driver.find_elements(By.TAG_NAME, 'iframe')
+            logger.info(f"   🖼️  Iframes trouvés: {len(iframes)}")
+            for idx, iframe in enumerate(iframes, 1):
+                src = iframe.get_attribute('src') or 'N/A'
+                logger.info(f"      [{idx}] Src: {src[:80]}...")
+            
+            # 10. Sauvegarder le HTML
+            html_path = debug_dir / "debug_panneau_page_source.html"
+            with open(html_path, 'w', encoding='utf-8') as f:
+                f.write(self.driver.page_source)
+            logger.info(f"   💾 HTML sauvegardé: {html_path}")
+            
+            # 11. Vérifier si Google Maps JS est chargé
+            google_loaded = self.driver.execute_script("""
+                return typeof google !== 'undefined' || typeof window.google !== 'undefined';
+            """)
+            logger.info(f"   📦 Google Maps JS chargé: {google_loaded}")
+            
+            # 12. Chercher des messages d'erreur ou CAPTCHA
+            error_messages = self.driver.execute_script("""
+                var errorTexts = ['captcha', 'error', 'blocked', 'access denied', 'robot', 'verify'];
+                var allText = document.body.innerText.toLowerCase();
+                var found = [];
+                for (var i = 0; i < errorTexts.length; i++) {
+                    if (allText.includes(errorTexts[i])) {
+                        found.push(errorTexts[i]);
+                    }
+                }
+                return found;
+            """)
+            if error_messages:
+                logger.warning(f"   ⚠️  Messages d'erreur potentiels trouvés: {error_messages}")
+            else:
+                logger.info("   ✅ Aucun message d'erreur détecté")
+            
+            # 13. Vérifier la présence d'éléments de résultats (liens vers établissements)
+            result_links = self.driver.execute_script("""
+                var links = document.querySelectorAll('a[href*="/maps/place/"]');
+                return links.length;
+            """)
+            logger.info(f"   🔗 Liens vers établissements trouvés: {result_links}")
+            
+            # 14. Vérifier si la page contient "Aucun résultat" ou similaire
+            no_results = self.driver.execute_script("""
+                var text = document.body.innerText.toLowerCase();
+                return text.includes('aucun résultat') || 
+                       text.includes('no results') || 
+                       text.includes('pas de résultat');
+            """)
+            if no_results:
+                logger.warning("   ⚠️  Message 'Aucun résultat' détecté dans la page")
+            
+            logger.info("")
+            logger.info("   " + "="*80)
+            logger.info("   ✅ DEBUG TERMINÉ - Consultez les fichiers dans data/debug/")
+            logger.info("   " + "="*80)
+            logger.info("")
+            
+        except Exception as e:
+            logger.error(f"   ❌ Erreur lors du debug: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+    
+    def _debug_etablissements_manquants(self, panneau):
+        """
+        Debug pour comprendre pourquoi 0 établissements sont trouvés
+        """
+        from pathlib import Path
+        
+        debug_dir = Path(__file__).parent.parent / "data" / "debug"
+        debug_dir.mkdir(parents=True, exist_ok=True)
+        
+        logger.info("")
+        logger.info("   " + "="*80)
+        logger.info("   🔍 DEBUG ÉTABLISSEMENTS MANQUANTS")
+        logger.info("   " + "="*80)
+        logger.info("")
+        
+        try:
+            # 1. Sauvegarder le HTML
+            html_path = debug_dir / "debug_etablissements_page_source.html"
+            with open(html_path, 'w', encoding='utf-8') as f:
+                f.write(self.driver.page_source)
+            logger.info(f"   💾 HTML sauvegardé: {html_path}")
+            
+            # 2. Chercher TOUS les éléments qui pourraient être des établissements
+            logger.info("   🔍 Recherche de tous les éléments potentiels...")
+            
+            # 2a. Chercher dans le panneau si fourni
+            if panneau:
+                articles = panneau.find_elements(By.CSS_SELECTOR, 'div[role="article"]')
+                logger.info(f"   📋 div[role='article'] trouvés dans panneau: {len(articles)}")
+                
+                links_place = panneau.find_elements(By.CSS_SELECTOR, 'a[href*="/maps/place/"]')
+                logger.info(f"   🔗 a[href*='/maps/place/'] trouvés dans panneau: {len(links_place)}")
+                
+                all_links = panneau.find_elements(By.CSS_SELECTOR, 'a')
+                logger.info(f"   🔗 Tous les liens (a) dans le panneau: {len(all_links)}")
+                
+                # 3. Chercher avec JavaScript (plus complet)
+                logger.info("   🔍 Recherche JavaScript dans le panneau...")
+                
+                js_results = self.driver.execute_script("""
+                    var panneau = arguments[0];
+                    var results = {
+                        articles: panneau.querySelectorAll('div[role="article"]').length,
+                        links_place: panneau.querySelectorAll('a[href*="/maps/place/"]').length,
+                        all_links: panneau.querySelectorAll('a').length,
+                        all_divs: panneau.querySelectorAll('div').length,
+                        divs_with_click: panneau.querySelectorAll('div[onclick], div[role="button"]').length,
+                        elements_with_href: panneau.querySelectorAll('[href*="/maps/place/"]').length
+                    };
+                    return results;
+                """, panneau)
+            else:
+                logger.info("   ⚠️ Pas de panneau fourni, recherche dans toute la page uniquement")
+                js_results = {'articles': 0, 'links_place': 0, 'all_links': 0, 'all_divs': 0, 'divs_with_click': 0, 'elements_with_href': 0}
+            
+            logger.info(f"      div[role='article']: {js_results['articles']}")
+            logger.info(f"      a[href*='/maps/place/']: {js_results['links_place']}")
+            logger.info(f"      Tous les liens: {js_results['all_links']}")
+            logger.info(f"      Tous les div: {js_results['all_divs']}")
+            logger.info(f"      Divs cliquables: {js_results['divs_with_click']}")
+            logger.info(f"      Éléments avec href maps/place: {js_results['elements_with_href']}")
+            
+            # 4. Chercher dans TOUTE la page (pas juste le panneau)
+            logger.info("   🔍 Recherche dans TOUTE la page...")
+            
+            page_results = self.driver.execute_script("""
+                return {
+                    articles: document.querySelectorAll('div[role="article"]').length,
+                    links_place: document.querySelectorAll('a[href*="/maps/place/"]').length,
+                    all_links: document.querySelectorAll('a').length,
+                    divs_with_click: document.querySelectorAll('div[onclick], div[role="button"]').length
+                };
+            """)
+            
+            logger.info(f"      Dans TOUTE la page:")
+            logger.info(f"         div[role='article']: {page_results['articles']}")
+            logger.info(f"         a[href*='/maps/place/']: {page_results['links_place']}")
+            logger.info(f"         Tous les liens: {page_results['all_links']}")
+            logger.info(f"         Divs cliquables: {page_results['divs_with_click']}")
+            
+            # 5. Si des éléments sont trouvés dans la page mais pas dans le panneau
+            if page_results['links_place'] > 0 and js_results['links_place'] == 0:
+                logger.warning("   ⚠️ Des liens /maps/place/ existent dans la page MAIS PAS dans le panneau!")
+                logger.warning("   ⚠️ Le panneau div[role='main'] ne contient peut-être pas les résultats")
+                logger.info("   🔍 Recherche du VRAI conteneur des résultats...")
+                
+                # Chercher où sont vraiment les liens
+                vrai_conteneur = self.driver.execute_script("""
+                    var links = document.querySelectorAll('a[href*="/maps/place/"]');
+                    if (links.length > 0) {
+                        var parent = links[0].closest('div[role]');
+                        if (parent) {
+                            return {
+                                role: parent.getAttribute('role'),
+                                id: parent.id || 'N/A',
+                                className: parent.className || 'N/A',
+                                selector: parent.id ? '#' + parent.id : 'div[role="' + parent.getAttribute('role') + '"]'
+                            };
+                        }
+                    }
+                    return null;
+                """)
+                
+                if vrai_conteneur:
+                    logger.info(f"   ✅ VRAI conteneur trouvé:")
+                    logger.info(f"      Role: {vrai_conteneur['role']}")
+                    logger.info(f"      ID: {vrai_conteneur['id']}")
+                    logger.info(f"      Class: {vrai_conteneur['className'][:50]}")
+                    logger.info(f"      Sélecteur à utiliser: {vrai_conteneur['selector']}")
+            
+            # 6. Screenshot pour voir visuellement
+            screenshot_path = debug_dir / "debug_etablissements_screenshot.png"
+            self.driver.save_screenshot(str(screenshot_path))
+            logger.info(f"   📸 Screenshot sauvegardé: {screenshot_path}")
+            
+            logger.info("")
+            logger.info("   " + "="*80)
+            logger.info("   ✅ DEBUG TERMINÉ")
+            logger.info("   " + "="*80)
+            logger.info("")
+            
+        except Exception as e:
+            logger.error(f"   ❌ Erreur lors du debug: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
     
     def _extraire_donnees_etablissement(self, index: int, total: int) -> Optional[Dict]:
         """
@@ -740,6 +1236,220 @@ class GoogleMapsScraper:
             
         except Exception as e:
             logger.error(f"  ❌ Erreur extraction [{index}/{total}]: {e}")
+            return None
+    
+    def _extraire_donnees_depuis_element(self, element, index: int, total: int) -> Optional[Dict]:
+        """
+        Extrait les données depuis un élément directement (sans panneau de détail)
+        
+        Args:
+            element: Élément Selenium (lien ou div)
+            index: Index de l'établissement
+            total: Total d'établissements
+        
+        Returns:
+            Dict avec les données ou None
+        """
+        info = {
+            'nom': None,
+            'telephone': None,
+            'site_web': None,
+            'adresse': None,
+            'code_postal': None,
+            'ville': None,
+            'note': None,
+            'nb_avis': None
+        }
+        
+        try:
+            # Nom de l'établissement
+            try:
+                # Essayer aria-label d'abord
+                nom = element.get_attribute('aria-label')
+                if not nom:
+                    # Chercher dans les enfants
+                    nom_elem = element.find_elements(By.CSS_SELECTOR, 'div[class*="fontHeadline"], h3, div[class*="font"]')
+                    if nom_elem:
+                        nom = nom_elem[0].text.strip()
+                    else:
+                        # Prendre le premier texte non vide
+                        nom = element.text.split('\n')[0].strip() if element.text else None
+                
+                info['nom'] = nom
+            except:
+                pass
+            
+            # Chercher le parent qui contient toutes les infos
+            try:
+                parent = element.find_element(By.XPATH, './ancestor::div[@jsaction]') if element.tag_name == 'a' else element
+                texte_complet = parent.text
+                
+                # Téléphone - Pattern français
+                tel_match = re.search(r'(?:0|\+33)[1-9](?:[0-9]{8}|[\s.-][0-9]{2}[\s.-][0-9]{2}[\s.-][0-9]{2}[\s.-][0-9]{2})', texte_complet)
+                if tel_match:
+                    tel_brut = tel_match.group(0).replace(' ', '').replace('.', '').replace('-', '').replace('+33', '0')
+                    info['telephone'] = self._normaliser_telephone(tel_brut)
+                
+                # Adresse - Chercher un pattern d'adresse française
+                adresse_match = re.search(r'\d{1,3}\s+(?:rue|avenue|boulevard|place|impasse|chemin|route|allée)[^,]+,\s*\d{5}\s+[A-Za-zÀ-ÿ\s-]+', texte_complet, re.IGNORECASE)
+                if adresse_match:
+                    adresse = adresse_match.group(0)
+                    info['adresse'] = adresse
+                    
+                    # Extraire code postal et ville
+                    cp_match = re.search(r'\b(\d{5})\b', adresse)
+                    if cp_match:
+                        info['code_postal'] = cp_match.group(1)
+                    
+                    ville_match = re.search(r'\d{5}\s+([A-Za-zÀ-ÿ\s-]+)', adresse)
+                    if ville_match:
+                        info['ville'] = ville_match.group(1).strip()
+            except:
+                pass
+            
+            # URL du site web (si c'est un lien)
+            try:
+                if element.tag_name == 'a':
+                    href = element.get_attribute('href')
+                    if href and '/maps/place/' in href:
+                        info['site_web'] = href  # URL Google Maps de l'établissement
+            except:
+                pass
+            
+            # Logs
+            if info['nom']:
+                log_parts = [f"[{index}/{total}] {info['nom']}"]
+                if info['telephone']:
+                    log_parts.append(f"📞 {info['telephone']}")
+                else:
+                    log_parts.append("❌ Pas de téléphone")
+                
+                logger.info(" ".join(log_parts))
+            
+            return info if info['nom'] else None
+            
+        except Exception as e:
+            logger.error(f"  ❌ Erreur extraction élément [{index}/{total}]: {e}")
+            return None
+    
+    def _extraire_donnees_depuis_detail_page(self, index: int, total: int) -> Optional[Dict]:
+        """
+        Extrait les données depuis la page de détail ouverte après clic
+        
+        Args:
+            index: Index de l'établissement
+            total: Total d'établissements
+        
+        Returns:
+            Dict avec les données ou None
+        """
+        info = {
+            'nom': None,
+            'telephone': None,
+            'site_web': None,
+            'adresse': None,
+            'code_postal': None,
+            'ville': None,
+            'note': None,
+            'nb_avis': None
+        }
+        
+        try:
+            # Nom
+            try:
+                nom_elem = self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "h1")))
+                info['nom'] = nom_elem.text.strip()
+            except:
+                pass
+            
+            # Téléphone
+            try:
+                tel_buttons = self.driver.find_elements(By.CSS_SELECTOR, 'button[data-item-id*="phone"], a[href^="tel:"]')
+                for tel_btn in tel_buttons:
+                    href = tel_btn.get_attribute('href')
+                    if href and href.startswith('tel:'):
+                        tel_brut = href.replace('tel:', '').replace(' ', '').replace('+33', '0')
+                        info['telephone'] = self._normaliser_telephone(tel_brut)
+                        break
+                    aria_label = tel_btn.get_attribute('aria-label')
+                    if aria_label:
+                        tel_match = re.search(r'(\+33|0)[\s\.]?[1-9][\s\.]?(\d{2}[\s\.]?){4}', aria_label)
+                        if tel_match:
+                            tel_brut = tel_match.group(0).replace(' ', '').replace('.', '').replace('+33', '0')
+                            info['telephone'] = self._normaliser_telephone(tel_brut)
+                            break
+            except:
+                pass
+            
+            # Site web
+            try:
+                site_links = self.driver.find_elements(By.CSS_SELECTOR, 'a[data-item-id*="authority"], a[href^="http"]')
+                for site_link in site_links:
+                    href = site_link.get_attribute('href')
+                    if href and ('http://' in href or 'https://' in href) and 'google.com' not in href and 'maps' not in href:
+                        info['site_web'] = href
+                        break
+            except:
+                pass
+            
+            # Adresse
+            try:
+                adresse_buttons = self.driver.find_elements(By.CSS_SELECTOR, 'button[data-item-id*="address"]')
+                for adr_btn in adresse_buttons:
+                    aria_label = adr_btn.get_attribute('aria-label')
+                    if aria_label:
+                        info['adresse'] = aria_label.replace('Adresse: ', '').replace('Address: ', '').strip()
+                        cp_match = re.search(r'\b(\d{5})\b', info['adresse'])
+                        if cp_match:
+                            info['code_postal'] = cp_match.group(1)
+                        ville_match = re.search(r'\d{5}\s+(.+)', info['adresse'])
+                        if ville_match:
+                            info['ville'] = ville_match.group(1).strip()
+                        break
+            except:
+                pass
+            
+            # Note
+            try:
+                note_elems = self.driver.find_elements(By.CSS_SELECTOR, 'span[role="img"][aria-label*="étoile"], span[role="img"][aria-label*="star"]')
+                for note_elem in note_elems:
+                    note = self._extraire_note(note_elem)
+                    if note:
+                        info['note'] = note
+                        break
+            except:
+                pass
+            
+            # Nombre d'avis
+            try:
+                avis_elems = self.driver.find_elements(By.XPATH, "//span[contains(text(), 'avis') or contains(text(), 'review')]")
+                for avis_elem in avis_elems:
+                    nb = self._extraire_nb_avis(avis_elem)
+                    if nb:
+                        info['nb_avis'] = nb
+                        break
+            except:
+                pass
+            
+            # Logs
+            if info['nom']:
+                log_parts = [f"[{index}/{total}] {info['nom']}"]
+                if info['telephone']:
+                    log_parts.append(f"📞 {info['telephone']}")
+                else:
+                    log_parts.append("❌ Pas de téléphone")
+                
+                if info['site_web']:
+                    log_parts.append("🌐 Oui")
+                else:
+                    log_parts.append("❌ Pas de site")
+                
+                logger.info(" ".join(log_parts))
+            
+            return info if info['nom'] else None
+            
+        except Exception as e:
+            logger.error(f"  ❌ Erreur extraction détail [{index}/{total}]: {e}")
             return None
     
     def _extraire_donnees_depuis_panneau(self, element, index: int, total: int) -> Optional[Dict]:
@@ -900,41 +1610,58 @@ class GoogleMapsScraper:
         resultats = []
         
         try:
-            # Recherche
-            if not self._rechercher_etablissements(recherche, ville):
+            # Recherche - récupérer le sélecteur qui a fonctionné
+            recherche_ok, selector_panneau = self._rechercher_etablissements(recherche, ville)
+            if not recherche_ok:
                 return []
+            
+            # Utiliser le sélecteur qui a fonctionné, ou un par défaut
+            if not selector_panneau:
+                selector_panneau = 'div[role="feed"]'
             
             # Scroller pour charger plus de résultats
             logger.info("📜 Scroll du panneau pour charger plus de résultats...")
-            self._scroller_panneau_lateral(max_scrolls=15)
+            self._scroller_panneau_lateral(max_scrolls=15, selector=selector_panneau)
             
-            # Récupérer tous les éléments d'établissements du panneau
+            # ✅ FIX : Chercher DIRECTEMENT les établissements dans toute la page
+            # Ne pas chercher dans un panneau spécifique qui peut ne pas contenir les résultats
             logger.info("🔍 Récupération des établissements...")
-            time.sleep(3)
+            time.sleep(3)  # Attendre que les résultats se chargent
             
-            # Trouver le panneau de résultats (plusieurs sélecteurs possibles)
-            panneau = None
-            try:
-                panneau = WebDriverWait(self.driver, 15).until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, 'div[role="feed"]'))
-                )
-            except:
+            # Chercher TOUS les liens vers des établissements dans toute la page
+            # C'est le sélecteur le plus fiable qui fonctionne toujours
+            etablissements_elems = self.driver.find_elements(By.CSS_SELECTOR, 'a[href*="/maps/place/"]')
+            
+            logger.info(f"✅ {len(etablissements_elems)} établissements trouvés dans la page")
+            
+            # Si 0 établissements trouvés, essayer des méthodes alternatives
+            if len(etablissements_elems) == 0:
+                logger.warning("⚠️ Aucun établissement trouvé avec a[href*='/maps/place/'], recherche alternative...")
+                
+                # Méthode alternative : chercher dans feed ou articles
                 try:
-                    panneau = WebDriverWait(self.driver, 10).until(
-                        EC.presence_of_element_located((By.CSS_SELECTOR, 'div[role="main"]'))
-                    )
+                    feed = self.driver.find_elements(By.CSS_SELECTOR, 'div[role="feed"]')
+                    if feed:
+                        etablissements_elems = feed[0].find_elements(By.CSS_SELECTOR, 'a, div[jsaction]')
+                        logger.info(f"   📍 {len(etablissements_elems)} éléments trouvés dans feed")
+                    
+                    if len(etablissements_elems) == 0:
+                        articles = self.driver.find_elements(By.CSS_SELECTOR, 'div[role="article"]')
+                        if articles:
+                            etablissements_elems = articles
+                            logger.info(f"   📍 {len(articles)} articles trouvés")
                 except:
-                    logger.error("❌ Impossible de trouver le panneau de résultats")
-                    return []
+                    pass
             
-            if not panneau:
-                logger.error("❌ Panneau de résultats introuvable")
-                return []
-            
-            # Récupérer tous les éléments cliquables d'établissements
-            etablissements_elems = panneau.find_elements(By.CSS_SELECTOR, 'div[role="article"], a[href*="/maps/place/"]')
-            
-            logger.info(f"✅ {len(etablissements_elems)} établissements trouvés dans le panneau")
+            # Si toujours 0, lancer le debug
+            if len(etablissements_elems) == 0:
+                logger.warning("⚠️ Aucun établissement trouvé, lancement du debug...")
+                try:
+                    panneau_debug = self.driver.find_element(By.CSS_SELECTOR, 'div[role="main"]')
+                    self._debug_etablissements_manquants(panneau_debug)
+                except:
+                    self._debug_etablissements_manquants(None)
+                return []  # Retourner vide si aucun établissement trouvé
             
             # Limiter au max_results
             etablissements_elems = etablissements_elems[:max_results]
@@ -950,8 +1677,20 @@ class GoogleMapsScraper:
                     self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", elem)
                     time.sleep(0.5)
                     
-                    # Extraire les données depuis le panneau
-                    info = self._extraire_donnees_depuis_panneau(elem, i, len(etablissements_elems))
+                    # ✅ FIX : Extraire les données directement depuis l'élément
+                    # Si c'est un lien, cliquer pour ouvrir le détail, sinon extraire depuis l'élément
+                    if elem.tag_name == 'a' and elem.get_attribute('href') and '/maps/place/' in elem.get_attribute('href'):
+                        # C'est un lien vers un établissement, cliquer pour ouvrir le détail
+                        try:
+                            elem.click()
+                            time.sleep(1.5)  # Attendre que le panneau de détail s'ouvre
+                            info = self._extraire_donnees_depuis_detail_page(i, len(etablissements_elems))
+                        except:
+                            # Si le clic échoue, extraire depuis l'élément directement
+                            info = self._extraire_donnees_depuis_element(elem, i, len(etablissements_elems))
+                    else:
+                        # C'est un div ou autre élément, extraire directement
+                        info = self._extraire_donnees_depuis_element(elem, i, len(etablissements_elems))
                     
                     if info:
                         info['recherche'] = recherche
