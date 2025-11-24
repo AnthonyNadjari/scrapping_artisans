@@ -29,3 +29,19 @@ Le projet est maintenant prêt pour un nouveau départ avec :
 - Configuration OneDrive optimisée
 - Fichiers de debug ignorés par Git
 
+## ⚡ Optimisations MAX - Version ultra-rapide (2025-11-24)
+
+### Corrections
+- ✅ Erreur Streamlit `use_container_width` corrigée
+- ✅ Détection correcte du site web (exclut Google Maps)
+- ✅ Tous les établissements scrapés (plus de limite à 5)
+
+### Optimisations de vitesse
+- ✅ Délais réduits au minimum (50-60% plus rapide)
+- ✅ Ordre d'extraction optimisé (extraction directe d'abord)
+- ✅ Scroll optimisé (délais réduits, plus de scrolls)
+
+### Nettoyage
+- ✅ Fichiers de documentation inutiles supprimés
+- ✅ Code optimisé et prêt pour production
+

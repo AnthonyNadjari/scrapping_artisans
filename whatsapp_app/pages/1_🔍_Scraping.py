@@ -457,7 +457,6 @@ if st.session_state.scraped_results:
     # Afficher le tableau
     st.dataframe(
         df_filtre[['nom', 'telephone', 'site_web', 'adresse', 'ville', 'note', 'nb_avis']],
-        use_container_width=True,
         height=400
     )
     
