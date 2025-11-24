@@ -235,9 +235,29 @@ if st.session_state.scraping_running:
         
         nom = info.get('nom', 'N/A')
         tel = info.get('telephone', 'N/A')
-        site = "Oui" if info.get('site_web') else "Non"
+        site_web = info.get('site_web', '')
+        # ✅ FIX : Vérifier que c'est un vrai site web, pas l'URL Google Maps
+        if site_web:
+            # Si l'URL contient 'google.com' ou 'maps', ce n'est pas un vrai site web
+            if 'google.com' in site_web.lower() or 'maps' in site_web.lower():
+                site_web = None  # Ce n'est pas un vrai site web
+                info['site_web'] = None  # Corriger dans les données
+        
+        site = "✅ Oui" if site_web else "❌ Non"
+        site_url = site_web[:50] + "..." if site_web and len(site_web) > 50 else (site_web or "N/A")
         
         status_text.info(f"🔍 [{index}/{total}] **{nom}** | 📞 {tel} | 🌐 Site: {site}")
+        
+        # ✅ NOUVEAU : Logs détaillés dans Streamlit
+        detail_log = f"📋 **{nom}**\n"
+        detail_log += f"   📞 Téléphone: {tel}\n"
+        detail_log += f"   🌐 Site web: {site_url}\n"
+        if info.get('adresse'):
+            detail_log += f"   📍 Adresse: {info.get('adresse', 'N/A')}\n"
+        if info.get('note'):
+            detail_log += f"   ⭐ Note: {info.get('note')}/5 ({info.get('nb_avis', 0)} avis)\n"
+        
+        logs_display.markdown(detail_log)
         
         # Stats
         avec_tel = sum(1 for r in st.session_state.scraped_results if r.get('telephone'))
@@ -315,10 +335,12 @@ if st.session_state.scraping_running:
                     
                     logger.info(f"🔍 Scraping ville {i}/{len(villes_a_scraper)}: {ville}")
                     try:
+                        # ✅ FIX : Ne pas diviser max_results par ville, utiliser le max pour chaque ville
+                        # L'utilisateur veut scraper le maximum d'établissements par ville
                         resultats = scraper.scraper(
                             recherche=metier_actuel,
                             ville=ville,
-                            max_results=max_results_actuel // len(villes_a_scraper) if len(villes_a_scraper) > 1 else max_results_actuel,
+                            max_results=max_results_actuel,  # Utiliser le max pour chaque ville
                             progress_callback=save_callback
                         )
                         if resultats:

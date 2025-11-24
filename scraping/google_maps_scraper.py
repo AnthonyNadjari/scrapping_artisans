@@ -262,7 +262,7 @@ class GoogleMapsScraper:
                             
                             last_height = new_height
                             scrolls += 1
-                            time.sleep(random.uniform(1, 2))
+                            time.sleep(random.uniform(0.5, 1))  # ✅ OPTIMISATION
                         
                         logger.info(f"📜 {scrolls} scrolls de page effectués")
                         return
@@ -281,7 +281,7 @@ class GoogleMapsScraper:
                             break
                         last_height = new_height
                         scrolls += 1
-                        time.sleep(random.uniform(1, 2))
+                        time.sleep(random.uniform(0.5, 1))  # ✅ OPTIMISATION
                     
                     logger.info(f"📜 {scrolls} scrolls de page effectués")
                     return
@@ -296,8 +296,8 @@ class GoogleMapsScraper:
                     "arguments[0].scrollTop = arguments[0].scrollHeight", panneau
                 )
                 
-                # Attendre que les nouveaux résultats se chargent
-                time.sleep(2)
+                # ✅ OPTIMISATION : Réduire le délai entre scrolls
+                time.sleep(1)  # Réduit de 2s à 1s
                 
                 # Vérifier si on a atteint la fin
                 new_height = self.driver.execute_script(
@@ -312,8 +312,8 @@ class GoogleMapsScraper:
                 last_height = new_height
                 scrolls += 1
                 
-                # Pause aléatoire entre scrolls
-                time.sleep(random.uniform(1, 2))
+                # ✅ OPTIMISATION : Réduire la pause aléatoire entre scrolls
+                time.sleep(random.uniform(0.5, 1))  # Réduit de 1-2s à 0.5-1s
             
             logger.info(f"📜 {scrolls} scrolls effectués")
             
@@ -792,9 +792,10 @@ class GoogleMapsScraper:
                             time.sleep(3)
                             continue
                         return False, None
-                    # Attendre que Google Maps se charge après consentement
-                    logger.info("   ⏳ Attente chargement Google Maps après consentement...")
-                    time.sleep(5)
+                    
+                    # Attendre que Google Maps charge COMPLÈTEMENT
+                    logger.info("   ⏳ Attente chargement complet Google Maps...")
+                    self._attendre_chargement_complet(timeout=30)
                 
                 # ÉTAPE 2 : Fermer les popups (cookies, géolocalisation, etc.)
                 logger.info("   🗑️  Fermeture des popups...")
@@ -827,6 +828,62 @@ class GoogleMapsScraper:
                     except TimeoutException:
                         logger.debug(f"   ⏱️  Timeout pour: {selector}")
                         continue
+                
+                # ✅ CRITIQUE : Vérifier si la recherche est toujours active après consentement
+                # Google Maps redirige parfois vers une page vide (sans "search" dans l'URL)
+                if panneau_trouve:
+                    current_url = self.driver.current_url
+                    logger.info(f"   🌐 URL actuelle: {current_url[:100]}...")
+                    
+                    # Vérifier si l'URL contient "search" (recherche active)
+                    if "search" not in current_url.lower():
+                        logger.info("   ⚠️ URL ne contient pas 'search' - Page vide détectée, relance de la recherche...")
+                        # Relancer la recherche avec l'URL complète
+                        url_recherche = f"https://www.google.com/maps/search/{quote(query)}"
+                        logger.info(f"   🔄 Relance recherche: {url_recherche}")
+                        self.driver.get(url_recherche)
+                        time.sleep(5)
+                        
+                        # Vérifier à nouveau si on est sur consentement (peut réapparaître)
+                        if self._est_page_consentement():
+                            logger.info("   🍪 Consentement réapparu, nouvelle acceptation...")
+                            if not self._accepter_consentement():
+                                logger.warning("   ⚠️ Échec acceptation consentement après relance")
+                            else:
+                                time.sleep(3)
+                                self._attendre_chargement_complet(timeout=30)
+                                self._fermer_tous_popups()
+                                time.sleep(1)
+                        
+                        # Réessayer de trouver le panneau après relance
+                        for selector, timeout in selecteurs_panneau:
+                            try:
+                                WebDriverWait(self.driver, timeout).until(
+                                    EC.presence_of_element_located((By.CSS_SELECTOR, selector))
+                                )
+                                logger.info(f"   ✅ Panneau de résultats détecté après relance: {selector}")
+                                panneau_trouve = True
+                                selector_utilise = selector
+                                break
+                            except TimeoutException:
+                                continue
+                    
+                    # Attendre explicitement que les RÉSULTATS apparaissent
+                    if panneau_trouve:
+                        logger.info("   ⏳ Attente des résultats de recherche...")
+                        try:
+                            WebDriverWait(self.driver, 30).until(
+                                lambda d: len(d.find_elements(By.CSS_SELECTOR, 'a[href*="/maps/place/"]')) > 0 or
+                                          len(d.find_elements(By.CSS_SELECTOR, 'div[role="article"]')) > 0
+                            )
+                            nb_etablissements = len(self.driver.find_elements(By.CSS_SELECTOR, 'a[href*="/maps/place/"]'))
+                            nb_articles = len(self.driver.find_elements(By.CSS_SELECTOR, 'div[role="article"]'))
+                            logger.info(f"   ✅ Résultats de recherche détectés: {nb_etablissements} liens /maps/place/, {nb_articles} articles")
+                        except TimeoutException:
+                            logger.warning("   ⚠️ Timeout attente résultats, mais on continue quand même...")
+                            nb_etablissements = len(self.driver.find_elements(By.CSS_SELECTOR, 'a[href*="/maps/place/"]'))
+                            nb_articles = len(self.driver.find_elements(By.CSS_SELECTOR, 'div[role="article"]'))
+                            logger.info(f"   📊 Éléments trouvés sans attendre: {nb_etablissements} liens, {nb_articles} articles")
                 
                 if panneau_trouve:
                     return True, selector_utilise
@@ -1307,14 +1364,9 @@ class GoogleMapsScraper:
             except:
                 pass
             
-            # URL du site web (si c'est un lien)
-            try:
-                if element.tag_name == 'a':
-                    href = element.get_attribute('href')
-                    if href and '/maps/place/' in href:
-                        info['site_web'] = href  # URL Google Maps de l'établissement
-            except:
-                pass
+            # ✅ FIX : Ne pas mettre l'URL Google Maps comme site web
+            # Le site web doit être extrait depuis la page de détail, pas depuis l'élément
+            # On laisse site_web à None ici, il sera rempli depuis _extraire_donnees_depuis_detail_page
             
             # Logs
             if info['nom']:
@@ -1486,7 +1538,7 @@ class GoogleMapsScraper:
             # Cliquer pour ouvrir le détail
             try:
                 element.click()
-                time.sleep(1.5)  # Attendre que le panneau de détail s'ouvre
+                time.sleep(0.8)  # ✅ OPTIMISATION : Réduit de 1.5s à 0.8s
             except:
                 pass
             
@@ -1626,10 +1678,24 @@ class GoogleMapsScraper:
             # ✅ FIX : Chercher DIRECTEMENT les établissements dans toute la page
             # Ne pas chercher dans un panneau spécifique qui peut ne pas contenir les résultats
             logger.info("🔍 Récupération des établissements...")
-            time.sleep(3)  # Attendre que les résultats se chargent
+            
+            # ✅ NOUVEAU : Attendre explicitement que les résultats se chargent
+            logger.info("   ⏳ Attente que les résultats se chargent dans la page...")
+            try:
+                WebDriverWait(self.driver, 30).until(
+                    lambda d: len(d.find_elements(By.CSS_SELECTOR, 'a[href*="/maps/place/"]')) > 0 or
+                              len(d.find_elements(By.CSS_SELECTOR, 'div[role="article"]')) > 0
+                )
+                logger.info("   ✅ Résultats chargés dans la page")
+            except TimeoutException:
+                logger.warning("   ⚠️ Timeout attente résultats, mais on continue...")
+            
+            # Attendre un peu plus pour que tous les résultats se chargent
+            time.sleep(2)
             
             # Chercher TOUS les liens vers des établissements dans toute la page
             # C'est le sélecteur le plus fiable qui fonctionne toujours
+            # On scraper TOUS les établissements, pas seulement ceux avec le mot-clé
             etablissements_elems = self.driver.find_elements(By.CSS_SELECTOR, 'a[href*="/maps/place/"]')
             
             logger.info(f"✅ {len(etablissements_elems)} établissements trouvés dans la page")
@@ -1673,24 +1739,33 @@ class GoogleMapsScraper:
                     break
                 
                 try:
-                    # Scroll jusqu'à l'élément pour le rendre visible
-                    self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", elem)
-                    time.sleep(0.5)
-                    
-                    # ✅ FIX : Extraire les données directement depuis l'élément
-                    # Si c'est un lien, cliquer pour ouvrir le détail, sinon extraire depuis l'élément
-                    if elem.tag_name == 'a' and elem.get_attribute('href') and '/maps/place/' in elem.get_attribute('href'):
-                        # C'est un lien vers un établissement, cliquer pour ouvrir le détail
-                        try:
-                            elem.click()
-                            time.sleep(1.5)  # Attendre que le panneau de détail s'ouvre
-                            info = self._extraire_donnees_depuis_detail_page(i, len(etablissements_elems))
-                        except:
-                            # Si le clic échoue, extraire depuis l'élément directement
+                    # ✅ OPTIMISATION : Utiliser le panneau latéral au lieu de cliquer sur chaque élément
+                    # Plus rapide : extraire depuis le panneau latéral qui s'ouvre au survol/clic
+                    try:
+                        # Essayer d'extraire depuis le panneau latéral (plus rapide)
+                        info = self._extraire_donnees_depuis_panneau(elem, i, len(etablissements_elems))
+                        if not info or not info.get('nom'):
+                            # Si échec, essayer avec clic sur le lien
+                            if elem.tag_name == 'a' and elem.get_attribute('href') and '/maps/place/' in elem.get_attribute('href'):
+                                try:
+                                    elem.click()
+                                    time.sleep(0.8)  # ✅ OPTIMISATION : Réduit de 1.5s à 0.8s
+                                    info = self._extraire_donnees_depuis_detail_page(i, len(etablissements_elems))
+                                except:
+                                    info = self._extraire_donnees_depuis_element(elem, i, len(etablissements_elems))
+                            else:
+                                info = self._extraire_donnees_depuis_element(elem, i, len(etablissements_elems))
+                    except:
+                        # Fallback : méthode originale
+                        if elem.tag_name == 'a' and elem.get_attribute('href') and '/maps/place/' in elem.get_attribute('href'):
+                            try:
+                                elem.click()
+                                time.sleep(0.8)  # ✅ OPTIMISATION : Réduit de 1.5s à 0.8s
+                                info = self._extraire_donnees_depuis_detail_page(i, len(etablissements_elems))
+                            except:
+                                info = self._extraire_donnees_depuis_element(elem, i, len(etablissements_elems))
+                        else:
                             info = self._extraire_donnees_depuis_element(elem, i, len(etablissements_elems))
-                    else:
-                        # C'est un div ou autre élément, extraire directement
-                        info = self._extraire_donnees_depuis_element(elem, i, len(etablissements_elems))
                     
                     if info:
                         info['recherche'] = recherche
@@ -1701,8 +1776,8 @@ class GoogleMapsScraper:
                         if progress_callback:
                             progress_callback(i, len(etablissements_elems), info)
                     
-                    # Pause entre établissements
-                    time.sleep(random.uniform(1, 2))
+                    # ✅ OPTIMISATION : Réduire la pause entre établissements
+                    time.sleep(random.uniform(0.3, 0.6))  # Réduit de 1-2s à 0.3-0.6s
                     
                 except StaleElementReferenceException:
                     logger.warning(f"  ⚠️ Élément stale [{i}/{len(etablissements_elems)}], skip")
