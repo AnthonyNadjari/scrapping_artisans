@@ -1,12 +1,14 @@
 """
 Scraper Google Maps pour extraire les artisans
 Extrait : nom, téléphone, site web, adresse, note, avis
+MÉTHODE URL DIRECTE : Utilise https://www.google.com/maps/search/{REQUÊTE}
 """
 import time
 import random
 import re
 import logging
 from typing import List, Dict, Optional
+from urllib.parse import quote
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -545,7 +547,10 @@ class GoogleMapsScraper:
     
     def _rechercher_etablissements(self, recherche: str, ville: str) -> bool:
         """
-        Effectue une recherche sur Google Maps - VERSION ULTRA-ROBUSTE
+        Effectue une recherche sur Google Maps - MÉTHODE URL DIRECTE
+        Utilise directement https://www.google.com/maps/search/{REQUÊTE}
+        
+        Cette méthode contourne complètement le problème de la barre de recherche !
         
         Args:
             recherche: Type d'artisan (ex: "plombier")
@@ -554,81 +559,66 @@ class GoogleMapsScraper:
         Returns:
             True si la recherche a réussi, False sinon
         """
-        from selenium.webdriver.common.keys import Keys
-        
         max_tentatives = 3
         
         for tentative in range(1, max_tentatives + 1):
-            logger.info(f"\n🌐 Ouverture de Google Maps... (tentative {tentative}/{max_tentatives})")
+            logger.info(f"\n🌐 Recherche Google Maps... (tentative {tentative}/{max_tentatives})")
             
             try:
-                # ÉTAPE 1 : Ouvrir Google Maps
-                self.driver.get("https://www.google.com/maps")
+                # ✅ MÉTHODE URL DIRECTE (pas de barre de recherche à trouver !)
+                query = f"{recherche} {ville}"
+                url = f"https://www.google.com/maps/search/{quote(query)}"
                 
-                # ÉTAPE 2 : Attendre chargement complet (CRITIQUE pour JS)
-                if not self._attendre_chargement_complet(timeout=30):
-                    logger.error("   ❌ Échec chargement Google Maps")
-                    if tentative < max_tentatives:
-                        time.sleep(3)
-                    continue
+                logger.info(f"   📍 URL directe: {url}")
                 
-                # ÉTAPE 3 : Fermer tous les popups
+                # ÉTAPE 1 : Ouvrir directement l'URL de recherche
+                self.driver.get(url)
+                logger.info("   ⏳ Chargement de la page de résultats...")
+                time.sleep(5)  # Attendre le chargement
+                
+                # ÉTAPE 2 : Fermer les popups (cookies, géolocalisation, etc.)
                 logger.info("   🗑️  Fermeture des popups...")
                 self._fermer_tous_popups()
+                time.sleep(1)
                 
-                # CRITIQUE: Pause plus longue pour laisser le JS finir de charger
-                # Google Maps peut prendre 5-10 secondes pour créer tous les éléments
-                logger.info("   ⏳ Attente finale chargement JavaScript (5 secondes)...")
-                time.sleep(5)
-                
-                # ÉTAPE 4 : Trouver la barre de recherche (10+ méthodes)
-                logger.info("   🔍 Recherche de la barre de recherche...")
-                search_box, methode = self._trouver_barre_recherche_robuste()
-                
-                if not search_box:
-                    logger.error(f"   ❌ Barre de recherche introuvable (tentative {tentative})")
-                    if tentative < max_tentatives:
-                        logger.info("   🔄 Rechargement de la page...")
-                        time.sleep(3)
-                    continue
-                
-                # ÉTAPE 5 : Effectuer la recherche
-                query = f"{recherche} {ville}"
-                logger.info(f"   📝 Saisie de la recherche: {query}")
-                
-                # Cliquer sur la barre pour focus
+                # ÉTAPE 3 : Attendre que le panneau de résultats soit chargé
+                logger.info("   ⏳ Attente du panneau de résultats...")
                 try:
-                    search_box.click()
-                    time.sleep(0.5)
-                except:
-                    pass
-                
-                # Effacer le contenu existant
-                search_box.clear()
-                time.sleep(0.3)
-                
-                # Taper la recherche
-                search_box.send_keys(query)
-                time.sleep(0.5)
-                
-                # Lancer la recherche (Enter)
-                search_box.send_keys(Keys.RETURN)
-                logger.info("   ⏳ Attente des résultats...")
-                time.sleep(5)
-                
-                # ÉTAPE 6 : Vérifier que les résultats sont chargés
-                try:
-                    WebDriverWait(self.driver, 15).until(
-                        EC.presence_of_element_located((By.CSS_SELECTOR, 'div[role="feed"], div[role="main"]'))
+                    WebDriverWait(self.driver, 20).until(
+                        EC.presence_of_element_located((By.CSS_SELECTOR, 'div[role="feed"]'))
                     )
-                    logger.info("   ✅ Résultats chargés avec succès!")
+                    logger.info("   ✅ Panneau de résultats chargé avec succès!")
                     return True
                     
                 except TimeoutException:
-                    logger.error("   ❌ Timeout: résultats non chargés")
+                    logger.warning(f"   ⚠️ Timeout: panneau non détecté (tentative {tentative})")
+                    # Essayer avec un autre sélecteur
+                    try:
+                        WebDriverWait(self.driver, 10).until(
+                            EC.presence_of_element_located((By.CSS_SELECTOR, 'div[role="main"]'))
+                        )
+                        logger.info("   ✅ Panneau de résultats détecté (sélecteur alternatif)!")
+                        return True
+                    except:
+                        pass
+                    
                     if tentative < max_tentatives:
+                        logger.info("   🔄 Nouvelle tentative...")
                         time.sleep(3)
-                    continue
+                        continue
+                    else:
+                        logger.error("   ❌ Échec: panneau de résultats introuvable après 3 tentatives")
+                        # Sauvegarder screenshot pour debug
+                        try:
+                            from pathlib import Path
+                            debug_dir = Path(__file__).parent.parent / "data" / "debug"
+                            debug_dir.mkdir(parents=True, exist_ok=True)
+                            screenshot_path = debug_dir / "debug_panneau_introuvable.png"
+                            self.driver.save_screenshot(str(screenshot_path))
+                            logger.info(f"   💾 Screenshot sauvegardé: {screenshot_path}")
+                        except:
+                            pass
+                        return False
                 
             except Exception as e:
                 logger.error(f"   ❌ Erreur inattendue: {str(e)}")
@@ -636,7 +626,8 @@ class GoogleMapsScraper:
                 logger.debug(traceback.format_exc())
                 if tentative < max_tentatives:
                     time.sleep(3)
-                continue
+                    continue
+                return False
         
         return False
     
