@@ -8,7 +8,7 @@ import random
 import re
 import logging
 from typing import List, Dict, Optional
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -1409,7 +1409,11 @@ class GoogleMapsScraper:
                 
                 logger.info(" ".join(log_parts))
             
-            return info if info['nom'] else None
+            # ✅ FIX CRITIQUE : Ne pas retourner None si on a des données, même sans nom
+            # Le nom peut être extrait plus tard ou depuis un autre endroit
+            if info.get('nom') or info.get('telephone') or info.get('site_web') or info.get('adresse'):
+                return info
+            return None
             
         except Exception as e:
             logger.error(f"  ❌ Erreur extraction élément [{index}/{total}]: {e}")
@@ -1582,9 +1586,9 @@ class GoogleMapsScraper:
                         logger.debug(f"  Erreur extraction téléphone aria-label: {e}")
                         continue
                 
-                # Priorité 2 : href tel: si pas trouvé
-                if not info['telephone']:
-                    tel_links = search_context.find_elements(By.CSS_SELECTOR, 'a[href^="tel:"]')
+                    # Priorité 2 : href tel: si pas trouvé
+                    if not info.get('telephone'):
+                        tel_links = search_context.find_elements(By.CSS_SELECTOR, 'a[href^="tel:"]')
                     logger.debug(f"  [{index}] Téléphone: {len(tel_links)} liens tel: trouvés")
                     for tel_link in tel_links:
                         try:
@@ -1637,11 +1641,11 @@ class GoogleMapsScraper:
                     except:
                         continue
                 
-                # Priorité 2 : aria-label "Visiter le site Web" dans le panneau de détail uniquement
-                if not info['site_web'] and panneau_detail:
-                    site_links = panneau_detail.find_elements(By.CSS_SELECTOR, 
-                        'a[aria-label*="Visiter le site Web"]'
-                    )
+                    # Priorité 2 : aria-label "Visiter le site Web" (chercher dans tout le contexte)
+                    if not info.get('site_web'):
+                        site_links = panneau_detail.find_elements(By.CSS_SELECTOR, 
+                            'a[aria-label*="Visiter le site Web"]'
+                        )
                     for site_link in site_links:
                         try:
                             href = site_link.get_attribute('href')
@@ -1750,7 +1754,11 @@ class GoogleMapsScraper:
                 
                 logger.info(" ".join(log_parts))
             
-            return info if info['nom'] else None
+            # ✅ FIX CRITIQUE : Ne pas retourner None si on a des données, même sans nom
+            # Le nom peut être extrait plus tard ou depuis un autre endroit
+            if info.get('nom') or info.get('telephone') or info.get('site_web') or info.get('adresse'):
+                return info
+            return None
             
         except Exception as e:
             logger.error(f"  ❌ Erreur extraction détail [{index}/{total}]: {e}")
@@ -1797,65 +1805,66 @@ class GoogleMapsScraper:
                 logger.debug(f"  Erreur debug panneau [{index}]: {e}")
         
         try:
-            # Nom
+            # ==================== EXTRACTION DU NOM ====================
+            nom = None
+            
             try:
-                # ✅ FIX : Améliorer l'extraction du nom depuis le panneau
-                nom = None
+                logger.info(f"  [{index}] 🔍 Extraction du nom depuis l'élément de liste...")
                 
-                # Priorité 1 : div[class*="fontHeadline"] (plus fiable, contient le vrai nom)
+                # MÉTHODE 1 : Lien avec href="/maps/place/" (PLUS FIABLE)
                 try:
-                    headline_elems = element.find_elements(By.CSS_SELECTOR, 'div[class*="fontHeadline"]')
-                    for elem in headline_elems:
-                        texte = elem.text.strip()
-                        # Nettoyer les emojis
-                        texte_clean = texte.replace('🏅', '').replace('📌', '').replace('', '').strip()
-                        # Ignorer les textes génériques
-                        if texte_clean and texte_clean.lower() not in ['résultats', 'results', 'voir plus', 'sponsorisé', 'sponsored', ''] and len(texte_clean) > 3:
+                    link_elements = element.find_elements(By.CSS_SELECTOR, 'a[href*="/maps/place/"]')
+                    for link in link_elements:
+                        texte = link.text.strip()
+                        texte_clean = texte.replace('🏅', '').replace('📌', '').replace('⭐', '').strip()
+                        
+                        if (texte_clean and len(texte_clean) > 2 and 
+                            texte_clean.lower() not in ['résultats', 'results', 'sponsorisé', 'sponsored']):
                             nom = texte_clean
+                            logger.info(f"  [{index}] ✅ Nom trouvé (lien): {nom}")
                             break
                 except:
                     pass
                 
-                # Priorité 2 : Chercher dans h1, h2, h3 (mais pas "Sponsorisé")
+                # MÉTHODE 2 : aria-label de l'élément
                 if not nom:
-                    selecteurs_nom = ['h1', 'h2', 'h3', 'div[role="heading"]', 'span[class*="fontHeadline"]']
-                    for selector in selecteurs_nom:
-                        try:
-                            nom_elems = element.find_elements(By.CSS_SELECTOR, selector)
-                            for nom_elem in nom_elems:
-                                texte = nom_elem.text.strip()
-                                texte_clean = texte.replace('🏅', '').replace('📌', '').replace('', '').strip()
-                                # Ignorer les textes génériques incluant "Sponsorisé"
-                                if texte_clean and texte_clean.lower() not in ['résultats', 'results', 'voir plus', 'sponsorisé', 'sponsored', ''] and len(texte_clean) > 3:
+                    try:
+                        aria_label = element.get_attribute('aria-label')
+                        if aria_label:
+                            # Ex: "Plombier Dupont · 4.5★ · Plomberie"
+                            nom = aria_label.split('·')[0].strip()
+                            nom = nom.replace('🏅', '').replace('📌', '').replace('⭐', '').strip()
+                            if nom and len(nom) > 2:
+                                logger.info(f"  [{index}] ✅ Nom trouvé (aria-label): {nom}")
+                    except:
+                        pass
+                
+                # MÉTHODE 3 : div[class*="fontHeadline"] DANS L'ÉLÉMENT UNIQUEMENT
+                if not nom:
+                    try:
+                        headline_elems = element.find_elements(By.CSS_SELECTOR, 'div[class*="fontHeadline"]')
+                        if headline_elems:
+                            for elem in headline_elems[:2]:  # Les 2 premiers seulement
+                                texte = elem.text.strip()
+                                texte_clean = texte.replace('🏅', '').replace('📌', '').replace('⭐', '').strip()
+                                
+                                if (texte_clean and len(texte_clean) > 2 and '\n' not in texte_clean and
+                                    texte_clean.lower() not in ['résultats', 'results', 'pereira']):
                                     nom = texte_clean
+                                    logger.info(f"  [{index}] ✅ Nom trouvé (fontHeadline): {nom}")
                                     break
-                            if nom:
-                                break
-                        except:
-                            continue
+                    except:
+                        pass
                 
-                # Priorité 3 : Chercher dans le texte de l'élément
-                if not nom:
-                    texte_complet = element.text
-                    if texte_complet:
-                        lignes = [l.strip() for l in texte_complet.split('\n') if l.strip()]
-                        for ligne in lignes:
-                            ligne_clean = ligne.replace('🏅', '').replace('📌', '').replace('', '').strip()
-                            if ligne_clean and ligne_clean.lower() not in ['résultats', 'results', 'voir plus', 'sponsorisé', 'sponsored', ''] and len(ligne_clean) > 3:
-                                nom = ligne_clean
-                                break
-                
-                # Nettoyer le nom final et vérifier qu'il n'est pas "Sponsorisé"
                 if nom:
-                    nom_clean = nom.replace('🏅', '').replace('📌', '').replace('', '').strip()
-                    if nom_clean and nom_clean.lower() not in ['résultats', 'results', 'sponsorisé', 'sponsored', ''] and len(nom_clean) > 3:
-                        info['nom'] = nom_clean
-                    else:
-                        info['nom'] = None
+                    info['nom'] = nom
                 else:
+                    logger.warning(f"  [{index}] ⚠️ Nom non trouvé depuis l'élément")
                     info['nom'] = None
-            except:
-                pass
+                    
+            except Exception as e:
+                logger.error(f"  [{index}] ❌ Erreur extraction nom: {e}")
+                info['nom'] = None
             
             # Cliquer pour ouvrir le détail
             try:
@@ -1868,38 +1877,50 @@ class GoogleMapsScraper:
                 except:
                     # Si clic normal échoue, utiliser JavaScript
                     self.driver.execute_script("arguments[0].click();", element)
-                time.sleep(0.8)  # ✅ FIX : Augmenter à 0.8s pour laisser le panneau s'ouvrir complètement
+                # ✅ FIX CRITIQUE : Augmenter le délai pour éviter la contamination du panneau
+                time.sleep(2.5)  # 2.5 secondes pour laisser le panneau se rafraîchir complètement
             except Exception as e:
                 logger.debug(f"  Erreur clic panneau [{index}]: {e}")
             
-            # ✅ FIX CRITIQUE : Chercher directement les éléments sans limiter au panneau
-            search_context = self.driver
-            
-            # ✅ FIX : Mettre à jour le nom depuis le panneau de détail si pas déjà trouvé ou si c'est "Sponsorisé"
-            if not info.get('nom') or info['nom'] == 'Résultats' or info['nom'].lower() in ['sponsorisé', 'sponsored']:
+            # ==================== MISE À JOUR DU NOM DEPUIS LE PANNEAU ====================
+            if not info.get('nom') or (info.get('nom') and info['nom'].lower() in ['pereira', 'résultats', 'results']):  # Si pas de nom OU mauvais nom
                 try:
-                    # Priorité 1 : div[class*="fontHeadline"] (plus fiable)
-                    headline_elems = search_context.find_elements(By.CSS_SELECTOR, 'div[class*="fontHeadline"]')
-                    for elem in headline_elems:
-                        texte = elem.text.strip()
-                        texte_clean = texte.replace('🏅', '').replace('📌', '').replace('', '').strip()
-                        if texte_clean and texte_clean.lower() not in ['résultats', 'results', 'sponsorisé', 'sponsored', ''] and len(texte_clean) > 3:
-                            info['nom'] = texte_clean
-                            break
+                    logger.info(f"  [{index}] 🔄 Tentative de récupération du nom depuis le panneau...")
                     
-                    # Priorité 2 : h1 si pas trouvé
-                    if not info.get('nom') or info['nom'].lower() in ['sponsorisé', 'sponsored']:
-                        h1_elems = search_context.find_elements(By.CSS_SELECTOR, 'h1')
-                        for h1 in h1_elems:
-                            texte = h1.text.strip()
-                            texte_clean = texte.replace('🏅', '').replace('📌', '').replace('', '').strip()
-                            if texte_clean and texte_clean.lower() not in ['résultats', 'results', 'sponsorisé', 'sponsored', ''] and len(texte_clean) > 3:
-                                info['nom'] = texte_clean
-                                break
-                except:
-                    pass
+                    # MÉTHODE 1 : Depuis l'URL (PLUS FIABLE)
+                    try:
+                        current_url = self.driver.current_url
+                        if '/maps/place/' in current_url:
+                            nom_url = current_url.split('/maps/place/')[1].split('/')[0]
+                            nom_url = unquote(nom_url.replace('+', ' '))
+                            
+                            if nom_url and len(nom_url) > 2 and nom_url != info.get('nom'):
+                                nom = nom_url
+                                info['nom'] = nom
+                                logger.info(f"  [{index}] ✅ Nom récupéré depuis URL: {nom}")
+                    except:
+                        pass
+                    
+                    # MÉTHODE 2 : h1[data-attrid="title"]
+                    if not info.get('nom') or (info.get('nom') and info['nom'].lower() in ['pereira', 'résultats', 'results']):
+                        try:
+                            titre_elem = self.driver.find_element(By.CSS_SELECTOR, 'h1[data-attrid="title"]')
+                            nom_panneau = titre_elem.text.strip()
+                            
+                            if nom_panneau and nom_panneau.lower() not in ['pereira', 'résultats', 'results']:
+                                nom = nom_panneau
+                                info['nom'] = nom
+                                logger.info(f"  [{index}] ✅ Nom récupéré depuis h1: {nom}")
+                        except:
+                            pass
+                            
+                except Exception as e:
+                    logger.debug(f"  [{index}] Erreur mise à jour nom: {e}")
             
             # Extraire depuis le panneau de détail ouvert
+            # ✅ FIX CRITIQUE : Définir search_context
+            search_context = self.driver
+            
             try:
                 # Téléphone
                 try:
@@ -1918,10 +1939,17 @@ class GoogleMapsScraper:
                                 tel_match = re.search(r'(\+33|0)\s*[1-9](?:\s*\d{2}){4}', aria_label)
                                 if tel_match:
                                     tel_brut = tel_match.group(0).replace(' ', '').replace('+33', '0')
-                                    info['telephone'] = self._normaliser_telephone(tel_brut)
-                                    if info['telephone']:
-                                        logger.info(f"  ✅ Téléphone trouvé via aria-label (panneau): {info['telephone']}")
+                                    tel_normalise = self._normaliser_telephone(tel_brut)
+                                    if tel_normalise:
+                                        info['telephone'] = tel_normalise
+                                        # Vérification immédiate
+                                        if info.get('telephone') == tel_normalise:
+                                            logger.info(f"  [{index}] ✅ Téléphone trouvé et stocké: {info['telephone']}")
+                                        else:
+                                            logger.error(f"  [{index}] ❌ ERREUR: Téléphone non stocké! tel_normalise={tel_normalise}, info['telephone']={info.get('telephone')}")
                                         break
+                                    else:
+                                        logger.warning(f"  [{index}] ⚠️ Téléphone trouvé mais normalisation échouée: {tel_brut}")
                                 else:
                                     logger.debug(f"  [{index}] Regex ne match pas (panneau): {aria_label}")
                         except Exception as e:
@@ -1929,7 +1957,7 @@ class GoogleMapsScraper:
                             continue
                     
                     # Priorité 2 : href tel: si pas trouvé
-                    if not info['telephone']:
+                    if not info.get('telephone'):
                         tel_links = search_context.find_elements(By.CSS_SELECTOR, 'a[href^="tel:"]')
                         logger.debug(f"  [{index}] Téléphone (panneau): {len(tel_links)} liens tel: trouvés")
                         for tel_link in tel_links:
@@ -1937,75 +1965,77 @@ class GoogleMapsScraper:
                                 href = tel_link.get_attribute('href')
                                 if href and href.startswith('tel:'):
                                     tel_brut = href.replace('tel:', '').replace(' ', '').replace('+33', '0')
-                                    info['telephone'] = self._normaliser_telephone(tel_brut)
-                                    logger.info(f"  ✅ Téléphone trouvé via href (panneau): {info['telephone']}")
-                                    if info['telephone']:
+                                    tel_normalise = self._normaliser_telephone(tel_brut)
+                                    if tel_normalise:
+                                        info['telephone'] = tel_normalise
+                                        logger.info(f"  [{index}] ✅ Téléphone trouvé via href (panneau): {info['telephone']}")
                                         break
+                                    else:
+                                        logger.warning(f"  [{index}] ⚠️ Téléphone href trouvé mais normalisation échouée: {tel_brut}")
                             except:
                                 continue
                 except Exception as e:
                     logger.error(f"  ❌ Erreur extraction téléphone (panneau): {e}")
                 
-                # Site web
+                # ==================== EXTRACTION SITE WEB ====================
                 try:
-                    # ✅ FIX CRITIQUE : Trouver le panneau de détail ouvert pour limiter la recherche
-                    panneau_detail = None
-                    if info.get('nom'):
-                        try:
-                            h1_with_nom = search_context.find_elements(By.XPATH, f'//h1[contains(text(), "{info["nom"][:20]}")]')
-                            if h1_with_nom:
-                                panneau_detail = h1_with_nom[0].find_element(By.XPATH, './ancestor::div[@role="complementary" or contains(@class, "m6QErb") or contains(@jsaction, "pane")]')
-                        except:
-                            pass
+                    # Attendre que le panneau soit mis à jour (déjà fait avec le délai de 2.5s après le clic)
                     
-                    search_context_site = panneau_detail if panneau_detail else search_context
-                    
-                    # Priorité 1 : a[data-item-id*="authority"] (plus précis, dans le panneau de détail)
-                    site_links = search_context_site.find_elements(By.CSS_SELECTOR, 
+                    # Priorité 1 : a[data-item-id*="authority"] (le plus fiable)
+                    site_links = search_context.find_elements(By.CSS_SELECTOR, 
                         'a[data-item-id*="authority"]'
                     )
-                    for site_link in site_links:
-                        try:
-                            href = site_link.get_attribute('href')
-                            if href and ('http://' in href or 'https://' in href):
-                                if 'google.com' not in href.lower() and \
-                                   'maps' not in href.lower() and \
-                                   'goo.gl' not in href.lower() and \
-                                   'googleapis.com' not in href.lower() and \
-                                   'aclk' not in href.lower():
-                                    info['site_web'] = href
-                                    logger.debug(f"  ✅ Site web trouvé via authority (panneau): {info['site_web']}")
-                                    break
-                        except:
-                            continue
                     
-                    # Priorité 2 : aria-label "Visiter le site Web" dans le panneau de détail uniquement
-                    if not info['site_web'] and panneau_detail:
-                        site_links = panneau_detail.find_elements(By.CSS_SELECTOR, 
-                            'a[aria-label*="Visiter le site Web"]'
-                        )
+                    if site_links:
                         for site_link in site_links:
                             try:
                                 href = site_link.get_attribute('href')
-                                aria_label = site_link.get_attribute('aria-label')
+                                
                                 if href and ('http://' in href or 'https://' in href):
+                                    # Filtrer les liens Google Maps
                                     if 'google.com' not in href.lower() and \
                                        'maps' not in href.lower() and \
                                        'goo.gl' not in href.lower() and \
                                        'googleapis.com' not in href.lower() and \
                                        'aclk' not in href.lower():
-                                        if aria_label and 'Visiter le site Web' in aria_label:
-                                            # Vérifier que le nom dans aria-label correspond à l'établissement
-                                            if info.get('nom') and info['nom'][:10] in aria_label:
-                                                info['site_web'] = href
-                                                logger.debug(f"  ✅ Site web trouvé via aria-label (correspond au nom): {info['site_web']}")
-                                                break
+                                        # Prendre le premier site valide trouvé
+                                        info['site_web'] = href
+                                        logger.info(f"  [{index}] ✅ Site web trouvé: {href}")
+                                        break
                             except:
                                 continue
                     
-                    # Si toujours pas trouvé, ne pas mettre de site web
-                    if not info['site_web']:
-                        logger.debug(f"  ⚠️ Aucun site web trouvé pour {info.get('nom', 'établissement')}")
+                    # Priorité 2 : aria-label "Visiter le site Web" (backup si méthode 1 échoue)
+                    # ❌ DÉSACTIVÉ : Cette méthode cherche dans toute la page et trouve des sites de panneaux précédents
+                    # Tous les sites incorrects (contamination) viennent de cette méthode
+                    # Les établissements sans site web doivent avoir None, pas le site du précédent
+                    '''
+                    if not info.get('site_web'):
+                        try:
+                            site_links = search_context.find_elements(By.CSS_SELECTOR, 
+                                'a[aria-label*="Visiter le site Web"], a[aria-label*="site Web"], a[aria-label*="Website"], a[aria-label*="Site"]'
+                            )
+                            for site_link in site_links:
+                                try:
+                                    href = site_link.get_attribute('href')
+                                    if href and ('http://' in href or 'https://' in href):
+                                        if 'google.com' not in href.lower() and \
+                                           'maps' not in href.lower() and \
+                                           'goo.gl' not in href.lower() and \
+                                           'googleapis.com' not in href.lower() and \
+                                           'aclk' not in href.lower():
+                                            info['site_web'] = href
+                                            logger.info(f"  [{index}] ✅ Site web trouvé (aria): {href}")
+                                            break
+                                except:
+                                    continue
+                        except:
+                            pass
+                    '''
+                    
+                    # Si toujours pas trouvé
+                    if not info.get('site_web'):
+                        logger.debug(f"  [{index}] ⚠️ Aucun site web trouvé pour {info.get('nom', 'établissement')}")
                 except Exception as e:
                     logger.debug(f"  Erreur extraction site web (panneau): {e}")
                 
@@ -2082,30 +2112,109 @@ class GoogleMapsScraper:
                     pass
                 
             except Exception as e:
-                logger.debug(f"  Erreur extraction détail: {e}")
+                logger.error(f"  [{index}] ❌ Erreur extraction détail: {e}")
+                import traceback
+                logger.debug(f"  [{index}] Traceback: {traceback.format_exc()}")
+            
+            # Vérification finale avant les logs - FORCER l'affichage
+            tel_final = info.get('telephone')
+            nom_final = info.get('nom')
+            logger.info(f"  [{index}] 🔍 VÉRIFICATION FINALE - nom: {nom_final}, tel: {tel_final}, site: {info.get('site_web')}")
+            
+            # Si le nom est None mais qu'on a d'autres données, essayer de le récupérer depuis l'élément
+            if not nom_final:
+                logger.warning(f"  [{index}] ⚠️ Nom manquant, tentative récupération depuis élément...")
+                try:
+                    # Essayer plusieurs sélecteurs
+                    selecteurs = ['div[class*="fontHeadline"]', 'h1', 'h2', 'h3', 'span[class*="fontHeadline"]']
+                    for selector in selecteurs:
+                        try:
+                            nom_elems = element.find_elements(By.CSS_SELECTOR, selector)
+                            for nom_elem in nom_elems:
+                                texte = nom_elem.text.strip()
+                                texte_clean = texte.replace('🏅', '').replace('📌', '').replace('', '').strip()
+                                if texte_clean and texte_clean.lower() not in ['résultats', 'results', 'sponsorisé', 'sponsored', 'pereira', ''] and len(texte_clean) > 3:
+                                    info['nom'] = texte_clean
+                                    logger.info(f"  [{index}] ✅ Nom récupéré depuis élément ({selector}): {info['nom']}")
+                                    nom_final = info['nom']
+                                    break
+                            if nom_final:
+                                break
+                        except:
+                            continue
+                except Exception as e:
+                    logger.debug(f"  [{index}] Erreur récupération nom depuis élément: {e}")
             
             # Logs
-            if info['nom']:
+            if info.get('nom'):
                 log_parts = [f"[{index}/{total}] {info['nom']}"]
-                if info['telephone']:
+                if info.get('telephone'):
                     log_parts.append(f"📞 {info['telephone']}")
                 else:
                     log_parts.append("❌ Pas de téléphone")
+                    logger.warning(f"  [{index}] ⚠️ Téléphone non stocké malgré extraction")
                 
-                if info['site_web']:
+                if info.get('site_web'):
                     log_parts.append(f"🌐 Oui")
                 else:
                     log_parts.append("❌ Pas de site")
                 
-                if info['note']:
+                if info.get('note'):
+                    log_parts.append(f"⭐ {info['note']}/5")
+                
+                logger.info(" ".join(log_parts))
+            else:
+                logger.warning(f"  [{index}] ⚠️ Pas de nom, mais données présentes - tel: {info.get('telephone')}, site: {info.get('site_web')}")
+                # Créer log_parts même sans nom
+                log_parts = [f"[{index}/{total}] (Sans nom)"]
+                if info.get('telephone'):
+                    log_parts.append(f"📞 {info['telephone']}")
+                else:
+                    log_parts.append("❌ Pas de téléphone")
+                
+                if info.get('site_web'):
+                    log_parts.append(f"🌐 Oui")
+                else:
+                    log_parts.append("❌ Pas de site")
+                
+                if info.get('note'):
                     log_parts.append(f"⭐ {info['note']}/5")
                 
                 logger.info(" ".join(log_parts))
             
-            return info if info['nom'] else None
+            # ==================== VÉRIFICATION FINALE ET RETOUR ====================
+            # 🔥 LOG CRITIQUE : Afficher EXACTEMENT ce qui va être retourné
+            logger.info(f"  [{index}] 📋 VÉRIFICATION FINALE:")
+            logger.info(f"  [{index}]    - Nom: {info.get('nom')}")
+            logger.info(f"  [{index}]    - Téléphone: {info.get('telephone')}")
+            logger.info(f"  [{index}]    - Site web: {info.get('site_web')}")
+            logger.info(f"  [{index}]    - Adresse: {info.get('adresse')}")
+            logger.info(f"  [{index}]    - Note: {info.get('note')}")
+            
+            # Vérifier qu'on a AU MOINS une donnée valide
+            has_data = (
+                (info.get('nom') and isinstance(info.get('nom'), str) and info.get('nom').strip()) or
+                (info.get('telephone') and isinstance(info.get('telephone'), str) and info.get('telephone').strip()) or
+                (info.get('site_web') and isinstance(info.get('site_web'), str) and info.get('site_web').strip()) or
+                (info.get('adresse') and isinstance(info.get('adresse'), str) and info.get('adresse').strip())
+            )
+            
+            if has_data:
+                if not info.get('nom'):
+                    logger.warning(f"  [{index}] ⚠️ Pas de nom, mais autres données présentes - ON RETOURNE QUAND MÊME !")
+                logger.info(f"  [{index}] ✅ RETOUR DES DONNÉES")
+                return info
+            else:
+                logger.warning(f"  [{index}] ❌ Aucune donnée valide - ON RETOURNE None")
+                return None
             
         except Exception as e:
             logger.error(f"  ❌ Erreur extraction panneau [{index}/{total}]: {e}")
+            import traceback
+            logger.debug(f"  [{index}] Traceback: {traceback.format_exc()}")
+            # Même en cas d'erreur, retourner info si on a des données
+            if info.get('nom') or info.get('telephone') or info.get('site_web') or info.get('adresse'):
+                return info
             return None
     
     def scraper(self, recherche: str, ville: str, max_results: int = 100, progress_callback=None) -> List[Dict]:
@@ -2214,7 +2323,17 @@ class GoogleMapsScraper:
                     # C'est la méthode la plus fiable pour obtenir téléphone et site web
                     try:
                         info = self._extraire_donnees_depuis_panneau(elem, i, len(etablissements_elems))
-                        if not info or not info.get('nom'):
+                        
+                        # 🔥 LOG CRITIQUE : Vérifier ce qui est reçu
+                        if info:
+                            logger.info(f"[{i}] 🎯 REÇU DEPUIS _extraire_donnees_depuis_panneau:")
+                            logger.info(f"[{i}]    Nom: {info.get('nom')}")
+                            logger.info(f"[{i}]    Téléphone: {info.get('telephone')}")
+                            logger.info(f"[{i}]    Site web: {info.get('site_web')}")
+                        
+                        if not info:
+                            logger.debug(f"  [{i}/{len(etablissements_elems)}] Panneau: aucune donnée, essai élément...")
+                        elif not info.get('nom'):
                             logger.debug(f"  [{i}/{len(etablissements_elems)}] Panneau: pas de nom, essai élément...")
                             # Si échec, essayer extraction directe depuis élément
                             try:
@@ -2240,7 +2359,8 @@ class GoogleMapsScraper:
                                 except Exception as e3:
                                     logger.debug(f"  [{i}/{len(etablissements_elems)}] Erreur clic direct: {e3}")
                     
-                    if info and info.get('nom'):
+                    # ✅ FIX CRITIQUE : Accepter les données même si le nom est None, tant qu'on a d'autres données
+                    if info and (info.get('nom') or info.get('telephone') or info.get('site_web') or info.get('adresse')):
                         info['recherche'] = recherche
                         info['ville_recherche'] = ville
                         resultats.append(info)
@@ -2249,7 +2369,7 @@ class GoogleMapsScraper:
                         if progress_callback:
                             progress_callback(i, len(etablissements_elems), info)
                     else:
-                        logger.warning(f"  ⚠️ [{i}/{len(etablissements_elems)}] Aucune donnée extraite (nom manquant ou None)")
+                        logger.warning(f"  ⚠️ [{i}/{len(etablissements_elems)}] Aucune donnée extraite (toutes les données sont None)")
                     
                     # ✅ OPTIMISATION MAX : Pause minimale entre établissements
                     time.sleep(random.uniform(0.1, 0.3))  # Réduit à 0.1-0.3s (minimum)

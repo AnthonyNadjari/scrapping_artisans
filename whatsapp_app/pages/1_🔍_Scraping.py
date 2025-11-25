@@ -454,7 +454,38 @@ if st.session_state.scraped_results:
     if filtre_sans_site:
         df_filtre = df_filtre[df_filtre['site_web'].isna()]
     
-    # Afficher le tableau
+    # Afficher le tableau avec CSS pour prendre toute la largeur et ajuster les colonnes
+    st.markdown("""
+    <style>
+    .stDataFrame {
+        width: 100% !important;
+    }
+    .stDataFrame > div {
+        width: 100% !important;
+    }
+    .stDataFrame table {
+        width: 100% !important;
+        table-layout: fixed !important;
+    }
+    .stDataFrame th {
+        background-color: #f0f2f6 !important;
+        font-weight: bold !important;
+        padding: 8px !important;
+    }
+    .stDataFrame td {
+        padding: 8px !important;
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+    }
+    .stDataFrame th:nth-child(1), .stDataFrame td:nth-child(1) { width: 20% !important; }
+    .stDataFrame th:nth-child(2), .stDataFrame td:nth-child(2) { width: 12% !important; }
+    .stDataFrame th:nth-child(3), .stDataFrame td:nth-child(3) { width: 20% !important; }
+    .stDataFrame th:nth-child(4), .stDataFrame td:nth-child(4) { width: 20% !important; }
+    .stDataFrame th:nth-child(5), .stDataFrame td:nth-child(5) { width: 10% !important; }
+    .stDataFrame th:nth-child(6), .stDataFrame td:nth-child(6) { width: 8% !important; }
+    .stDataFrame th:nth-child(7), .stDataFrame td:nth-child(7) { width: 10% !important; }
+    </style>
+    """, unsafe_allow_html=True)
     st.dataframe(
         df_filtre[['nom', 'telephone', 'site_web', 'adresse', 'ville', 'note', 'nb_avis']],
         height=400
