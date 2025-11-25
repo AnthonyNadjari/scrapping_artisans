@@ -14,8 +14,12 @@ class WhatsAppLinkGenerator:
         Entrée : "06 12 34 56 78" ou "0612345678"
         Sortie : "33612345678" (sans le +)
         """
+        # ✅ Vérifier que telephone n'est pas None
+        if not telephone:
+            return ""
+        
         # Nettoyer le numéro
-        tel_clean = ''.join(filter(str.isdigit, telephone))
+        tel_clean = ''.join(filter(str.isdigit, str(telephone)))
         
         # Si commence par 0, remplacer par 33
         if tel_clean.startswith('0'):

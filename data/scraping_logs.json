@@ -1,0 +1,402 @@
+[
+  {
+    "timestamp": "2025-11-26T00:12:42.253876",
+    "message": "[5/6] ENTREPRISE CHATEAU | 📞 06 62 28 64 23 | 🌐 Oui | 📍 Rumont"
+  },
+  {
+    "timestamp": "2025-11-26T00:12:43.015507",
+    "message": "[4/7] PIERRE BELDONT PLOMBERIE | 📞 06 25 22 00 17 | 🌐 Non | 📍 Boisdon"
+  },
+  {
+    "timestamp": "2025-11-26T00:12:45.834871",
+    "message": "[6/6] Plomberie Solution | 📞 06 49 58 98 43 | 🌐 Oui | 📍 Rumont"
+  },
+  {
+    "timestamp": "2025-11-26T00:12:46.136697",
+    "message": "❌ [ThreadPoolExecutor-1_3] Erreur Rumont: 'GoogleMapsScraper' object has no attribute 'quit'"
+  },
+  {
+    "timestamp": "2025-11-26T00:12:46.685368",
+    "message": "[5/7] Julien le Plombier | 📞 06 84 44 56 06 | 🌐 Oui | 📍 Boisdon"
+  },
+  {
+    "timestamp": "2025-11-26T00:12:48.279094",
+    "message": "🔍 [ThreadPoolExecutor-1_3] plombier - 77 - Maisoncelles-en-Gâtinais"
+  },
+  {
+    "timestamp": "2025-11-26T00:12:50.581226",
+    "message": "[6/7] Plomberie Bourdon | 📞 06 14 05 62 14 | 🌐 Oui | 📍 Boisdon"
+  },
+  {
+    "timestamp": "2025-11-26T00:12:53.995708",
+    "message": "[7/7] ABML Energies | 📞 None | 🌐 Oui | 📍 Boisdon"
+  },
+  {
+    "timestamp": "2025-11-26T00:12:54.333171",
+    "message": "❌ [ThreadPoolExecutor-1_0] Erreur Boisdon: 'GoogleMapsScraper' object has no attribute 'quit'"
+  },
+  {
+    "timestamp": "2025-11-26T00:12:56.479669",
+    "message": "🔍 [ThreadPoolExecutor-1_0] plombier - 77 - Mortery"
+  },
+  {
+    "timestamp": "2025-11-26T00:13:34.985005",
+    "message": "❌ [ThreadPoolExecutor-1_1] Erreur Obsonville: 'GoogleMapsScraper' object has no attribute 'quit'"
+  },
+  {
+    "timestamp": "2025-11-26T00:13:36.615569",
+    "message": "❌ [ThreadPoolExecutor-1_2] Erreur Garentreville: 'GoogleMapsScraper' object has no attribute 'quit'"
+  },
+  {
+    "timestamp": "2025-11-26T00:13:37.178672",
+    "message": "🔍 [ThreadPoolExecutor-1_1] plombier - 77 - Arville"
+  },
+  {
+    "timestamp": "2025-11-26T00:13:38.795703",
+    "message": "🔍 [ThreadPoolExecutor-1_2] plombier - 77 - Gesvres-le-Chapitre"
+  },
+  {
+    "timestamp": "2025-11-26T00:13:43.584856",
+    "message": "[1/2] Home-Multitravaux (HM-TRAVAUX) | 📞 07 89 41 55 28 | 🌐 Oui | 📍 Maisoncelles-en-Gâtinais"
+  },
+  {
+    "timestamp": "2025-11-26T00:13:46.923304",
+    "message": "[2/2] AB PLOMBERIE CHAUFFAGE | 📞 06 17 31 37 50 | 🌐 Oui | 📍 Maisoncelles-en-Gâtinais"
+  },
+  {
+    "timestamp": "2025-11-26T00:13:47.262547",
+    "message": "❌ [ThreadPoolExecutor-1_3] Erreur Maisoncelles-en-Gâtinais: 'GoogleMapsScraper' object has no attribute 'quit'"
+  },
+  {
+    "timestamp": "2025-11-26T00:13:49.566444",
+    "message": "🔍 [ThreadPoolExecutor-1_3] plombier - 77 - Burcy"
+  },
+  {
+    "timestamp": "2025-11-26T00:13:52.783117",
+    "message": "[1/5] MORIN PERE ET FILS | 📞 06 85 56 60 86 | 🌐 Oui | 📍 Mortery"
+  },
+  {
+    "timestamp": "2025-11-26T00:13:57.178343",
+    "message": "[2/5] Rodrigues-Vilarinho plomberie chauffage | 📞 07 83 33 63 58 | 🌐 Non | 📍 Mortery"
+  },
+  {
+    "timestamp": "2025-11-26T00:14:00.623472",
+    "message": "[3/5] Baron Clim Pac Bois \" RAMONAGE , POELE A GRANULE , CLIMATISATION PROVINS | 📞 06 23 97 27 31 | 🌐 Oui | 📍 Mortery"
+  },
+  {
+    "timestamp": "2025-11-26T00:14:04.174318",
+    "message": "[4/5] Plomberie de la tour | 📞 01 64 00 16 11 | 🌐 Non | 📍 Mortery"
+  },
+  {
+    "timestamp": "2025-11-26T00:14:07.768563",
+    "message": "[5/5] Monsieur Plombier | 📞 07 64 89 84 83 | 🌐 Oui | 📍 Mortery"
+  },
+  {
+    "timestamp": "2025-11-26T00:14:07.994324",
+    "message": "❌ [ThreadPoolExecutor-1_0] Erreur Mortery: 'GoogleMapsScraper' object has no attribute 'quit'"
+  },
+  {
+    "timestamp": "2025-11-26T00:14:10.113819",
+    "message": "🔍 [ThreadPoolExecutor-1_0] plombier - 77 - Barbey"
+  },
+  {
+    "timestamp": "2025-11-26T00:14:35.863665",
+    "message": "[1/6] LC Chauffage | 📞 06 23 94 18 88 | 🌐 Oui | 📍 Gesvres-le-Chapitre"
+  },
+  {
+    "timestamp": "2025-11-26T00:14:39.422275",
+    "message": "[2/6] LC Chauffage | 📞 06 23 94 18 88 | 🌐 Oui | 📍 Gesvres-le-Chapitre"
+  },
+  {
+    "timestamp": "2025-11-26T00:14:42.895462",
+    "message": "[3/6] Brossel Sas | 📞 01 64 34 02 63 | 🌐 Oui | 📍 Gesvres-le-Chapitre"
+  },
+  {
+    "timestamp": "2025-11-26T00:14:46.310873",
+    "message": "[4/6] .ICPE77122 | 📞 06 31 70 00 29 | 🌐 Non | 📍 Gesvres-le-Chapitre"
+  },
+  {
+    "timestamp": "2025-11-26T00:14:47.470221",
+    "message": "[1/2] Cyril Guérard Plomberie | 📞 06 45 85 06 90 | 🌐 Oui | 📍 Burcy"
+  },
+  {
+    "timestamp": "2025-11-26T00:14:49.662761",
+    "message": "[5/6] Mairie | 📞 01 60 01 04 15 | 🌐 Non | 📍 Gesvres-le-Chapitre"
+  },
+  {
+    "timestamp": "2025-11-26T00:14:50.826248",
+    "message": "[2/2] Gérault Rudy Eurl | 📞 02 33 37 71 38 | 🌐 Non | 📍 Burcy"
+  },
+  {
+    "timestamp": "2025-11-26T00:14:50.995379",
+    "message": "❌ [ThreadPoolExecutor-1_3] Erreur Burcy: 'GoogleMapsScraper' object has no attribute 'quit'"
+  },
+  {
+    "timestamp": "2025-11-26T00:14:53.093259",
+    "message": "[6/6] AF Plomberie | 📞 07 60 56 29 62 | 🌐 Oui | 📍 Gesvres-le-Chapitre"
+  },
+  {
+    "timestamp": "2025-11-26T00:14:53.115479",
+    "message": "🔍 [ThreadPoolExecutor-1_3] plombier - 77 - Courchamp"
+  },
+  {
+    "timestamp": "2025-11-26T00:14:53.330824",
+    "message": "❌ [ThreadPoolExecutor-1_2] Erreur Gesvres-le-Chapitre: 'GoogleMapsScraper' object has no attribute 'quit'"
+  },
+  {
+    "timestamp": "2025-11-26T00:14:55.476019",
+    "message": "🔍 [ThreadPoolExecutor-1_2] plombier - 77 - Les Marêts"
+  },
+  {
+    "timestamp": "2025-11-26T00:15:05.446692",
+    "message": "[1/8] Barry Gilbey Plumbing | 📞 None | 🌐 Non | 📍 Barbey"
+  },
+  {
+    "timestamp": "2025-11-26T00:15:08.985259",
+    "message": "[2/8] Barsi Jean-Philippe | 📞 02 38 56 04 61 | 🌐 Non | 📍 Barbey"
+  },
+  {
+    "timestamp": "2025-11-26T00:15:12.464130",
+    "message": "[3/8] Barbe SIS SARL | 📞 05 56 43 13 11 | 🌐 Oui | 📍 Barbey"
+  },
+  {
+    "timestamp": "2025-11-26T00:15:15.804237",
+    "message": "[4/8] Société Barbé | 📞 06 86 49 02 19 | 🌐 Oui | 📍 Barbey"
+  },
+  {
+    "timestamp": "2025-11-26T00:15:19.470183",
+    "message": "[5/8] Éric Barbet | 📞 06 08 52 35 12 | 🌐 Oui | 📍 Barbey"
+  },
+  {
+    "timestamp": "2025-11-26T00:15:23.274170",
+    "message": "[6/8] BARBEY chauffage-sanitaire | 📞 None | 🌐 Oui | 📍 Barbey"
+  },
+  {
+    "timestamp": "2025-11-26T00:15:26.662013",
+    "message": "[7/8] BARBIER PLOMBERIE | 📞 07 69 98 50 92 | 🌐 Non | 📍 Barbey"
+  },
+  {
+    "timestamp": "2025-11-26T00:15:29.940796",
+    "message": "[8/8] Plumb London | 📞 None | 🌐 Oui | 📍 Barbey"
+  },
+  {
+    "timestamp": "2025-11-26T00:15:30.184042",
+    "message": "❌ [ThreadPoolExecutor-1_0] Erreur Barbey: 'GoogleMapsScraper' object has no attribute 'quit'"
+  },
+  {
+    "timestamp": "2025-11-26T00:15:32.334968",
+    "message": "🔍 [ThreadPoolExecutor-1_0] plombier - 77 - Châtenoy"
+  },
+  {
+    "timestamp": "2025-11-26T00:15:46.985143",
+    "message": "[1/2] SOHIER TR PLOMBERIE | 📞 06 98 01 12 27 | 🌐 Non | 📍 Courchamp"
+  },
+  {
+    "timestamp": "2025-11-26T00:15:49.690494",
+    "message": "❌ [ThreadPoolExecutor-1_1] Erreur Arville: 'GoogleMapsScraper' object has no attribute 'quit'"
+  },
+  {
+    "timestamp": "2025-11-26T00:15:50.613404",
+    "message": "[2/2] Sanitub 77 | 📞 None | 🌐 Non | 📍 Courchamp"
+  },
+  {
+    "timestamp": "2025-11-26T00:15:50.873516",
+    "message": "❌ [ThreadPoolExecutor-1_3] Erreur Courchamp: 'GoogleMapsScraper' object has no attribute 'quit'"
+  },
+  {
+    "timestamp": "2025-11-26T00:15:51.688175",
+    "message": "[1/13] Plomberie Solution | 📞 06 49 58 98 43 | 🌐 Oui | 📍 Les Marêts"
+  },
+  {
+    "timestamp": "2025-11-26T00:15:51.973605",
+    "message": "🔍 [ThreadPoolExecutor-1_1] plombier - 77 - Gravon"
+  },
+  {
+    "timestamp": "2025-11-26T00:15:52.988739",
+    "message": "🔍 [ThreadPoolExecutor-1_3] plombier - 77 - Ichy"
+  },
+  {
+    "timestamp": "2025-11-26T00:15:55.173058",
+    "message": "[2/13] DVRENOV | 📞 None | 🌐 Non | 📍 Les Marêts"
+  },
+  {
+    "timestamp": "2025-11-26T00:15:58.911316",
+    "message": "[3/13] ETS LAGREN | 📞 06 22 16 92 40 | 🌐 Oui | 📍 Les Marêts"
+  },
+  {
+    "timestamp": "2025-11-26T00:16:02.317826",
+    "message": "[4/13] Artisan Plombier - Ets MOREL | 📞 01 43 97 48 44 | 🌐 Oui | 📍 Les Marêts"
+  },
+  {
+    "timestamp": "2025-11-26T00:16:06.177076",
+    "message": "[5/13] Batyconstruction | 📞 06 42 07 21 57 | 🌐 Oui | 📍 Les Marêts"
+  },
+  {
+    "timestamp": "2025-11-26T00:16:09.660649",
+    "message": "[6/13] Entreprise Perault - Plombier / Chauffagiste | 📞 06 75 92 81 12 | 🌐 Oui | 📍 Les Marêts"
+  },
+  {
+    "timestamp": "2025-11-26T00:16:13.263128",
+    "message": "[7/13] Artisan Plombier - Ets TORTOSA | 📞 01 85 10 04 00 | 🌐 Oui | 📍 Les Marêts"
+  },
+  {
+    "timestamp": "2025-11-26T00:16:17.695984",
+    "message": "[8/13] Blanc Terence | 📞 06 41 76 51 63 | 🌐 Oui | 📍 Les Marêts"
+  },
+  {
+    "timestamp": "2025-11-26T00:16:21.218880",
+    "message": "[9/13] FGCP | 📞 06 72 27 64 74 | 🌐 Oui | 📍 Les Marêts"
+  },
+  {
+    "timestamp": "2025-11-26T00:16:24.550326",
+    "message": "[10/13] DAVOIGNEAU GARNIER | 📞 01 60 70 50 01 | 🌐 Oui | 📍 Les Marêts"
+  },
+  {
+    "timestamp": "2025-11-26T00:16:27.385678",
+    "message": "[1/10] Pleinet Plomberie Chauffage | 📞 06 09 07 55 27 | 🌐 Non | 📍 Châtenoy"
+  },
+  {
+    "timestamp": "2025-11-26T00:16:27.770547",
+    "message": "[11/13] Entreprise Chagot | 📞 01 60 72 17 87 | 🌐 Oui | 📍 Les Marêts"
+  },
+  {
+    "timestamp": "2025-11-26T00:16:30.779865",
+    "message": "[2/10] Van Coillie Olivier | 📞 06 08 86 58 55 | 🌐 Oui | 📍 Châtenoy"
+  },
+  {
+    "timestamp": "2025-11-26T00:16:31.186027",
+    "message": "[12/13] Dufeu Plomberie Chauffage Sanitaire | 📞 01 60 74 01 91 | 🌐 Oui | 📍 Les Marêts"
+  },
+  {
+    "timestamp": "2025-11-26T00:16:34.060380",
+    "message": "[3/10] EURL Nicolas laurent | 📞 06 18 37 41 32 | 🌐 Non | 📍 Châtenoy"
+  },
+  {
+    "timestamp": "2025-11-26T00:16:34.555434",
+    "message": "[13/13] Sas Descantes | 📞 01 60 70 31 15 | 🌐 Oui | 📍 Les Marêts"
+  },
+  {
+    "timestamp": "2025-11-26T00:16:34.781760",
+    "message": "❌ [ThreadPoolExecutor-1_2] Erreur Les Marêts: 'GoogleMapsScraper' object has no attribute 'quit'"
+  },
+  {
+    "timestamp": "2025-11-26T00:16:36.942450",
+    "message": "🔍 [ThreadPoolExecutor-1_2] plombier - 77 - Gironville"
+  },
+  {
+    "timestamp": "2025-11-26T00:16:37.300865",
+    "message": "[4/10] SARL PONCET électricité/plomberie/climatisation | 📞 03 85 44 17 57 | 🌐 Oui | 📍 Châtenoy"
+  },
+  {
+    "timestamp": "2025-11-26T00:16:42.254407",
+    "message": "[5/10] RT Plomberie | 📞 07 67 65 62 61 | 🌐 Oui | 📍 Châtenoy"
+  },
+  {
+    "timestamp": "2025-11-26T00:16:45.639902",
+    "message": "[6/10] CEDEO Chalon-sur-Saône : Sanitaire - Chauffage - Plomberie | 📞 03 85 43 06 22 | 🌐 Oui | 📍 Châtenoy"
+  },
+  {
+    "timestamp": "2025-11-26T00:16:49.697105",
+    "message": "[7/10] Agp | 📞 03 85 41 94 29 | 🌐 Oui | 📍 Châtenoy"
+  },
+  {
+    "timestamp": "2025-11-26T00:16:50.882892",
+    "message": "[1/13] Plomberie Solution | 📞 06 49 58 98 43 | 🌐 Oui | 📍 Gravon"
+  },
+  {
+    "timestamp": "2025-11-26T00:16:53.268287",
+    "message": "[8/10] Fougère Sylvain Plombier Chauffagiste | 📞 07 82 00 51 69 | 🌐 Non | 📍 Châtenoy"
+  },
+  {
+    "timestamp": "2025-11-26T00:16:54.619048",
+    "message": "[2/13] Plombier Renov | 📞 07 81 85 86 57 | 🌐 Oui | 📍 Gravon"
+  },
+  {
+    "timestamp": "2025-11-26T00:16:56.895219",
+    "message": "[9/10] BMT Plomberie | 📞 06 03 67 65 57 | 🌐 Non | 📍 Châtenoy"
+  },
+  {
+    "timestamp": "2025-11-26T00:16:58.426813",
+    "message": "[3/13] BF Plomberie 77 - Plombier 77 | 📞 06 43 64 01 23 | 🌐 Non | 📍 Gravon"
+  },
+  {
+    "timestamp": "2025-11-26T00:17:00.673302",
+    "message": "[10/10] 2bgc plomberie | 📞 06 21 14 84 22 | 🌐 Non | 📍 Châtenoy"
+  },
+  {
+    "timestamp": "2025-11-26T00:17:00.982615",
+    "message": "❌ [ThreadPoolExecutor-1_0] Erreur Châtenoy: 'GoogleMapsScraper' object has no attribute 'quit'"
+  },
+  {
+    "timestamp": "2025-11-26T00:17:01.905459",
+    "message": "[4/13] Beauvois Wilfried | 📞 06 60 41 90 55 | 🌐 Oui | 📍 Gravon"
+  },
+  {
+    "timestamp": "2025-11-26T00:17:03.119553",
+    "message": "🔍 [ThreadPoolExecutor-1_0] plombier - 77 - Leudon-en-Brie"
+  },
+  {
+    "timestamp": "2025-11-26T00:17:05.347692",
+    "message": "[5/13] BOUVERET YANN PLOMBIER CHAUFFAGISTE 77 | 📞 01 44 90 11 31 | 🌐 Oui | 📍 Gravon"
+  },
+  {
+    "timestamp": "2025-11-26T00:17:08.827711",
+    "message": "[6/13] SALVAN | 📞 06 18 75 48 20 | 🌐 Oui | 📍 Gravon"
+  },
+  {
+    "timestamp": "2025-11-26T00:17:12.073038",
+    "message": "[7/13] CALOREO PLOMBERIE CHAUFFAGE | 📞 09 81 46 67 43 | 🌐 Oui | 📍 Gravon"
+  },
+  {
+    "timestamp": "2025-11-26T00:17:15.550581",
+    "message": "[8/13] P2c Services | 📞 01 64 39 30 18 | 🌐 Oui | 📍 Gravon"
+  },
+  {
+    "timestamp": "2025-11-26T00:17:18.908532",
+    "message": "[9/13] Plombier Repare.com Travaux plomberie salle de bain douche senior chauffage rénovation Assurance DEPANNAGE (77,45,89,91) | 📞 06 02 45 68 38 | 🌐 Oui | 📍 Gravon"
+  },
+  {
+    "timestamp": "2025-11-26T00:17:23.138924",
+    "message": "[10/13] Thom’s industrie | 📞 06 66 36 70 42 | 🌐 Oui | 📍 Gravon"
+  },
+  {
+    "timestamp": "2025-11-26T00:17:28.071010",
+    "message": "[11/13] LD EAUX | 📞 07 53 69 15 40 | 🌐 Oui | 📍 Gravon"
+  },
+  {
+    "timestamp": "2025-11-26T00:17:31.478410",
+    "message": "[12/13] YL Plomberie Chauffage | 📞 07 85 88 11 53 | 🌐 Oui | 📍 Gravon"
+  },
+  {
+    "timestamp": "2025-11-26T00:17:34.829886",
+    "message": "[13/13] Flt'eau | 📞 06 67 40 53 05 | 🌐 Non | 📍 Gravon"
+  },
+  {
+    "timestamp": "2025-11-26T00:17:35.001291",
+    "message": "❌ [ThreadPoolExecutor-1_1] Erreur Gravon: 'GoogleMapsScraper' object has no attribute 'quit'"
+  },
+  {
+    "timestamp": "2025-11-26T00:17:35.325022",
+    "message": "[1/31] J&D | 📞 06 47 31 52 59 | 🌐 Non | 📍 Gironville"
+  },
+  {
+    "timestamp": "2025-11-26T00:17:37.142938",
+    "message": "🔍 [ThreadPoolExecutor-1_1] plombier - 77 - Frétoy"
+  },
+  {
+    "timestamp": "2025-11-26T00:17:38.848522",
+    "message": "[2/31] AG Plomberie | 📞 06 13 96 45 54 | 🌐 Non | 📍 Gironville"
+  },
+  {
+    "timestamp": "2025-11-26T00:17:42.277743",
+    "message": "[3/31] Ld Eaux | 📞 07 53 69 15 40 | 🌐 Oui | 📍 Gironville"
+  },
+  {
+    "timestamp": "2025-11-26T00:17:45.652431",
+    "message": "[4/31] IRJ Plomberie | 📞 06 17 77 46 25 | 🌐 Oui | 📍 Gironville"
+  },
+  {
+    "timestamp": "2025-11-26T00:17:50.550585",
+    "message": "[5/31] VÉNÈTES - Plomberie Chauffage Électricité | 📞 06 95 75 46 33 | 🌐 Oui | 📍 Gironville"
+  }
+]

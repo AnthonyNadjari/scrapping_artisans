@@ -18,8 +18,11 @@ from selenium.webdriver.chrome.service import Service
 from selenium.common.exceptions import TimeoutException, NoSuchElementException, StaleElementReferenceException
 from webdriver_manager.chrome import ChromeDriverManager
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# ✅ Réduire les logs pour améliorer les performances
+logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+# Logger seulement les erreurs et warnings, pas les infos
+logger.setLevel(logging.WARNING)
 
 
 class GoogleMapsScraper:
@@ -151,7 +154,7 @@ class GoogleMapsScraper:
             pass
         return None
     
-    def _scroller_panneau_lateral(self, max_scrolls: int = 15, selector: str = 'div[role="feed"]'):
+    def _scroller_panneau_lateral(self, max_scrolls: int = 50, selector: str = 'div[role="feed"]'):  # ✅ Augmenté de 15 à 50 par défaut
         """
         Scroll le panneau latéral pour charger plus de résultats
         
@@ -1512,9 +1515,9 @@ class GoogleMapsScraper:
             'nb_avis': None
         }
         
-        # ✅ DEBUG : Sauvegarder la structure pour le premier établissement
-        if index == 1:
-            self._debug_structure_panneau_detail(index)
+        # ✅ DEBUG désactivé pour améliorer les performances
+        # if index == 1:
+        #     self._debug_structure_panneau_detail(index)
         
         try:
             # ✅ FIX CRITIQUE : Chercher directement les éléments sans limiter au panneau
@@ -1799,8 +1802,8 @@ class GoogleMapsScraper:
                     self.driver.execute_script("arguments[0].click();", element)
                 time.sleep(1.0)  # Attendre que le panneau s'ouvre
                 
-                # Sauvegarder la structure
-                self._debug_structure_panneau_detail(index)
+                # ✅ Debug désactivé pour améliorer les performances
+                # self._debug_structure_panneau_detail(index)
             except Exception as e:
                 logger.debug(f"  Erreur debug panneau [{index}]: {e}")
         
@@ -2183,13 +2186,7 @@ class GoogleMapsScraper:
                 logger.info(" ".join(log_parts))
             
             # ==================== VÉRIFICATION FINALE ET RETOUR ====================
-            # 🔥 LOG CRITIQUE : Afficher EXACTEMENT ce qui va être retourné
-            logger.info(f"  [{index}] 📋 VÉRIFICATION FINALE:")
-            logger.info(f"  [{index}]    - Nom: {info.get('nom')}")
-            logger.info(f"  [{index}]    - Téléphone: {info.get('telephone')}")
-            logger.info(f"  [{index}]    - Site web: {info.get('site_web')}")
-            logger.info(f"  [{index}]    - Adresse: {info.get('adresse')}")
-            logger.info(f"  [{index}]    - Note: {info.get('note')}")
+            # ✅ Réduire les logs - les détails sont dans Streamlit via le fichier JSON
             
             # Vérifier qu'on a AU MOINS une donnée valide
             has_data = (
@@ -2200,12 +2197,8 @@ class GoogleMapsScraper:
             )
             
             if has_data:
-                if not info.get('nom'):
-                    logger.warning(f"  [{index}] ⚠️ Pas de nom, mais autres données présentes - ON RETOURNE QUAND MÊME !")
-                logger.info(f"  [{index}] ✅ RETOUR DES DONNÉES")
                 return info
             else:
-                logger.warning(f"  [{index}] ❌ Aucune donnée valide - ON RETOURNE None")
                 return None
             
         except Exception as e:
@@ -2249,23 +2242,20 @@ class GoogleMapsScraper:
                 selector_panneau = 'div[role="feed"]'
             
             # Scroller pour charger plus de résultats
-            logger.info("📜 Scroll du panneau pour charger plus de résultats...")
-            self._scroller_panneau_lateral(max_scrolls=15, selector=selector_panneau)
+            # ✅ Réduire les logs pour améliorer les performances
+            self._scroller_panneau_lateral(max_scrolls=50, selector=selector_panneau)  # ✅ Augmenté de 15 à 50 pour charger plus de résultats
             
             # ✅ FIX : Chercher DIRECTEMENT les établissements dans toute la page
             # Ne pas chercher dans un panneau spécifique qui peut ne pas contenir les résultats
-            logger.info("🔍 Récupération des établissements...")
             
             # ✅ NOUVEAU : Attendre explicitement que les résultats se chargent
-            logger.info("   ⏳ Attente que les résultats se chargent dans la page...")
             try:
                 WebDriverWait(self.driver, 30).until(
                     lambda d: len(d.find_elements(By.CSS_SELECTOR, 'a[href*="/maps/place/"]')) > 0 or
                               len(d.find_elements(By.CSS_SELECTOR, 'div[role="article"]')) > 0
                 )
-                logger.info("   ✅ Résultats chargés dans la page")
             except TimeoutException:
-                logger.warning("   ⚠️ Timeout attente résultats, mais on continue...")
+                pass  # ✅ Réduire les logs
             
             # Attendre un peu plus pour que tous les résultats se chargent
             time.sleep(2)
@@ -2275,7 +2265,7 @@ class GoogleMapsScraper:
             # On scraper TOUS les établissements, pas seulement ceux avec le mot-clé
             etablissements_elems = self.driver.find_elements(By.CSS_SELECTOR, 'a[href*="/maps/place/"]')
             
-            logger.info(f"✅ {len(etablissements_elems)} établissements trouvés dans la page")
+            # ✅ Réduire les logs - seulement logger les erreurs importantes
             
             # Si 0 établissements trouvés, essayer des méthodes alternatives
             if len(etablissements_elems) == 0:
@@ -2324,12 +2314,8 @@ class GoogleMapsScraper:
                     try:
                         info = self._extraire_donnees_depuis_panneau(elem, i, len(etablissements_elems))
                         
-                        # 🔥 LOG CRITIQUE : Vérifier ce qui est reçu
-                        if info:
-                            logger.info(f"[{i}] 🎯 REÇU DEPUIS _extraire_donnees_depuis_panneau:")
-                            logger.info(f"[{i}]    Nom: {info.get('nom')}")
-                            logger.info(f"[{i}]    Téléphone: {info.get('telephone')}")
-                            logger.info(f"[{i}]    Site web: {info.get('site_web')}")
+                        # ✅ Réduire les logs - seulement logger les erreurs importantes
+                        # Les logs détaillés sont maintenant dans Streamlit via le fichier JSON
                         
                         if not info:
                             logger.debug(f"  [{i}/{len(etablissements_elems)}] Panneau: aucune donnée, essai élément...")
@@ -2381,7 +2367,7 @@ class GoogleMapsScraper:
                     logger.error(f"  ❌ Erreur établissement [{i}/{len(etablissements_elems)}]: {e}")
                     continue
             
-            logger.info(f"✅ Scraping terminé: {len(resultats)} établissements extraits")
+            # ✅ Réduire les logs - seulement logger les erreurs importantes
             return resultats
             
         except Exception as e:
@@ -2403,13 +2389,13 @@ class GoogleMapsScraper:
     def stop(self):
         """Arrête le scraping en cours et ferme le driver"""
         self.is_running = False
-        logger.info("⏹️ Arrêt du scraping demandé...")
+        # ✅ Réduire les logs lors de l'arrêt pour éviter de flooder le terminal
         if self.driver:
             try:
                 self.driver.quit()
-                logger.info("🔒 Chrome driver fermé")
             except:
                 pass
+        # Ne pas logger pour éviter de flooder le terminal
     
     def get_scraped_count(self) -> int:
         """Retourne le nombre d'établissements scrapés"""

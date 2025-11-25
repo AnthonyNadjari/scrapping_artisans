@@ -10,6 +10,8 @@ import threading
 from pathlib import Path
 from datetime import datetime
 import pandas as pd
+import requests
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Configuration de la page
 st.set_page_config(page_title="Scraping Google Maps", page_icon="🔍", layout="wide")
@@ -29,6 +31,39 @@ try:
         villes_par_dept = json.load(f)
 except:
     villes_par_dept = {}
+
+# ✅ Fonction pour récupérer les communes depuis data.gouv.fr
+def get_communes_from_api(departement: str, min_population: int = 0, max_population: int = 50000):
+    """Récupère les communes d'un département depuis l'API data.gouv.fr avec coordonnées GPS"""
+    try:
+        url = f"https://geo.api.gouv.fr/departements/{departement}/communes"
+        params = {
+            "fields": "nom,code,codesPostaux,population,centre",
+            "format": "json"
+        }
+        response = requests.get(url, params=params, timeout=10)
+        if response.status_code == 200:
+            communes = response.json()
+            # Filtrer par population
+            filtered = []
+            for c in communes:
+                pop = c.get('population', 0)
+                if min_population <= pop <= max_population:
+                    centre = c.get('centre', {})
+                    filtered.append({
+                        'nom': c['nom'],
+                        'code': c['code'],
+                        'code_postal': c.get('codesPostaux', [c.get('code', '')])[0] if c.get('codesPostaux') else c.get('code', ''),
+                        'population': pop,
+                        'latitude': centre.get('coordinates', [None, None])[1] if centre else None,
+                        'longitude': centre.get('coordinates', [None, None])[0] if centre else None
+                    })
+            # Trier par population (croissant)
+            filtered.sort(key=lambda x: x['population'])
+            return filtered
+    except Exception as e:
+        logger.error(f"Erreur API communes: {e}")
+    return []
 
 st.title("🔍 Scraping Google Maps - Artisans")
 
@@ -52,11 +87,19 @@ st.subheader("⚙️ Configuration")
 col_config1, col_config2 = st.columns(2)
 
 with col_config1:
-    metier = st.selectbox(
-        "Type d'artisan",
-        options=["plombier", "electricien", "chauffagiste", "menuisier", "peintre", "macon", "couvreur", "carreleur"],
-        help="Type d'artisan à rechercher"
+    # ✅ Multi-select pour les métiers
+    metiers_options = ["plombier", "electricien", "chauffagiste", "menuisier", "peintre", "macon", "couvreur", "carreleur"]
+    metiers = st.multiselect(
+        "Type(s) d'artisan(s)",
+        options=metiers_options,
+        default=["plombier"],
+        help="Sélectionnez un ou plusieurs types d'artisans à rechercher"
     )
+    if not metiers:
+        st.warning("⚠️ Veuillez sélectionner au moins un métier")
+        metier = "plombier"
+    else:
+        metier = metiers[0]
 
 with col_config2:
     # Liste des départements français
@@ -72,12 +115,18 @@ with col_config2:
         "80", "81", "82", "83", "84", "85", "86", "87", "88", "89",
         "90", "91", "92", "93", "94", "95"
     ]
-    departement = st.selectbox(
-        "Département",
+    # ✅ Multi-select pour les départements
+    departements = st.multiselect(
+        "Département(s)",
         options=departements_liste,
-        index=departements_liste.index("77") if "77" in departements_liste else 0,
-        help="Le système scrapera automatiquement plusieurs petites villes de ce département"
+        default=["77"],
+        help="Sélectionnez un ou plusieurs départements à scraper"
     )
+    if not departements:
+        st.warning("⚠️ Veuillez sélectionner au moins un département")
+        departement = "77"
+    else:
+        departement = departements[0]
 
 col_config3, col_config4 = st.columns(2)
 
@@ -88,7 +137,7 @@ with col_config3:
         max_value=200,
         value=50,
         step=10,
-        help="Nombre maximum d'établissements à scraper"
+        help="Nombre maximum d'établissements à scraper par ville"
     )
 
 with col_config4:
@@ -97,6 +146,254 @@ with col_config4:
         value=True,
         help="Mode headless activé par défaut (plus rapide). Décochez pour voir le navigateur."
     )
+
+# ✅ Options avancées
+with st.expander("⚙️ Options avancées"):
+    col_adv1, col_adv2 = st.columns(2)
+    with col_adv1:
+        use_api_communes = st.checkbox(
+            "Utiliser API data.gouv.fr pour les communes",
+            value=False,
+            help="Récupère automatiquement les communes depuis l'API officielle"
+        )
+        if use_api_communes:
+            min_pop = st.number_input("Population minimum", min_value=0, value=0, step=100)
+            max_pop = st.number_input("Population maximum", min_value=0, value=50000, step=1000)
+            
+            # ✅ Bouton pour afficher les communes trouvées
+            if st.button("📋 Afficher les communes trouvées"):
+                st.session_state.show_communes = True
+    with col_adv2:
+        enable_resume = st.checkbox(
+            "Activer resume/checkpoint",
+            value=True,
+            help="Permet de reprendre le scraping où il s'est arrêté"
+        )
+        num_threads = st.slider(
+            "Nombre de threads",
+            min_value=1,
+            max_value=20,
+            value=3,
+            help="Nombre de navigateurs en parallèle (attention: plus de threads = plus rapide mais plus de ressources)"
+        )
+
+# ✅ Afficher les communes si demandé
+if st.session_state.get('show_communes', False) and use_api_communes and departements:
+    st.markdown("---")
+    st.subheader("📍 Communes trouvées via API data.gouv.fr")
+    
+    communes_trouvees = {}
+    with st.spinner("🔄 Récupération des communes depuis l'API..."):
+        for dept in departements:
+            communes = get_communes_from_api(dept, min_pop if use_api_communes else 0, max_pop if use_api_communes else 50000)
+            communes_trouvees[dept] = communes
+    
+    # Afficher un tableau avec toutes les communes
+    all_communes = []
+    for dept, communes in communes_trouvees.items():
+        for commune in communes:
+            all_communes.append({
+                'Département': dept,
+                'Commune': commune['nom'],
+                'Code postal': commune['code_postal'],
+                'Population': f"{commune['population']:,}" if commune['population'] > 0 else "N/A"
+            })
+    
+    if all_communes:
+        st.info(f"📊 Total: {len(all_communes)} communes trouvées")
+        
+        # ✅ Mise en page côte à côte : tableau et carte
+        col_table, col_map = st.columns([1, 1])
+        
+        with col_table:
+            st.subheader("📋 Liste des communes")
+            df_communes = pd.DataFrame(all_communes)
+            
+            # CSS pour autofit toutes les colonnes et éviter la colonne vide
+            st.markdown("""
+            <style>
+            /* Cibler le conteneur du DataFrame */
+            div[data-testid="stDataFrame"] {
+                width: 100% !important;
+            }
+            div[data-testid="stDataFrame"] > div {
+                width: 100% !important;
+                overflow-x: visible !important;
+            }
+            /* Tableau avec ajustement automatique - largeur 100% mais colonnes auto */
+            div[data-testid="stDataFrame"] table {
+                width: 100% !important;
+                table-layout: auto !important;
+                border-collapse: collapse !important;
+            }
+            /* Colonnes avec ajustement automatique selon le contenu */
+            div[data-testid="stDataFrame"] th,
+            div[data-testid="stDataFrame"] td {
+                white-space: nowrap !important;
+                padding: 8px 12px !important;
+                width: auto !important;
+                max-width: none !important;
+            }
+            /* Masquer complètement la dernière colonne si elle est vide */
+            div[data-testid="stDataFrame"] table thead tr th:last-child:empty,
+            div[data-testid="stDataFrame"] table tbody tr td:last-child:empty {
+                display: none !important;
+                width: 0 !important;
+                padding: 0 !important;
+                border: none !important;
+            }
+            </style>
+            """, unsafe_allow_html=True)
+            
+            # Utiliser dataframe sans hide_index (non supporté dans cette version)
+            st.dataframe(df_communes, height=600)
+            
+            # JavaScript pour masquer la colonne vide après le rendu
+            st.markdown("""
+            <script>
+            function hideEmptyColumn() {
+                const tables = document.querySelectorAll('div[data-testid="stDataFrame"] table');
+                tables.forEach(function(table) {
+                    const rows = table.querySelectorAll('tr');
+                    if (rows.length > 0) {
+                        // Vérifier si la dernière colonne est vide dans toutes les lignes
+                        let allEmpty = true;
+                        rows.forEach(function(row) {
+                            const lastCell = row.querySelector('th:last-child, td:last-child');
+                            if (lastCell && lastCell.textContent && lastCell.textContent.trim() !== '') {
+                                allEmpty = false;
+                            }
+                        });
+                        
+                        // Si toutes les dernières colonnes sont vides, les masquer
+                        if (allEmpty) {
+                            rows.forEach(function(row) {
+                                const lastCell = row.querySelector('th:last-child, td:last-child');
+                                if (lastCell) {
+                                    lastCell.style.display = 'none';
+                                    lastCell.style.width = '0';
+                                    lastCell.style.padding = '0';
+                                    lastCell.style.border = 'none';
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+            // Exécuter après le chargement
+            setTimeout(hideEmptyColumn, 100);
+            setTimeout(hideEmptyColumn, 500);
+            setTimeout(hideEmptyColumn, 1000);
+            </script>
+            """, unsafe_allow_html=True)
+        
+        with col_map:
+            st.subheader("🗺️ Carte interactive")
+            
+            # ✅ Carte interactive avec folium
+            try:
+                import folium
+                from streamlit_folium import folium_static
+                
+                # Filtrer les communes avec coordonnées GPS directement depuis communes_trouvees
+                communes_avec_gps = []
+                for dept, communes_list in communes_trouvees.items():
+                    for comm in communes_list:
+                        if comm.get('latitude') and comm.get('longitude'):
+                            communes_avec_gps.append({
+                                'nom': comm['nom'],
+                                'departement': dept,
+                                'code_postal': comm.get('code_postal', ''),
+                                'population': comm.get('population', 0),
+                                'latitude': comm['latitude'],
+                                'longitude': comm['longitude']
+                            })
+                
+                if communes_avec_gps:
+                    # Calculer le centre de la carte (moyenne des coordonnées)
+                    avg_lat = sum(c['latitude'] for c in communes_avec_gps) / len(communes_avec_gps)
+                    avg_lon = sum(c['longitude'] for c in communes_avec_gps) / len(communes_avec_gps)
+                    
+                    # Créer une carte centrée sur les communes
+                    m = folium.Map(location=[avg_lat, avg_lon], zoom_start=8)
+                    
+                    # ✅ Calculer les min/max de population POUR LES COMMUNES AFFICHÉES (limitées à 200)
+                    sample_communes = communes_avec_gps[:200] if len(communes_avec_gps) > 200 else communes_avec_gps
+                    populations = [c['population'] for c in sample_communes if c['population'] > 0]
+                    
+                    if populations:
+                        min_pop_displayed = min(populations)
+                        max_pop_displayed = max(populations)
+                        pop_range_displayed = max_pop_displayed - min_pop_displayed if max_pop_displayed > min_pop_displayed else 1
+                    else:
+                        min_pop_displayed = 0
+                        max_pop_displayed = 1
+                        pop_range_displayed = 1
+                    
+                    for commune in sample_communes:
+                        pop = commune['population']
+                        pop_str = f"{pop:,}" if pop > 0 else "N/A"
+                        popup_text = f"<b>{commune['nom']}</b><br>Département: {commune['departement']}<br>Code postal: {commune['code_postal']}<br>Population: {pop_str}"
+                        
+                        # ✅ Taille du marqueur proportionnelle à la population RELATIVE au min/max affichés
+                        if pop > 0 and pop_range_displayed > 0:
+                            # Normaliser entre 3 et 15 pixels de radius selon le min/max des communes affichées
+                            normalized = (pop - min_pop_displayed) / pop_range_displayed
+                            radius = 3 + (normalized * 12)  # Entre 3 et 15 pixels
+                        else:
+                            radius = 3
+                        
+                        # Couleur selon la population (seuils fixes pour la couleur)
+                        if pop > 10000:
+                            icon_color = 'red'
+                        elif pop > 5000:
+                            icon_color = 'orange'
+                        elif pop > 2000:
+                            icon_color = 'blue'
+                        else:
+                            icon_color = 'green'
+                        
+                        folium.CircleMarker(
+                            location=[commune['latitude'], commune['longitude']],
+                            radius=radius,
+                            popup=folium.Popup(popup_text, max_width=200),
+                            tooltip=f"{commune['nom']} ({pop:,} hab.)" if pop > 0 else commune['nom'],
+                            color=icon_color,
+                            fill=True,
+                            fillColor=icon_color,
+                            fillOpacity=0.6,
+                            weight=1
+                        ).add_to(m)
+                    
+                    # Afficher la carte
+                    folium_static(m, width=700, height=600)
+                    
+                    if len(communes_avec_gps) > 200:
+                        st.caption(f"🗺️ Affichage de 200 communes sur {len(communes_avec_gps)} avec coordonnées GPS")
+                    else:
+                        st.caption(f"🗺️ {len(communes_avec_gps)} communes avec coordonnées GPS")
+                    
+                    # Légende
+                    st.markdown("""
+                    <div style='background: #f0f0f0; padding: 10px; border-radius: 5px; margin-top: 10px;'>
+                        <strong>Légende :</strong><br>
+                        🔴 Rouge : > 10 000 hab. | 🟠 Orange : 5 000 - 10 000 hab. | 
+                        🔵 Bleu : 2 000 - 5 000 hab. | 🟢 Vert : < 2 000 hab.<br>
+                        <small>La taille des points est proportionnelle à la population</small>
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.warning("⚠️ Aucune commune avec coordonnées GPS trouvée")
+            except ImportError:
+                st.info("💡 Pour afficher une carte interactive, installez: `pip install folium streamlit-folium`")
+            except Exception as e:
+                st.error(f"Erreur lors de la création de la carte: {e}")
+    else:
+        st.warning("Aucune commune trouvée avec les critères sélectionnés")
+    
+    if st.button("❌ Fermer l'affichage des communes"):
+        st.session_state.show_communes = False
+        st.experimental_rerun()
 
 st.markdown("---")
 
@@ -111,35 +408,52 @@ if 'scraping_thread' not in st.session_state:
     st.session_state.scraping_thread = None
 if 'scraping_started' not in st.session_state:
     st.session_state.scraping_started = False
+if 'saved_count' not in st.session_state:
+    st.session_state.saved_count = 0
+if 'logs_buffer' not in st.session_state:
+    st.session_state.logs_buffer = []
 
 # Boutons de contrôle
-col_btn1, col_btn2, col_btn3 = st.columns(3)
+col_btn1, col_btn2 = st.columns(2)
 
 with col_btn1:
     if st.button("🚀 LANCER LE SCRAPING", disabled=st.session_state.scraping_running):
-        st.session_state.scraping_running = True
-        st.session_state.scraped_results = []
-        st.session_state.departement_selected = departement
-        st.session_state.metier_selected = metier
-        st.session_state.scraping_started = False  # Réinitialiser pour permettre un nouveau lancement
-        
-        # Créer un nouveau scraper (réinitialiser)
-        st.session_state.scraper = GoogleMapsScraper(headless=headless)
-        st.session_state.scraper.is_running = True  # S'assurer qu'il est en cours
-        
-        # Initialiser les fichiers JSON pour la communication thread-safe
-        results_file = Path(__file__).parent.parent.parent / "data" / "scraping_results_temp.json"
-        status_file = Path(__file__).parent.parent.parent / "data" / "scraping_status.json"
-        
-        # Vider le fichier de résultats
-        with open(results_file, 'w', encoding='utf-8') as f:
-            json.dump([], f)
-        
-        # Marquer comme en cours
-        with open(status_file, 'w', encoding='utf-8') as f:
-            json.dump({'running': True, 'started': True}, f)
-        
-        st.experimental_rerun()
+        if not metiers or not departements:
+            st.error("⚠️ Veuillez sélectionner au moins un métier et un département")
+        else:
+            st.session_state.scraping_running = True
+            st.session_state.scraped_results = []
+            st.session_state.saved_count = 0
+            st.session_state.logs_buffer = []
+            st.session_state.departements_selected = departements
+            st.session_state.metiers_selected = metiers
+            st.session_state.scraping_started = False
+            
+            # Créer un nouveau scraper
+            st.session_state.scraper = GoogleMapsScraper(headless=headless)
+            st.session_state.scraper.is_running = True
+            
+            # Initialiser les fichiers JSON
+            results_file = Path(__file__).parent.parent.parent / "data" / "scraping_results_temp.json"
+            status_file = Path(__file__).parent.parent.parent / "data" / "scraping_status.json"
+            logs_file = Path(__file__).parent.parent.parent / "data" / "scraping_logs.json"
+            checkpoint_file = Path(__file__).parent.parent.parent / "data" / "scraping_checkpoint.json"
+            
+            with open(results_file, 'w', encoding='utf-8') as f:
+                json.dump([], f)
+            
+            with open(status_file, 'w', encoding='utf-8') as f:
+                json.dump({'running': True, 'started': True}, f)
+            
+            with open(logs_file, 'w', encoding='utf-8') as f:
+                json.dump([], f)
+            
+            if not enable_resume:
+                # Supprimer le checkpoint si resume désactivé
+                if checkpoint_file.exists():
+                    checkpoint_file.unlink()
+            
+            st.experimental_rerun()
 
 with col_btn2:
     if st.button("⏹️ ARRÊTER", disabled=not st.session_state.scraping_running):
@@ -147,7 +461,6 @@ with col_btn2:
             st.session_state.scraper.stop()
         st.session_state.scraping_running = False
         
-        # Marquer comme arrêté dans le fichier
         status_file = Path(__file__).parent.parent.parent / "data" / "scraping_status.json"
         try:
             with open(status_file, 'w', encoding='utf-8') as f:
@@ -157,50 +470,6 @@ with col_btn2:
         
         st.success("⏹️ Scraping arrêté. Les résultats déjà scrapés sont sauvegardés.")
         st.experimental_rerun()
-
-with col_btn3:
-    if st.button("💾 SAUVEGARDER EN BDD", disabled=len(st.session_state.scraped_results) == 0):
-        if st.session_state.scraped_results:
-            progress_bar = st.progress(0)
-            status_text = st.empty()
-            
-            nb_ajoutes = 0
-            nb_erreurs = 0
-            nb_duplicates = 0
-            
-            for i, resultat in enumerate(st.session_state.scraped_results):
-                try:
-                    # Préparer les données pour la BDD
-                    artisan_data = {
-                        'nom_entreprise': resultat.get('nom', 'N/A'),
-                        'telephone': resultat.get('telephone', '').replace(' ', '') if resultat.get('telephone') else None,
-                        'adresse': resultat.get('adresse', ''),
-                        'code_postal': resultat.get('code_postal', ''),
-                        'ville': resultat.get('ville', ''),
-                        'type_artisan': st.session_state.get('metier_selected', metier),
-                        'source': 'google_maps'
-                    }
-                    
-                    # Ajouter site web si présent
-                    if resultat.get('site_web'):
-                        artisan_data['site_web'] = resultat.get('site_web')
-                    
-                    artisan_id = ajouter_artisan(artisan_data)
-                    nb_ajoutes += 1
-                    
-                except Exception as e:
-                    error_msg = str(e)
-                    nb_erreurs += 1
-                    if "UNIQUE constraint" in error_msg or "duplicate" in error_msg.lower():
-                        nb_duplicates += 1
-                
-                progress_bar.progress((i + 1) / len(st.session_state.scraped_results))
-                status_text.info(f"💾 Sauvegarde: {i + 1}/{len(st.session_state.scraped_results)}")
-            
-            progress_bar.progress(1.0)
-            st.success(f"✅ Sauvegarde terminée: {nb_ajoutes} ajoutés, {nb_duplicates} doublons, {nb_erreurs} erreurs")
-            st.session_state.scraped_results = []
-            st.experimental_rerun()
 
 st.markdown("---")
 
@@ -217,97 +486,98 @@ if st.session_state.scraping_running:
         stats_text = st.empty()
     
     with logs_container:
-        logs_expander = st.expander("📋 Logs détaillés", expanded=True)
+        logs_expander = st.expander("📋 Logs en temps réel", expanded=True)
         logs_display = logs_expander.empty()
     
     # Initialiser le scraper si nécessaire
     if not st.session_state.scraper:
         st.session_state.scraper = GoogleMapsScraper(headless=headless)
     
-    # S'assurer que is_running est True
     if st.session_state.scraper:
         st.session_state.scraper.is_running = True
     
-    # Fonction de callback pour le progrès
-    def progress_callback(index, total, info):
-        progress = index / total
-        progress_bar.progress(progress)
-        
-        nom = info.get('nom', 'N/A')
-        tel = info.get('telephone', 'N/A')
-        site_web = info.get('site_web', '')
-        # ✅ FIX : Vérifier que c'est un vrai site web, pas l'URL Google Maps
-        if site_web:
-            # Si l'URL contient 'google.com' ou 'maps', ce n'est pas un vrai site web
-            if 'google.com' in site_web.lower() or 'maps' in site_web.lower():
-                site_web = None  # Ce n'est pas un vrai site web
-                info['site_web'] = None  # Corriger dans les données
-        
-        site = "✅ Oui" if site_web else "❌ Non"
-        site_url = site_web[:50] + "..." if site_web and len(site_web) > 50 else (site_web or "N/A")
-        
-        status_text.info(f"🔍 [{index}/{total}] **{nom}** | 📞 {tel} | 🌐 Site: {site}")
-        
-        # ✅ NOUVEAU : Logs détaillés dans Streamlit
-        detail_log = f"📋 **{nom}**\n"
-        detail_log += f"   📞 Téléphone: {tel}\n"
-        detail_log += f"   🌐 Site web: {site_url}\n"
-        if info.get('adresse'):
-            detail_log += f"   📍 Adresse: {info.get('adresse', 'N/A')}\n"
-        if info.get('note'):
-            detail_log += f"   ⭐ Note: {info.get('note')}/5 ({info.get('nb_avis', 0)} avis)\n"
-        
-        logs_display.markdown(detail_log)
-        
-        # Stats
-        avec_tel = sum(1 for r in st.session_state.scraped_results if r.get('telephone'))
-        avec_site = sum(1 for r in st.session_state.scraped_results if r.get('site_web'))
-        sans_site = len(st.session_state.scraped_results) - avec_site
-        
-        stats_text.success(
-            f"📊 **{len(st.session_state.scraped_results)}** scrapés | "
-            f"📞 {avec_tel} avec téléphone | "
-            f"🌐 {avec_site} avec site | "
-            f"⭐ {sans_site} SANS site (prospects !)"
-        )
-        
-        # Logs
-        log_line = f"[{datetime.now().strftime('%H:%M:%S')}] [{index}/{total}] {nom} | Tél: {tel} | Site: {site}"
-        if 'logs' not in st.session_state:
-            st.session_state.logs = []
-        st.session_state.logs.append(log_line)
-        logs_display.code("\n".join(st.session_state.logs[-50:]), language=None)
+    # ✅ Fonction de sauvegarde automatique en BDD
+    def save_to_db_auto(info, metier_actuel):
+        """Sauvegarde automatique en BDD"""
+        try:
+            artisan_data = {
+                'nom_entreprise': info.get('nom', 'N/A'),
+                'telephone': info.get('telephone', '').replace(' ', '') if info.get('telephone') else None,
+                'adresse': info.get('adresse', ''),
+                'code_postal': info.get('code_postal', ''),
+                'ville': info.get('ville', ''),
+                'type_artisan': metier_actuel,
+                'source': 'google_maps'
+            }
+            
+            if info.get('site_web'):
+                artisan_data['site_web'] = info.get('site_web')
+            
+            ajouter_artisan(artisan_data)
+            return True
+        except Exception as e:
+            error_msg = str(e)
+            if "UNIQUE constraint" not in error_msg and "duplicate" not in error_msg.lower():
+                logger.error(f"Erreur sauvegarde auto: {e}")
+            return False
     
     # Lancer le scraping dans un thread
     if 'scraping_started' not in st.session_state or not st.session_state.scraping_started:
         st.session_state.scraping_started = True
         
-        # Capturer les variables AVANT le thread (closure)
         scraper_instance = st.session_state.scraper
-        departement_capture = departement
-        metier_capture = metier
+        departements_capture = st.session_state.departements_selected
+        metiers_capture = st.session_state.metiers_selected
         max_results_capture = max_results
+        use_api_capture = use_api_communes
+        min_pop_capture = min_pop if use_api_communes else 0
+        max_pop_capture = max_pop if use_api_communes else 50000
+        num_threads_capture = num_threads
+        enable_resume_capture = enable_resume
         
         def run_scraping():
             try:
-                # Utiliser les variables capturées (pas st.session_state)
-                scraper = scraper_instance
-                departement_actuel = departement_capture
-                metier_actuel = metier_capture
                 max_results_actuel = max_results_capture
-                
-                villes_a_scraper = villes_par_dept.get(departement_actuel, [])
-                if not villes_a_scraper:
-                    # Si pas de villes définies, utiliser le département comme recherche
-                    villes_a_scraper = [f"{metier_actuel} {departement_actuel}"]
-                
-                # Utiliser un fichier JSON partagé pour stocker les résultats (thread-safe)
-                import json
                 results_file = Path(__file__).parent.parent.parent / "data" / "scraping_results_temp.json"
+                logs_file = Path(__file__).parent.parent.parent / "data" / "scraping_logs.json"
+                checkpoint_file = Path(__file__).parent.parent.parent / "data" / "scraping_checkpoint.json"
                 
-                # Callback qui sauvegarde progressivement dans le fichier
+                # ✅ Charger le checkpoint si resume activé
+                checkpoint_data = {}
+                if enable_resume_capture and checkpoint_file.exists():
+                    try:
+                        with open(checkpoint_file, 'r', encoding='utf-8') as f:
+                            checkpoint_data = json.load(f)
+                        logger.info(f"📂 Checkpoint chargé: {checkpoint_data}")
+                    except:
+                        checkpoint_data = {}
+                
+                # ✅ Fonction pour ajouter un log
+                def add_log(message):
+                    try:
+                        if logs_file.exists():
+                            with open(logs_file, 'r', encoding='utf-8') as f:
+                                logs = json.load(f)
+                        else:
+                            logs = []
+                        logs.append({
+                            'timestamp': datetime.now().isoformat(),
+                            'message': message
+                        })
+                        # Garder seulement les 100 derniers logs
+                        logs = logs[-100:]
+                        with open(logs_file, 'w', encoding='utf-8') as f:
+                            json.dump(logs, f, ensure_ascii=False, indent=2)
+                    except:
+                        pass
+                
+                # ✅ Callback amélioré avec sauvegarde automatique et logs
                 def save_callback(idx, total, info):
                     if info:
+                        # S'assurer que ville_recherche est présent
+                        if 'ville_recherche' not in info:
+                            info['ville_recherche'] = info.get('ville_recherche', '')
+                        
                         # Lire les résultats existants
                         if results_file.exists():
                             try:
@@ -323,39 +593,143 @@ if st.session_state.scraping_running:
                             existing_results.append(info)
                             with open(results_file, 'w', encoding='utf-8') as f:
                                 json.dump(existing_results, f, ensure_ascii=False, indent=2)
+                            
+                            # ✅ Sauvegarde automatique en BDD
+                            ville_recherche = info.get('ville_recherche', '')
+                            metier_actuel = metiers_capture[0] if metiers_capture else "plombier"
+                            if save_to_db_auto(info, metier_actuel):
+                                # Compter les sauvegardes
+                                saved_file = Path(__file__).parent.parent.parent / "data" / "saved_count.json"
+                                try:
+                                    if saved_file.exists():
+                                        with open(saved_file, 'r') as f:
+                                            count_data = json.load(f)
+                                            count = count_data.get('count', 0)
+                                    else:
+                                        count = 0
+                                    count += 1
+                                    with open(saved_file, 'w') as f:
+                                        json.dump({'count': count}, f)
+                                except:
+                                    pass
+                            
+                            # ✅ Ajouter un log
+                            nom = info.get('nom', 'N/A')
+                            tel = info.get('telephone', 'N/A')
+                            site = "Oui" if info.get('site_web') else "Non"
+                            add_log(f"[{idx}/{total}] {nom} | 📞 {tel} | 🌐 {site} | 📍 {ville_recherche}")
                 
                 tous_resultats = []
                 
-                # Scraper chaque ville
-                for i, ville in enumerate(villes_a_scraper, 1):
-                    # Vérifier l'état via le scraper (thread-safe)
-                    if not scraper.is_running:
-                        logger.info("⏹️ Scraping arrêté par l'utilisateur")
-                        break
+                # ✅ Préparer la liste des villes à scraper
+                toutes_villes = []
+                for dept in departements_capture:
+                    if use_api_capture:
+                        # Utiliser l'API data.gouv.fr
+                        communes = get_communes_from_api(dept, min_pop_capture, max_pop_capture)
+                        villes_dept = [c['nom'] for c in communes]
+                        add_log(f"📡 API: {len(villes_dept)} communes trouvées pour {dept}")
+                    else:
+                        # Utiliser le fichier JSON
+                        villes_dept = villes_par_dept.get(dept, [])
+                        if not villes_dept:
+                            villes_dept = [f"{metiers_capture[0]} {dept}"]
                     
-                    logger.info(f"🔍 Scraping ville {i}/{len(villes_a_scraper)}: {ville}")
+                    for metier_actuel in metiers_capture:
+                        for ville in villes_dept:
+                            # ✅ Vérifier le checkpoint
+                            task_key = f"{metier_actuel}_{dept}_{ville}"
+                            if enable_resume_capture and checkpoint_data.get(task_key, {}).get('completed', False):
+                                add_log(f"⏭️  Checkpoint: {task_key} déjà fait, on passe")
+                                continue
+                            toutes_villes.append({
+                                'metier': metier_actuel,
+                                'departement': dept,
+                                'ville': ville
+                            })
+                
+                add_log(f"🚀 Démarrage: {len(toutes_villes)} tâches à exécuter")
+                
+                # ✅ Fonction pour scraper une ville
+                def scrape_ville(task_info):
+                    metier_actuel = task_info['metier']
+                    dept_actuel = task_info['departement']
+                    ville_actuelle = task_info['ville']
+                    task_key = f"{metier_actuel}_{dept_actuel}_{ville_actuelle}"
+                    
                     try:
-                        # ✅ FIX : Ne pas diviser max_results par ville, utiliser le max pour chaque ville
-                        # L'utilisateur veut scraper le maximum d'établissements par ville
+                        # Créer un scraper pour ce thread
+                        scraper = GoogleMapsScraper(headless=headless)
+                        scraper.is_running = True
+                        
+                        add_log(f"🔍 [{threading.current_thread().name}] {metier_actuel} - {dept_actuel} - {ville_actuelle}")
+                        
                         resultats = scraper.scraper(
                             recherche=metier_actuel,
-                            ville=ville,
-                            max_results=max_results_actuel,  # Utiliser le max pour chaque ville
+                            ville=ville_actuelle,
+                            max_results=max_results_actuel,
                             progress_callback=save_callback
                         )
+                        
+                        # ✅ Sauvegarder le checkpoint
+                        if enable_resume_capture:
+                            try:
+                                if checkpoint_file.exists():
+                                    with open(checkpoint_file, 'r', encoding='utf-8') as f:
+                                        checkpoint = json.load(f)
+                                else:
+                                    checkpoint = {}
+                                checkpoint[task_key] = {
+                                    'completed': True,
+                                    'timestamp': datetime.now().isoformat(),
+                                    'results_count': len(resultats) if resultats else 0
+                                }
+                                with open(checkpoint_file, 'w', encoding='utf-8') as f:
+                                    json.dump(checkpoint, f, ensure_ascii=False, indent=2)
+                            except:
+                                pass
+                        
+                        # Fermer le scraper
+                        scraper.quit()
+                        
+                        if resultats:
+                            for r in resultats:
+                                r['ville_recherche'] = ville_actuelle
+                            add_log(f"✅ [{threading.current_thread().name}] {len(resultats)} résultats pour {ville_actuelle}")
+                            return resultats
+                        else:
+                            add_log(f"⚠️ [{threading.current_thread().name}] Aucun résultat pour {ville_actuelle}")
+                            return []
+                    except Exception as e:
+                        add_log(f"❌ [{threading.current_thread().name}] Erreur {ville_actuelle}: {str(e)[:100]}")
+                        return []
+                
+                # ✅ Multi-threading
+                if num_threads_capture > 1:
+                    add_log(f"🚀 Multi-threading activé ({num_threads_capture} threads)")
+                    with ThreadPoolExecutor(max_workers=num_threads_capture) as executor:
+                        futures = {executor.submit(scrape_ville, task): task for task in toutes_villes}
+                        for future in as_completed(futures):
+                            if not scraper_instance.is_running:
+                                break
+                            try:
+                                resultats = future.result()
+                                if resultats:
+                                    tous_resultats.extend(resultats)
+                            except Exception as e:
+                                add_log(f"❌ Erreur thread: {str(e)[:100]}")
+                else:
+                    # Mode séquentiel
+                    for task in toutes_villes:
+                        if not scraper_instance.is_running:
+                            break
+                        resultats = scrape_ville(task)
                         if resultats:
                             tous_resultats.extend(resultats)
-                            logger.info(f"✅ {len(resultats)} résultats pour {ville}")
-                        else:
-                            logger.warning(f"⚠️ Aucun résultat pour {ville}")
-                    except Exception as e:
-                        logger.error(f"❌ Erreur scraping {ville}: {e}")
-                        import traceback
-                        logger.error(traceback.format_exc())
-                        # Continuer avec la ville suivante même en cas d'erreur
-                        continue
                 
-                # Marquer comme terminé dans le fichier
+                add_log(f"✅ Scraping terminé: {len(tous_resultats)} résultats au total")
+                
+                # Marquer comme terminé
                 status_file = Path(__file__).parent.parent.parent / "data" / "scraping_status.json"
                 with open(status_file, 'w', encoding='utf-8') as f:
                     json.dump({'running': False, 'started': False}, f)
@@ -363,7 +737,7 @@ if st.session_state.scraping_running:
             except Exception as e:
                 import traceback
                 logger.error(f"❌ Erreur lors du scraping: {e}\n{traceback.format_exc()}")
-                # Marquer comme terminé même en cas d'erreur
+                add_log(f"❌ Erreur fatale: {str(e)[:200]}")
                 status_file = Path(__file__).parent.parent.parent / "data" / "scraping_status.json"
                 try:
                     with open(status_file, 'w', encoding='utf-8') as f:
@@ -374,18 +748,56 @@ if st.session_state.scraping_running:
         st.session_state.scraping_thread = threading.Thread(target=run_scraping, daemon=True)
         st.session_state.scraping_thread.start()
     
-    # Charger les résultats depuis le fichier JSON (thread-safe)
+    # ✅ Charger les résultats depuis le fichier JSON
     results_file = Path(__file__).parent.parent.parent / "data" / "scraping_results_temp.json"
     if results_file.exists():
         try:
             with open(results_file, 'r', encoding='utf-8') as f:
                 results_from_file = json.load(f)
-                # Mettre à jour st.session_state.scraped_results avec les nouveaux résultats
                 for r in results_from_file:
                     if r not in st.session_state.scraped_results:
                         st.session_state.scraped_results.append(r)
         except:
             pass
+    
+    # ✅ Charger et afficher les logs en temps réel
+    logs_file = Path(__file__).parent.parent.parent / "data" / "scraping_logs.json"
+    try:
+        if logs_file.exists():
+            with open(logs_file, 'r', encoding='utf-8') as f:
+                logs_data = json.load(f)
+                # Afficher les 50 derniers logs
+                recent_logs = logs_data[-50:] if len(logs_data) > 50 else logs_data
+                if recent_logs:
+                    logs_html = "<div style='font-family: monospace; font-size: 0.85em; max-height: 500px; overflow-y: auto; background: #f8f9fa; padding: 10px; border-radius: 5px;'>"
+                    for log_entry in recent_logs:
+                        timestamp = log_entry.get('timestamp', '')
+                        message = log_entry.get('message', '')
+                        # Formater le timestamp
+                        try:
+                            dt = datetime.fromisoformat(timestamp)
+                            time_str = dt.strftime('%H:%M:%S')
+                        except:
+                            time_str = timestamp[:8] if len(timestamp) > 8 else timestamp
+                        logs_html += f"<div style='margin: 3px 0; padding: 6px; border-left: 3px solid #007bff; padding-left: 10px; background: white; border-radius: 3px;'><span style='color: #6c757d; font-weight: bold;'>{time_str}</span> <span style='color: #212529;'>{message}</span></div>"
+                    logs_html += "</div>"
+                    logs_display.markdown(logs_html, unsafe_allow_html=True)
+                else:
+                    logs_display.info("⏳ En attente des premiers logs...")
+        else:
+            logs_display.info("⏳ En attente des premiers logs...")
+    except Exception as e:
+        logs_display.error(f"Erreur chargement logs: {e}")
+    
+    # Charger le compteur de sauvegardes
+    saved_file = Path(__file__).parent.parent.parent / "data" / "saved_count.json"
+    if saved_file.exists():
+        try:
+            with open(saved_file, 'r') as f:
+                count_data = json.load(f)
+                st.session_state.saved_count = count_data.get('count', 0)
+        except:
+            st.session_state.saved_count = 0
     
     # Vérifier l'état depuis le fichier JSON
     status_file = Path(__file__).parent.parent.parent / "data" / "scraping_status.json"
@@ -399,7 +811,7 @@ if st.session_state.scraping_running:
         except:
             pass
     
-    # Mettre à jour l'affichage avec les résultats actuels
+    # Mettre à jour l'affichage
     if st.session_state.scraped_results:
         avec_tel = sum(1 for r in st.session_state.scraped_results if r.get('telephone'))
         avec_site = sum(1 for r in st.session_state.scraped_results if r.get('site_web'))
@@ -409,10 +821,11 @@ if st.session_state.scraping_running:
             f"📊 **{len(st.session_state.scraped_results)}** scrapés | "
             f"📞 {avec_tel} avec téléphone | "
             f"🌐 {avec_site} avec site | "
-            f"⭐ {sans_site} SANS site (prospects !)"
+            f"⭐ {sans_site} SANS site (prospects !) | "
+            f"💾 {st.session_state.saved_count} sauvegardés"
         )
     
-    # Auto-refresh pour mettre à jour l'interface (seulement si scraping en cours)
+    # Auto-refresh
     if st.session_state.scraping_running:
         time.sleep(2)
         st.experimental_rerun()
@@ -454,7 +867,11 @@ if st.session_state.scraped_results:
     if filtre_sans_site:
         df_filtre = df_filtre[df_filtre['site_web'].isna()]
     
-    # Afficher le tableau avec CSS pour prendre toute la largeur et ajuster les colonnes
+    # ✅ Afficher le tableau avec colonne ville_recherche et meilleur affichage
+    colonnes_afficher = ['nom', 'telephone', 'site_web', 'adresse', 'ville_recherche', 'ville', 'note', 'nb_avis']
+    colonnes_disponibles = [col for col in colonnes_afficher if col in df_filtre.columns]
+    
+    # CSS amélioré pour le tableau
     st.markdown("""
     <style>
     .stDataFrame {
@@ -465,39 +882,38 @@ if st.session_state.scraped_results:
     }
     .stDataFrame table {
         width: 100% !important;
-        table-layout: fixed !important;
+        table-layout: auto !important;
     }
-    .stDataFrame th {
-        background-color: #f0f2f6 !important;
-        font-weight: bold !important;
-        padding: 8px !important;
-    }
-    .stDataFrame td {
+    .stDataFrame th, .stDataFrame td {
         padding: 8px !important;
         word-wrap: break-word !important;
         overflow-wrap: break-word !important;
+        white-space: normal !important;
     }
-    .stDataFrame th:nth-child(1), .stDataFrame td:nth-child(1) { width: 20% !important; }
-    .stDataFrame th:nth-child(2), .stDataFrame td:nth-child(2) { width: 12% !important; }
-    .stDataFrame th:nth-child(3), .stDataFrame td:nth-child(3) { width: 20% !important; }
-    .stDataFrame th:nth-child(4), .stDataFrame td:nth-child(4) { width: 20% !important; }
-    .stDataFrame th:nth-child(5), .stDataFrame td:nth-child(5) { width: 10% !important; }
-    .stDataFrame th:nth-child(6), .stDataFrame td:nth-child(6) { width: 8% !important; }
-    .stDataFrame th:nth-child(7), .stDataFrame td:nth-child(7) { width: 10% !important; }
+    .stDataFrame th:nth-child(1) { width: 15% !important; } /* Nom */
+    .stDataFrame th:nth-child(2) { width: 10% !important; } /* Téléphone */
+    .stDataFrame th:nth-child(3) { width: 20% !important; } /* Site web */
+    .stDataFrame th:nth-child(4) { width: 20% !important; } /* Adresse */
+    .stDataFrame th:nth-child(5) { width: 12% !important; } /* Ville recherchée */
+    .stDataFrame th:nth-child(6) { width: 10% !important; } /* Ville */
+    .stDataFrame th:nth-child(7) { width: 6% !important; } /* Note */
+    .stDataFrame th:nth-child(8) { width: 7% !important; } /* Nb avis */
     </style>
     """, unsafe_allow_html=True)
+    
+    # ✅ Utiliser width au lieu de use_container_width (compatibilité Streamlit)
     st.dataframe(
-        df_filtre[['nom', 'telephone', 'site_web', 'adresse', 'ville', 'note', 'nb_avis']],
-        height=400
+        df_filtre[colonnes_disponibles],
+        height=600
     )
     
-    # Boutons d'export
+    # ✅ Boutons d'export (gardés car utiles)
     col_exp1, col_exp2, col_exp3 = st.columns(3)
     
     with col_exp1:
         csv_all = df.to_csv(index=False, encoding='utf-8-sig')
-        dept = st.session_state.get('departement_selected', departement)
-        metier_export = st.session_state.get('metier_selected', metier)
+        dept = st.session_state.get('departements_selected', [departement])[0] if st.session_state.get('departements_selected') else departement
+        metier_export = st.session_state.get('metiers_selected', [metier])[0] if st.session_state.get('metiers_selected') else metier
         st.download_button(
             "📥 Télécharger CSV complet",
             csv_all,
@@ -509,8 +925,8 @@ if st.session_state.scraped_results:
         df_avec_site = df[df['site_web'].notna()]
         if len(df_avec_site) > 0:
             csv_avec = df_avec_site.to_csv(index=False, encoding='utf-8-sig')
-            dept = st.session_state.get('departement_selected', departement)
-            metier_export = st.session_state.get('metier_selected', metier)
+            dept = st.session_state.get('departements_selected', [departement])[0] if st.session_state.get('departements_selected') else departement
+            metier_export = st.session_state.get('metiers_selected', [metier])[0] if st.session_state.get('metiers_selected') else metier
             st.download_button(
                 "📥 CSV avec site web",
                 csv_avec,
@@ -522,12 +938,11 @@ if st.session_state.scraped_results:
         df_sans_site = df[df['site_web'].isna()]
         if len(df_sans_site) > 0:
             csv_sans = df_sans_site.to_csv(index=False, encoding='utf-8-sig')
-            dept = st.session_state.get('departement_selected', departement)
-            metier_export = st.session_state.get('metier_selected', metier)
+            dept = st.session_state.get('departements_selected', [departement])[0] if st.session_state.get('departements_selected') else departement
+            metier_export = st.session_state.get('metiers_selected', [metier])[0] if st.session_state.get('metiers_selected') else metier
             st.download_button(
                 "⭐ CSV SANS site web (PROSPECTS)",
                 csv_sans,
                 f"{metier_export}_{dept}_SANS_site_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
                 "text/csv"
             )
-
