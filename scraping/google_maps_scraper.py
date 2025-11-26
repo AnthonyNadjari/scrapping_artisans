@@ -86,8 +86,25 @@ class GoogleMapsScraper:
             chrome_options.add_argument('--window-size=1920,1080')
         
         try:
-            # Utiliser webdriver_manager pour télécharger automatiquement ChromeDriver
-            service = Service(ChromeDriverManager().install())
+            import platform
+            import os
+            
+            # ✅ Sur Linux (GitHub Actions), utiliser le ChromeDriver installé directement
+            # Sur Windows/Mac, utiliser ChromeDriverManager
+            if platform.system() == 'Linux' and os.path.exists('/usr/local/bin/chromedriver'):
+                # GitHub Actions : utiliser le ChromeDriver installé par le workflow
+                service = Service('/usr/local/bin/chromedriver')
+            elif platform.system() == 'Linux':
+                # Linux mais pas de ChromeDriver dans /usr/local/bin, essayer /usr/bin
+                if os.path.exists('/usr/bin/chromedriver'):
+                    service = Service('/usr/bin/chromedriver')
+                else:
+                    # Fallback : utiliser ChromeDriverManager
+                    service = Service(ChromeDriverManager().install())
+            else:
+                # Windows/Mac : utiliser ChromeDriverManager
+                service = Service(ChromeDriverManager().install())
+            
             self.driver = webdriver.Chrome(service=service, options=chrome_options)
             
             # Exécuter JS pour cacher webdriver
@@ -99,6 +116,8 @@ class GoogleMapsScraper:
             return True
         except Exception as e:
             logger.error(f"❌ Erreur initialisation Chrome: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
             return False
     
     def _normaliser_telephone(self, tel: str) -> Optional[str]:
