@@ -1,0 +1,99 @@
+name: Google Maps Scraping
+
+on:
+  workflow_dispatch:
+    inputs:
+      metiers:
+        description: 'Métiers à scraper (JSON array)'
+        required: true
+        type: string
+      departements:
+        description: 'Départements à scraper (JSON array)'
+        required: true
+        type: string
+      max_results:
+        description: 'Nombre max de résultats par ville'
+        required: true
+        type: number
+        default: 50
+      num_threads:
+        description: 'Nombre de threads'
+        required: true
+        type: number
+        default: 3
+      use_api_communes:
+        description: 'Utiliser API data.gouv.fr'
+        required: false
+        type: boolean
+        default: false
+      min_pop:
+        description: 'Population minimum'
+        required: false
+        type: number
+        default: 0
+      max_pop:
+        description: 'Population maximum'
+        required: false
+        type: number
+        default: 50000
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360  # 6 heures max
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget gnupg2 unzip
+          # Install Chrome
+          wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+          sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+          # Install ChromeDriver
+          CHROMEDRIVER_VERSION=$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE)
+          wget -O /tmp/chromedriver.zip https://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip
+          sudo unzip /tmp/chromedriver.zip -d /usr/local/bin/
+          sudo chmod +x /usr/local/bin/chromedriver
+      
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Run scraping
+        id: scraping
+        env:
+          METIERS: ${{ github.event.inputs.metiers }}
+          DEPARTEMENTS: ${{ github.event.inputs.departements }}
+          MAX_RESULTS: ${{ github.event.inputs.max_results || 50 }}
+          NUM_THREADS: ${{ github.event.inputs.num_threads || 3 }}
+          USE_API_COMMUNES: ${{ github.event.inputs.use_api_communes || false }}
+          MIN_POP: ${{ github.event.inputs.min_pop || 0 }}
+          MAX_POP: ${{ github.event.inputs.max_pop || 50000 }}
+        run: |
+          python scripts/run_scraping_github_actions.py
+      
+      - name: Upload results as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: scraping-results
+          path: data/scraping_results_github_actions.json
+          retention-days: 7
+      
+      - name: Summary
+        run: |
+          echo "## ✅ Scraping terminé" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 Résultats: $(cat data/scraping_results_github_actions.json | grep -o '"total_results": [0-9]*' | grep -o '[0-9]*') établissements scrapés" >> $GITHUB_STEP_SUMMARY
+
