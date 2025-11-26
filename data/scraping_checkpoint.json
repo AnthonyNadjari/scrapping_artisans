@@ -278,5 +278,55 @@
     "completed": true,
     "timestamp": "2025-11-27T00:40:53.677936",
     "results_count": 0
+  },
+  "plombier_77_Vaux-sur-Lunain": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:41:57.533805",
+    "results_count": 31
+  },
+  "plombier_77_Montdauphin": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:42:13.987402",
+    "results_count": 3
+  },
+  "plombier_77_La Chapelle-Saint-Sulpice": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:42:22.455614",
+    "results_count": 0
+  },
+  "plombier_77_Clos-Fontaine": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:42:27.263299",
+    "results_count": 13
+  },
+  "plombier_77_Forfry": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:42:27.327964",
+    "results_count": 0
+  },
+  "plombier_77_Villiers-en-Bière": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:42:31.994933",
+    "results_count": 0
+  },
+  "plombier_77_Ormesson": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:42:53.037646",
+    "results_count": 0
+  },
+  "plombier_77_Courtacon": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:42:58.294468",
+    "results_count": 0
+  },
+  "plombier_77_Saint-Mars-Vieux-Maisons": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:43:06.299124",
+    "results_count": 0
+  },
+  "plombier_77_Montolivet": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:43:14.023376",
+    "results_count": 0
   }
 }

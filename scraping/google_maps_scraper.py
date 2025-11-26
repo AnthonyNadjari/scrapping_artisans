@@ -917,7 +917,12 @@ class GoogleMapsScraper:
                             nb_articles = len(self.driver.find_elements(By.CSS_SELECTOR, 'div[role="article"]'))
                             logger.info(f"   ✅ Résultats de recherche détectés: {nb_etablissements} liens /maps/place/, {nb_articles} articles")
                         except TimeoutException:
-                            logger.warning("   ⚠️ Timeout attente résultats, mais on continue quand même...")
+                            # ✅ Sur GitHub Actions, c'est normal d'avoir un timeout - les résultats peuvent être plus lents
+                            import os
+                            if os.getenv('GITHUB_ACTIONS'):
+                                logger.info("   ⏳ Timeout attente résultats (GitHub Actions - normal), vérification directe...")
+                            else:
+                                logger.warning("   ⚠️ Timeout attente résultats, mais on continue quand même...")
                             nb_etablissements = len(self.driver.find_elements(By.CSS_SELECTOR, 'a[href*="/maps/place/"]'))
                             nb_articles = len(self.driver.find_elements(By.CSS_SELECTOR, 'div[role="article"]'))
                             logger.info(f"   📊 Éléments trouvés sans attendre: {nb_etablissements} liens, {nb_articles} articles")
@@ -1972,23 +1977,36 @@ class GoogleMapsScraper:
                             aria_label = tel_btn.get_attribute('aria-label')
                             logger.debug(f"  [{index}] aria-label (panneau): {aria_label}")
                             if aria_label and 'Numéro de téléphone' in aria_label:
-                                # Pattern plus simple et robuste : "+33 6 73 87 88 61"
-                                tel_match = re.search(r'(\+33|0)\s*[1-9](?:\s*\d{2}){4}', aria_label)
+                                # Pattern plus robuste : "+33 6 73 87 88 61" ou "06 73 87 88 61"
+                                # Chercher d'abord le format international +33
+                                tel_match = re.search(r'\+33\s*([1-9]\s*(?:\d{2}\s*){4})|0\s*[1-9](?:\s*\d{2}){4}', aria_label)
                                 if tel_match:
                                     tel_brut = tel_match.group(0).replace(' ', '').replace('+33', '0')
-                                    tel_normalise = self._normaliser_telephone(tel_brut)
-                                    if tel_normalise:
-                                        info['telephone'] = tel_normalise
-                                        # Vérification immédiate
-                                        if info.get('telephone') == tel_normalise:
+                                    # S'assurer qu'on a bien 10 chiffres
+                                    tel_clean = ''.join(filter(str.isdigit, tel_brut))
+                                    if len(tel_clean) == 10 and tel_clean.startswith('0'):
+                                        tel_normalise = self._normaliser_telephone(tel_clean)
+                                        if tel_normalise:
+                                            info['telephone'] = tel_normalise
                                             logger.info(f"  [{index}] ✅ Téléphone trouvé et stocké: {info['telephone']}")
+                                            break
                                         else:
-                                            logger.error(f"  [{index}] ❌ ERREUR: Téléphone non stocké! tel_normalise={tel_normalise}, info['telephone']={info.get('telephone')}")
-                                        break
+                                            logger.warning(f"  [{index}] ⚠️ Téléphone trouvé mais normalisation échouée: {tel_clean}")
                                     else:
-                                        logger.warning(f"  [{index}] ⚠️ Téléphone trouvé mais normalisation échouée: {tel_brut}")
+                                        logger.debug(f"  [{index}] Téléphone invalide (longueur: {len(tel_clean)}): {tel_clean}")
                                 else:
-                                    logger.debug(f"  [{index}] Regex ne match pas (panneau): {aria_label}")
+                                    # Essayer un pattern plus permissif
+                                    tel_match2 = re.search(r'(\+33|0)[\s\-\.]?([1-9][\s\-\.]?\d{2}[\s\-\.]?\d{2}[\s\-\.]?\d{2}[\s\-\.]?\d{2})', aria_label)
+                                    if tel_match2:
+                                        tel_brut = tel_match2.group(0).replace(' ', '').replace('-', '').replace('.', '').replace('+33', '0')
+                                        tel_clean = ''.join(filter(str.isdigit, tel_brut))
+                                        if len(tel_clean) == 10 and tel_clean.startswith('0'):
+                                            tel_normalise = self._normaliser_telephone(tel_clean)
+                                            if tel_normalise:
+                                                info['telephone'] = tel_normalise
+                                                logger.info(f"  [{index}] ✅ Téléphone trouvé (pattern 2) et stocké: {info['telephone']}")
+                                                break
+                                    logger.debug(f"  [{index}] Regex ne match pas (panneau): {aria_label[:100]}")
                         except Exception as e:
                             logger.debug(f"  Erreur extraction téléphone aria-label (panneau): {e}")
                             continue
@@ -2189,7 +2207,7 @@ class GoogleMapsScraper:
                     log_parts.append(f"📞 {info['telephone']}")
                 else:
                     log_parts.append("❌ Pas de téléphone")
-                    logger.warning(f"  [{index}] ⚠️ Téléphone non stocké malgré extraction")
+                    # ✅ Ne pas logger ce warning - c'est normal si pas de téléphone disponible
                 
                 if info.get('site_web'):
                     log_parts.append(f"🌐 Oui")
