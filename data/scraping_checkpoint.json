@@ -153,5 +153,125 @@
     "completed": true,
     "timestamp": "2025-11-27T00:16:55.362580",
     "results_count": 31
+  },
+  "plombier_77_Leudon-en-Brie": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:28:24.891664",
+    "results_count": 0
+  },
+  "plombier_77_Ichy": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:28:29.647775",
+    "results_count": 0
+  },
+  "plombier_77_Gironville": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:28:41.032630",
+    "results_count": 6
+  },
+  "plombier_77_Lizines": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:29:42.789907",
+    "results_count": 5
+  },
+  "plombier_77_Frétoy": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:29:52.278530",
+    "results_count": 9
+  },
+  "plombier_77_Paroy": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:30:35.420093",
+    "results_count": 15
+  },
+  "plombier_77_Beauvoir": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:30:59.252216",
+    "results_count": 5
+  },
+  "plombier_77_Vanvillé": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:31:50.588899",
+    "results_count": 6
+  },
+  "plombier_77_Giremoutiers": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:32:01.860039",
+    "results_count": 20
+  },
+  "plombier_77_Vieux-Champagne": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:33:25.546206",
+    "results_count": 11
+  },
+  "plombier_77_La Chapelle-Iger": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:33:44.602979",
+    "results_count": 13
+  },
+  "plombier_77_Courquetaine": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:33:45.151745",
+    "results_count": 31
+  },
+  "plombier_77_Diant": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:34:38.730171",
+    "results_count": 5
+  },
+  "plombier_77_Champcenest": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:35:14.391840",
+    "results_count": 10
+  },
+  "plombier_77_La Tombe": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:35:20.092579",
+    "results_count": 11
+  },
+  "plombier_77_Germigny-sous-Coulombs": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:36:01.376455",
+    "results_count": 7
+  },
+  "plombier_77_Cessoy-en-Montois": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:36:25.949436",
+    "results_count": 5
+  },
+  "plombier_77_Courcelles-en-Bassée": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:36:36.054596",
+    "results_count": 6
+  },
+  "plombier_77_Bezalles": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:37:30.288025",
+    "results_count": 10
+  },
+  "plombier_77_Montmachoux": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:37:49.833171",
+    "results_count": 5
+  },
+  "plombier_77_Fromont": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:38:33.278236",
+    "results_count": 3
+  },
+  "plombier_77_Châtillon-la-Borde": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:38:40.707094",
+    "results_count": 0
+  },
+  "plombier_77_Trocy-en-Multien": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:38:51.118993",
+    "results_count": 2
+  },
+  "plombier_77_Meigneux": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:40:22.889201",
+    "results_count": 11
   }
 }

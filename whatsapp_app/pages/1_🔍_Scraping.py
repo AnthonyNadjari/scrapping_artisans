@@ -767,10 +767,22 @@ if st.session_state.scraping_running:
                 st.info(f"📊 Statut: {status}")
         else:
             st.warning("⏳ En attente du démarrage du workflow...")
+            # Ne pas faire de refresh automatique si le workflow n'est pas encore démarré
+            if not st.session_state.github_workflow_id:
+                # Attendre un peu avant de réessayer
+                time.sleep(2)
+                st.experimental_rerun()
         
-        # Auto-refresh pour vérifier le statut
-        time.sleep(5)
-        st.experimental_rerun()
+        # Auto-refresh pour vérifier le statut SEULEMENT si le workflow est en cours
+        if status and (status == 'in_progress' or status == 'queued'):
+            time.sleep(5)
+            st.experimental_rerun()
+        elif status == 'completed':
+            # Workflow terminé, ne plus refresh
+            pass
+        else:
+            # Statut inconnu ou erreur, ne plus refresh automatiquement
+            pass
     
     else:
         # ✅ Mode local (code existant) - SEULEMENT si GitHub Actions n'est PAS activé

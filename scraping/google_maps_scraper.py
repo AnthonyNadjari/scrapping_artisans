@@ -883,6 +883,12 @@ class GoogleMapsScraper:
                                 self._fermer_tous_popups()
                                 time.sleep(1)
                         
+                        # ✅ Attendre plus longtemps sur GitHub Actions avant de chercher le panneau
+                        import os
+                        if os.getenv('GITHUB_ACTIONS'):
+                            logger.info("   ⏳ GitHub Actions: attente supplémentaire avant recherche panneau...")
+                            time.sleep(5)
+                        
                         # Réessayer de trouver le panneau après relance
                         for selector, timeout in selecteurs_panneau:
                             try:
@@ -2288,6 +2294,12 @@ class GoogleMapsScraper:
             # Attendre un peu plus pour que tous les résultats se chargent
             time.sleep(2)
             
+            # ✅ Attendre un peu plus longtemps sur GitHub Actions pour que les résultats se chargent
+            import os
+            if os.getenv('GITHUB_ACTIONS'):
+                logger.info("   ⏳ GitHub Actions détecté, attente supplémentaire pour le chargement...")
+                time.sleep(5)  # Attendre 5 secondes supplémentaires
+            
             # Chercher TOUS les liens vers des établissements dans toute la page
             # C'est le sélecteur le plus fiable qui fonctionne toujours
             # On scraper TOUS les établissements, pas seulement ceux avec le mot-clé
@@ -2299,20 +2311,27 @@ class GoogleMapsScraper:
             if len(etablissements_elems) == 0:
                 logger.warning("⚠️ Aucun établissement trouvé avec a[href*='/maps/place/'], recherche alternative...")
                 
+                # Attendre encore un peu et réessayer
+                if os.getenv('GITHUB_ACTIONS'):
+                    logger.info("   ⏳ Attente supplémentaire (GitHub Actions)...")
+                    time.sleep(10)  # Attendre 10 secondes supplémentaires sur GitHub Actions
+                    etablissements_elems = self.driver.find_elements(By.CSS_SELECTOR, 'a[href*="/maps/place/"]')
+                
                 # Méthode alternative : chercher dans feed ou articles
-                try:
-                    feed = self.driver.find_elements(By.CSS_SELECTOR, 'div[role="feed"]')
-                    if feed:
-                        etablissements_elems = feed[0].find_elements(By.CSS_SELECTOR, 'a, div[jsaction]')
-                        logger.info(f"   📍 {len(etablissements_elems)} éléments trouvés dans feed")
-                    
-                    if len(etablissements_elems) == 0:
-                        articles = self.driver.find_elements(By.CSS_SELECTOR, 'div[role="article"]')
-                        if articles:
-                            etablissements_elems = articles
-                            logger.info(f"   📍 {len(articles)} articles trouvés")
-                except:
-                    pass
+                if len(etablissements_elems) == 0:
+                    try:
+                        feed = self.driver.find_elements(By.CSS_SELECTOR, 'div[role="feed"]')
+                        if feed:
+                            etablissements_elems = feed[0].find_elements(By.CSS_SELECTOR, 'a, div[jsaction]')
+                            logger.info(f"   📍 {len(etablissements_elems)} éléments trouvés dans feed")
+                        
+                        if len(etablissements_elems) == 0:
+                            articles = self.driver.find_elements(By.CSS_SELECTOR, 'div[role="article"]')
+                            if articles:
+                                etablissements_elems = articles
+                                logger.info(f"   📍 {len(articles)} articles trouvés")
+                    except:
+                        pass
             
             # Si toujours 0, lancer le debug
             if len(etablissements_elems) == 0:
