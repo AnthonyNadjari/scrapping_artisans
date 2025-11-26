@@ -817,7 +817,10 @@ class GoogleMapsScraper:
                     
                     # Attendre que Google Maps charge COMPLÈTEMENT
                     logger.info("   ⏳ Attente chargement complet Google Maps...")
-                    self._attendre_chargement_complet(timeout=30)
+                    # ✅ Augmenter le timeout pour GitHub Actions (environnement plus lent)
+                    import os
+                    timeout_chargement = 60 if os.getenv('GITHUB_ACTIONS') else 30
+                    self._attendre_chargement_complet(timeout=timeout_chargement)
                 
                 # ÉTAPE 2 : Fermer les popups (cookies, géolocalisation, etc.)
                 logger.info("   🗑️  Fermeture des popups...")
@@ -828,12 +831,15 @@ class GoogleMapsScraper:
                 logger.info("   ⏳ Attente du panneau de résultats...")
                 
                 # Essayer plusieurs sélecteurs avec timeouts progressifs
+                # ✅ Augmenter les timeouts pour GitHub Actions (environnement plus lent)
+                import os
+                timeout_mult = 2 if os.getenv('GITHUB_ACTIONS') else 1
                 selecteurs_panneau = [
-                    ('div[role="feed"]', 20),
-                    ('div[role="main"]', 10),
-                    ('div[jsaction]', 10),
-                    ('div[data-value]', 10),
-                    ('div[class*="result"]', 10),
+                    ('div[role="feed"]', 20 * timeout_mult),
+                    ('div[role="main"]', 10 * timeout_mult),
+                    ('div[jsaction]', 10 * timeout_mult),
+                    ('div[data-value]', 10 * timeout_mult),
+                    ('div[class*="result"]', 10 * timeout_mult),
                 ]
                 
                 panneau_trouve = False
@@ -893,8 +899,11 @@ class GoogleMapsScraper:
                     # Attendre explicitement que les RÉSULTATS apparaissent
                     if panneau_trouve:
                         logger.info("   ⏳ Attente des résultats de recherche...")
+                        # ✅ Augmenter le timeout pour GitHub Actions (environnement plus lent)
+                        import os
+                        timeout_results = 60 if os.getenv('GITHUB_ACTIONS') else 30
                         try:
-                            WebDriverWait(self.driver, 30).until(
+                            WebDriverWait(self.driver, timeout_results).until(
                                 lambda d: len(d.find_elements(By.CSS_SELECTOR, 'a[href*="/maps/place/"]')) > 0 or
                                           len(d.find_elements(By.CSS_SELECTOR, 'div[role="article"]')) > 0
                             )

@@ -165,9 +165,12 @@ except:
 st.markdown("### 🚀 Mode d'exécution")
 use_github_actions = st.checkbox(
     "☁️ Utiliser GitHub Actions (scraping distant, gratuit)",
-    value=False,
+    value=st.session_state.get('use_github_actions', False),
     help="Le scraping s'exécutera sur GitHub Actions au lieu de votre machine locale. Gratuit jusqu'à 2000 min/mois."
 )
+
+# Sauvegarder l'état dans session_state
+st.session_state.use_github_actions = use_github_actions
 
 if use_github_actions:
     st.info("ℹ️ Le scraping s'exécutera sur GitHub Actions. Vous pouvez fermer cette page, les résultats seront disponibles une fois terminé.")
@@ -686,9 +689,12 @@ with col_btn2:
 st.markdown("---")
 
 # Zone de scraping
+# ✅ IMPORTANT: Ne pas lancer le scraping local si GitHub Actions est activé
+# Vérifier d'abord si GitHub Actions est activé AVANT de vérifier scraping_running
 if st.session_state.scraping_running:
-    # ✅ Vérifier si on utilise GitHub Actions
-    if use_github_actions and github_token and github_repo:
+    # ✅ Vérifier si on utilise GitHub Actions (vérifier la checkbox actuelle)
+    current_use_github = st.session_state.get('use_github_actions', False)
+    if current_use_github and github_token and github_repo:
         st.subheader("☁️ Scraping en cours sur GitHub Actions...")
         
         # Vérifier le statut du workflow
@@ -767,27 +773,32 @@ if st.session_state.scraping_running:
         st.experimental_rerun()
     
     else:
-        # ✅ Mode local (code existant)
-        st.subheader("🔄 Scraping en cours...")
-        
-        progress_container = st.container()
-        logs_container = st.container()
-        
-        with progress_container:
-            progress_bar = st.progress(0)
-            status_text = st.empty()
-            stats_text = st.empty()
-        
-        with logs_container:
-            logs_expander = st.expander("📋 Logs en temps réel", expanded=True)
-            logs_display = logs_expander.empty()
-        
-        # Initialiser le scraper si nécessaire
-        if not st.session_state.scraper:
-            st.session_state.scraper = GoogleMapsScraper(headless=headless)
-        
-        if st.session_state.scraper:
-            st.session_state.scraper.is_running = True
+        # ✅ Mode local (code existant) - SEULEMENT si GitHub Actions n'est PAS activé
+        current_use_github = st.session_state.get('use_github_actions', False)
+        if not current_use_github:
+            st.subheader("🔄 Scraping en cours...")
+            
+            progress_container = st.container()
+            logs_container = st.container()
+            
+            with progress_container:
+                progress_bar = st.progress(0)
+                status_text = st.empty()
+                stats_text = st.empty()
+            
+            with logs_container:
+                logs_expander = st.expander("📋 Logs en temps réel", expanded=True)
+                logs_display = logs_expander.empty()
+            
+            # Initialiser le scraper si nécessaire
+            if not st.session_state.scraper:
+                st.session_state.scraper = GoogleMapsScraper(headless=headless)
+            
+            if st.session_state.scraper:
+                st.session_state.scraper.is_running = True
+        else:
+            # Si GitHub Actions est activé mais pas encore configuré, ne rien faire
+            st.info("⏳ Configuration GitHub Actions en cours...")
     
     # ✅ Fonction de sauvegarde automatique en BDD
     def save_to_db_auto(info, metier_actuel):

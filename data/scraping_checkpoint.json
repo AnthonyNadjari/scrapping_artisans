@@ -103,5 +103,55 @@
     "completed": true,
     "timestamp": "2025-11-26T00:17:34.974776",
     "results_count": 13
+  },
+  "plombier_77_Melun": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:11:27.520838",
+    "results_count": 9
+  },
+  "plombier_77_Fontainebleau": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:12:05.986465",
+    "results_count": 16
+  },
+  "plombier_77_Provins": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:12:54.306544",
+    "results_count": 4
+  },
+  "plombier_77_Meaux": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:13:07.824502",
+    "results_count": 31
+  },
+  "plombier_77_Coulommiers": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:13:36.261881",
+    "results_count": 7
+  },
+  "plombier_77_Nemours": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:14:51.064174",
+    "results_count": 13
+  },
+  "plombier_77_Montereau-Fault-Yonne": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:14:51.450081",
+    "results_count": 10
+  },
+  "plombier_77_Lagny-sur-Marne": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:16:37.170894",
+    "results_count": 3
+  },
+  "plombier_77_Torcy": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:16:48.326216",
+    "results_count": 12
+  },
+  "plombier_77_Chelles": {
+    "completed": true,
+    "timestamp": "2025-11-27T00:16:55.362580",
+    "results_count": 31
   }
 }
