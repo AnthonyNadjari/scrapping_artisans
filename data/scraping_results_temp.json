@@ -2638,5 +2638,41 @@
     "nb_avis": 17,
     "recherche": "plombier",
     "ville_recherche": "Vaux-sur-Lunain"
+  },
+  {
+    "nom": "BD Plomberie Chauffage",
+    "telephone": "06 31 13 66 92",
+    "site_web": "http://bdplomberiechauffage.site-solocal.com/?utm_source=gmb",
+    "adresse": "2 Pl. de la Mairie, 89150 Dollot, France",
+    "code_postal": "89150",
+    "ville": "Dollot, France",
+    "note": 4.9,
+    "nb_avis": 5,
+    "recherche": "plombier",
+    "ville_recherche": "Vaux-sur-Lunain"
+  },
+  {
+    "nom": "AB PLOMBERIE CHAUFFAGE",
+    "telephone": "06 17 31 37 50",
+    "site_web": "https://fauvinruddyclaudejeanpaul.site-solocal.com/",
+    "adresse": "43 Rte de Bransles, 45210 Ferrières-en-Gâtinais, France",
+    "code_postal": "45210",
+    "ville": "Ferrières-en-Gâtinais, France",
+    "note": 4.9,
+    "nb_avis": 10,
+    "recherche": "plombier",
+    "ville_recherche": "Vaux-sur-Lunain"
+  },
+  {
+    "nom": "APL SERVICES TRAVAUX",
+    "telephone": "06 52 49 31 53",
+    "site_web": "http://aplservicestravaux.site-solocal.com/",
+    "adresse": null,
+    "code_postal": null,
+    "ville": null,
+    "note": 4.9,
+    "nb_avis": null,
+    "recherche": "plombier",
+    "ville_recherche": "Vaux-sur-Lunain"
   }
 ]
