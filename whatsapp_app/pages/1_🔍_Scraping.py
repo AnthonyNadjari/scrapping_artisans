@@ -759,38 +759,55 @@ def get_github_workflow_logs(token, repo, run_id):
 def list_github_workflows(token, repo):
     """Liste tous les workflows GitHub Actions en cours"""
     try:
-        # Récupérer les runs du workflow scraping
-        runs_url = f"https://api.github.com/repos/{repo}/actions/runs"
         headers = {
             "Accept": "application/vnd.github+json",
             "Authorization": f"Bearer {token}",
             "X-GitHub-Api-Version": "2022-11-28"
         }
         
-        params = {
-            "status": "in_progress,queued",
-            "per_page": 100
-        }
-        
-        response = requests.get(runs_url, headers=headers, params=params)
-        if response.status_code != 200:
-            return []
-        
-        runs_data = response.json()
         workflows = []
         
-        for run in runs_data.get('workflow_runs', []):
-            workflows.append({
-                'id': run.get('id'),
-                'run_number': run.get('run_number'),
-                'status': run.get('status'),
-                'conclusion': run.get('conclusion'),
-                'created_at': run.get('created_at'),
-                'updated_at': run.get('updated_at'),
-                'head_branch': run.get('head_branch'),
-                'workflow_id': run.get('workflow_id'),
-                'html_url': run.get('html_url')
-            })
+        # ✅ FIX : Faire deux appels séparés car l'API ne supporte pas "in_progress,queued" dans un seul paramètre
+        # Récupérer les runs "in_progress"
+        runs_url_in_progress = f"https://api.github.com/repos/{repo}/actions/runs?status=in_progress&per_page=100"
+        response = requests.get(runs_url_in_progress, headers=headers)
+        if response.status_code == 200:
+            runs_data = response.json()
+            for run in runs_data.get('workflow_runs', []):
+                workflows.append({
+                    'id': run.get('id'),
+                    'run_number': run.get('run_number'),
+                    'status': run.get('status'),
+                    'conclusion': run.get('conclusion'),
+                    'created_at': run.get('created_at'),
+                    'updated_at': run.get('updated_at'),
+                    'head_branch': run.get('head_branch'),
+                    'workflow_id': run.get('workflow_id'),
+                    'html_url': run.get('html_url')
+                })
+        
+        # Récupérer les runs "queued"
+        runs_url_queued = f"https://api.github.com/repos/{repo}/actions/runs?status=queued&per_page=100"
+        response = requests.get(runs_url_queued, headers=headers)
+        if response.status_code == 200:
+            runs_data = response.json()
+            for run in runs_data.get('workflow_runs', []):
+                # Éviter les doublons
+                if not any(w['id'] == run.get('id') for w in workflows):
+                    workflows.append({
+                        'id': run.get('id'),
+                        'run_number': run.get('run_number'),
+                        'status': run.get('status'),
+                        'conclusion': run.get('conclusion'),
+                        'created_at': run.get('created_at'),
+                        'updated_at': run.get('updated_at'),
+                        'head_branch': run.get('head_branch'),
+                        'workflow_id': run.get('workflow_id'),
+                        'html_url': run.get('html_url')
+                    })
+        
+        # Trier par date de création (plus récent en premier)
+        workflows.sort(key=lambda x: x.get('created_at', ''), reverse=True)
         
         return workflows
     except Exception as e:
@@ -870,7 +887,7 @@ def cancel_all_github_workflows(token, repo):
 # ✅ Cette section a été déplacée en haut pour être visible dès le démarrage (voir ligne ~200)
 
 # ✅ Boutons de contrôle SIMPLIFIÉS (comme demandé)
-col_btn1, col_btn2, col_btn3 = st.columns(3)
+col_btn1, col_btn2 = st.columns(2)
 
 with col_btn1:
     # ✅ GitHub Actions uniquement - pas de mode local
@@ -968,11 +985,6 @@ with col_btn2:
                     st.experimental_rerun()
                 else:
                     st.error(f"❌ {message}")
-
-with col_btn3:
-    # ✅ Bouton RAFRAÎCHIR
-    if st.button("🔄 RAFRAÎCHIR", help="Rafraîchir le statut des workflows et les résultats", key="refresh_workflows"):
-        st.experimental_rerun()
 
 st.markdown("---")
 
@@ -1161,8 +1173,11 @@ if should_show_dashboard:
                     st.session_state.github_workflow_id = saved_workflow_id
                     st.session_state.scraping_running = True  # TOUJOURS True si on a un workflow_id
                 
-                # ✅ Charger automatiquement les résultats progressifs depuis le fichier local
+                # ✅ Charger automatiquement les résultats progressifs depuis le fichier local ET la BDD
                 results_file = Path(__file__).parent.parent.parent / "data" / "scraping_results_github_actions.json"
+                results_list = []
+                
+                # 1. Charger depuis le fichier JSON (si existe)
                 if results_file.exists():
                     try:
                         with open(results_file, 'r', encoding='utf-8') as f:
@@ -1171,15 +1186,39 @@ if should_show_dashboard:
                                 results_list = results_data['results']
                             elif isinstance(results_data, list):
                                 results_list = results_data
-                            else:
-                                results_list = []
-                            
-                            if results_list:
-                                # Mettre à jour les résultats affichés
-                                st.session_state.scraped_results = results_list
-                                st.session_state.saved_count = len(results_list)
                     except Exception as e:
-                        logger.error(f"Erreur chargement résultats: {e}")
+                        logger.error(f"Erreur chargement résultats JSON: {e}")
+                
+                # 2. ✅ AUSSI charger depuis la BDD (pour voir les résultats sauvegardés directement)
+                try:
+                    from whatsapp_database.queries import get_artisans
+                    artisans_bdd = get_artisans(limit=1000)  # Récupérer les derniers artisans
+                    if artisans_bdd:
+                        # Convertir les artisans de la BDD en format compatible
+                        for artisan in artisans_bdd:
+                            # Éviter les doublons (par téléphone)
+                            if not any(r.get('telephone') == artisan.get('telephone') for r in results_list if r.get('telephone')):
+                                results_list.append({
+                                    'nom': artisan.get('nom') or artisan.get('nom_entreprise'),
+                                    'telephone': artisan.get('telephone'),
+                                    'site_web': artisan.get('site_web'),
+                                    'adresse': artisan.get('adresse'),
+                                    'ville': artisan.get('ville'),
+                                    'code_postal': artisan.get('code_postal'),
+                                    'note': artisan.get('note'),
+                                    'nb_avis': artisan.get('nombre_avis'),
+                                    'ville_recherche': artisan.get('ville_recherche'),
+                                    'recherche': artisan.get('type_artisan') or artisan.get('recherche')
+                                })
+                        logger.info(f"✅ {len(artisans_bdd)} artisans chargés depuis la BDD")
+                except Exception as e:
+                    logger.error(f"Erreur chargement BDD: {e}")
+                
+                if results_list:
+                    # Mettre à jour les résultats affichés
+                    st.session_state.scraped_results = results_list
+                    st.session_state.saved_count = len(results_list)
+                    st.success(f"✅ {len(results_list)} résultat(s) chargé(s)")
                 
                 # Le statut sera récupéré frais depuis GitHub API lors du rerun
                 # Ne PAS restaurer l'ancien statut - laisser get_github_workflow_status le récupérer frais
