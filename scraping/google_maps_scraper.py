@@ -2080,19 +2080,60 @@ class GoogleMapsScraper:
                     logger.debug(f"  [{index}] Erreur mise à jour nom: {e}")
             
             # Extraire depuis le panneau de détail ouvert
-            # ✅ FIX CRITIQUE : Définir search_context
-            search_context = self.driver
+            # ✅ FIX CRITIQUE : Identifier le panneau de détail spécifique qui s'est ouvert
+            search_context = self.driver  # Par défaut, chercher dans toute la page
+            
+            # ✅ Essayer de trouver le panneau de détail spécifique (panneau latéral qui s'ouvre)
+            try:
+                # Chercher le panneau latéral de détail (celui qui s'ouvre à droite)
+                panneaux_detail = self.driver.find_elements(By.CSS_SELECTOR, 
+                    'div[role="complementary"], '
+                    'div[jsaction*="pane"], '
+                    'div[class*="m6QErb"], '
+                    'div[data-value], '
+                    'div[class*="panel"]'
+                )
+                
+                if panneaux_detail:
+                    # Prendre le panneau le plus à droite (le dernier dans le DOM ou celui avec la plus grande position X)
+                    # Le panneau de détail est généralement le plus récent ou le plus visible
+                    panneau_detail = None
+                    max_x = -1
+                    
+                    for panneau in panneaux_detail:
+                        try:
+                            location = panneau.location
+                            if location['x'] > max_x:
+                                max_x = location['x']
+                                panneau_detail = panneau
+                        except:
+                            continue
+                    
+                    if panneau_detail:
+                        search_context = panneau_detail
+                        logger.info(f"  [{index}] ✅ Panneau de détail identifié (position X: {max_x})")
+                    else:
+                        # Fallback : prendre le dernier panneau trouvé
+                        search_context = panneaux_detail[-1]
+                        logger.info(f"  [{index}] ✅ Panneau de détail identifié (fallback: dernier panneau)")
+                else:
+                    logger.warning(f"  [{index}] ⚠️ Aucun panneau de détail spécifique trouvé, recherche dans toute la page")
+            except Exception as e:
+                logger.debug(f"  [{index}] Erreur identification panneau de détail: {e}, recherche dans toute la page")
             
             try:
                 # Téléphone
                 try:
                     logger.info(f"  [{index}] 🔍 Recherche du téléphone dans le panneau de détail...")
-                    # ✅ FIX : Chercher directement avec les bons sélecteurs
+                    # ✅ FIX : Chercher directement avec les bons sélecteurs (plusieurs variantes)
                     # Priorité 1 : aria-label avec "Numéro de téléphone" (le plus fiable)
                     tel_buttons = search_context.find_elements(By.CSS_SELECTOR, 
-                        'button[aria-label*="Numéro de téléphone"]'
+                        'button[aria-label*="Numéro de téléphone"], '
+                        'button[aria-label*="phone"], '
+                        'button[data-item-id*="phone"], '
+                        'a[href^="tel:"]'
                     )
-                    logger.info(f"  [{index}] 📞 Téléphone (panneau): {len(tel_buttons)} boutons trouvés")
+                    logger.info(f"  [{index}] 📞 Téléphone (panneau): {len(tel_buttons)} boutons/liens trouvés")
                     for tel_btn in tel_buttons:
                         try:
                             aria_label = tel_btn.get_attribute('aria-label')
@@ -2159,8 +2200,12 @@ class GoogleMapsScraper:
                     # Attendre que le panneau soit mis à jour (déjà fait avec le délai de 2.5s après le clic)
                     
                     # Priorité 1 : a[data-item-id*="authority"] (le plus fiable)
+                    # ✅ Ajouter plusieurs sélecteurs pour être plus robuste
                     site_links = search_context.find_elements(By.CSS_SELECTOR, 
-                        'a[data-item-id*="authority"]'
+                        'a[data-item-id*="authority"], '
+                        'a[aria-label*="Visiter le site Web"], '
+                        'a[aria-label*="site Web"], '
+                        'a[href^="http"]:not([href*="google.com"]):not([href*="maps"]):not([href*="goo.gl"])'
                     )
                     logger.info(f"  [{index}] 🌐 Site web (panneau): {len(site_links)} liens trouvés")
                     
