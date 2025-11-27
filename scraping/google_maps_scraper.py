@@ -2095,27 +2095,48 @@ class GoogleMapsScraper:
                 )
                 
                 if panneaux_detail:
-                    # Prendre le panneau le plus à droite (le dernier dans le DOM ou celui avec la plus grande position X)
-                    # Le panneau de détail est généralement le plus récent ou le plus visible
+                    # ✅ FIX CRITIQUE : Trouver le panneau qui contient le nom de l'établissement
+                    # Cela garantit qu'on cherche dans le bon panneau (celui de l'établissement cliqué)
                     panneau_detail = None
-                    max_x = -1
+                    nom_etablissement = info.get('nom', '').strip()
                     
-                    for panneau in panneaux_detail:
-                        try:
-                            location = panneau.location
-                            if location['x'] > max_x:
-                                max_x = location['x']
-                                panneau_detail = panneau
-                        except:
-                            continue
+                    if nom_etablissement:
+                        # Chercher le panneau qui contient le nom de l'établissement
+                        for panneau in panneaux_detail:
+                            try:
+                                panneau_text = panneau.text
+                                # Vérifier si le panneau contient le nom (ou au moins une partie)
+                                if nom_etablissement and len(nom_etablissement) > 3:
+                                    # Prendre les 10 premiers caractères pour éviter les problèmes de casse/espaces
+                                    nom_short = nom_etablissement[:10].lower().strip()
+                                    if nom_short in panneau_text.lower():
+                                        panneau_detail = panneau
+                                        logger.info(f"  [{index}] ✅ Panneau de détail identifié (contient le nom: {nom_short})")
+                                        break
+                            except:
+                                continue
+                    
+                    # Si pas trouvé par nom, prendre le panneau le plus à droite (le plus récent)
+                    if not panneau_detail:
+                        max_x = -1
+                        for panneau in panneaux_detail:
+                            try:
+                                location = panneau.location
+                                if location['x'] > max_x:
+                                    max_x = location['x']
+                                    panneau_detail = panneau
+                            except:
+                                continue
+                        
+                        if panneau_detail:
+                            logger.info(f"  [{index}] ✅ Panneau de détail identifié (position X: {max_x}, fallback)")
+                        else:
+                            # Fallback : prendre le dernier panneau trouvé
+                            panneau_detail = panneaux_detail[-1]
+                            logger.info(f"  [{index}] ✅ Panneau de détail identifié (fallback: dernier panneau)")
                     
                     if panneau_detail:
                         search_context = panneau_detail
-                        logger.info(f"  [{index}] ✅ Panneau de détail identifié (position X: {max_x})")
-                    else:
-                        # Fallback : prendre le dernier panneau trouvé
-                        search_context = panneaux_detail[-1]
-                        logger.info(f"  [{index}] ✅ Panneau de détail identifié (fallback: dernier panneau)")
                 else:
                     logger.warning(f"  [{index}] ⚠️ Aucun panneau de détail spécifique trouvé, recherche dans toute la page")
             except Exception as e:
@@ -2173,10 +2194,34 @@ class GoogleMapsScraper:
                             logger.debug(f"  Erreur extraction téléphone aria-label (panneau): {e}")
                             continue
                     
-                    # Priorité 2 : href tel: si pas trouvé
+                    # Priorité 2 : button[data-item-id*="phone"] si pas trouvé
+                    if not info.get('telephone'):
+                        tel_buttons_data = search_context.find_elements(By.CSS_SELECTOR, 'button[data-item-id*="phone"]')
+                        logger.info(f"  [{index}] 📞 Téléphone (data-item-id): {len(tel_buttons_data)} boutons trouvés")
+                        for tel_btn in tel_buttons_data:
+                            try:
+                                # Essayer d'extraire depuis le texte ou aria-label
+                                tel_text = tel_btn.text.strip()
+                                aria_label = tel_btn.get_attribute('aria-label') or ''
+                                
+                                # Chercher un numéro dans le texte ou aria-label
+                                tel_match = re.search(r'(\+33|0)[\s\-\.]?([1-9][\s\-\.]?\d{2}[\s\-\.]?\d{2}[\s\-\.]?\d{2}[\s\-\.]?\d{2})', tel_text + ' ' + aria_label)
+                                if tel_match:
+                                    tel_brut = tel_match.group(0).replace(' ', '').replace('-', '').replace('.', '').replace('+33', '0')
+                                    tel_clean = ''.join(filter(str.isdigit, tel_brut))
+                                    if len(tel_clean) == 10 and tel_clean.startswith('0'):
+                                        tel_normalise = self._normaliser_telephone(tel_clean)
+                                        if tel_normalise:
+                                            info['telephone'] = tel_normalise
+                                            logger.info(f"  [{index}] ✅ Téléphone trouvé via data-item-id: {info['telephone']}")
+                                            break
+                            except:
+                                continue
+                    
+                    # Priorité 3 : href tel: si pas trouvé
                     if not info.get('telephone'):
                         tel_links = search_context.find_elements(By.CSS_SELECTOR, 'a[href^="tel:"]')
-                        logger.debug(f"  [{index}] Téléphone (panneau): {len(tel_links)} liens tel: trouvés")
+                        logger.info(f"  [{index}] 📞 Téléphone (href tel:): {len(tel_links)} liens trouvés")
                         for tel_link in tel_links:
                             try:
                                 href = tel_link.get_attribute('href')
@@ -2221,10 +2266,28 @@ class GoogleMapsScraper:
                                        'goo.gl' not in href.lower() and \
                                        'googleapis.com' not in href.lower() and \
                                        'aclk' not in href.lower():
-                                        # Prendre le premier site valide trouvé
-                                        info['site_web'] = href
-                                        logger.info(f"  [{index}] ✅ Site web trouvé: {href}")
-                                        break
+                                        # ✅ VÉRIFICATION : S'assurer que le lien est dans le bon panneau
+                                        # Vérifier que le lien est visible et dans le panneau de détail
+                                        try:
+                                            # Si on cherche dans un panneau spécifique (pas toute la page)
+                                            if search_context != self.driver:
+                                                # Vérifier que le lien est bien dans ce panneau
+                                                # En cherchant le lien dans le panneau
+                                                links_in_panel = search_context.find_elements(By.CSS_SELECTOR, f'a[href="{href}"]')
+                                                if links_in_panel and site_link in links_in_panel:
+                                                    info['site_web'] = href
+                                                    logger.info(f"  [{index}] ✅ Site web trouvé: {href}")
+                                                    break
+                                            else:
+                                                # Si on cherche dans toute la page, prendre le premier lien valide
+                                                info['site_web'] = href
+                                                logger.info(f"  [{index}] ✅ Site web trouvé: {href}")
+                                                break
+                                        except:
+                                            # Si la vérification échoue, prendre quand même le lien (fallback)
+                                            info['site_web'] = href
+                                            logger.info(f"  [{index}] ✅ Site web trouvé (fallback): {href}")
+                                            break
                             except:
                                 continue
                     
