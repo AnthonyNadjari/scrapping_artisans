@@ -129,7 +129,8 @@ def init_database():
     conn.commit()
     conn.close()
     
-    print(f"Base de donnees initialisee : {DB_PATH}")
+    # ✅ Message silencieux (seulement en mode debug)
+    # print(f"Base de donnees initialisee : {DB_PATH}")
 
 def get_connection():
     """Retourne une connexion à la base de données"""

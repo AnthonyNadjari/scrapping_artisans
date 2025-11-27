@@ -24,6 +24,25 @@ logger = logging.getLogger(__name__)
 # Logger seulement les erreurs et warnings, pas les infos
 logger.setLevel(logging.WARNING)
 
+# ✅ Réduire les logs de webdriver-manager - DÉSACTIVER COMPLÈTEMENT
+import logging as wdm_logging
+import os
+
+# Désactiver TOUS les logs de webdriver-manager
+wdm_logger = wdm_logging.getLogger('webdriver_manager')
+wdm_logger.setLevel(wdm_logging.CRITICAL)  # Seulement les erreurs critiques
+wdm_logger.disabled = True  # Désactiver complètement
+
+# Désactiver aussi les logs de urllib3 (utilisé par webdriver-manager)
+urllib3_logger = wdm_logging.getLogger('urllib3')
+urllib3_logger.setLevel(wdm_logging.CRITICAL)
+urllib3_logger.disabled = True
+
+# Désactiver les logs de requests (utilisé par webdriver-manager)
+requests_logger = wdm_logging.getLogger('requests')
+requests_logger.setLevel(wdm_logging.CRITICAL)
+requests_logger.disabled = True
+
 
 class GoogleMapsScraper:
     """
@@ -50,9 +69,9 @@ class GoogleMapsScraper:
         # ✅ Multiplicateurs de timeout/delay pour GitHub Actions (plus lent)
         # Ces valeurs n'affectent QUE les timeouts, pas la logique
         if self.is_github_actions:
-            self.timeout_multiplier = 2.0  # Timeouts doublés
-            self.delay_multiplier = 2.0    # Delays doublés
-            logger.info("🔧 Mode GitHub Actions détecté - timeouts/delays augmentés")
+            self.timeout_multiplier = 3.0  # Timeouts triplés (augmenté de 2.0 à 3.0)
+            self.delay_multiplier = 3.0    # Delays triplés (augmenté de 2.0 à 3.0)
+            logger.info("🔧 Mode GitHub Actions détecté - timeouts/delays triplés")
         else:
             self.timeout_multiplier = 1.0  # Pas de changement local
             self.delay_multiplier = 1.0    # Pas de changement local
@@ -136,9 +155,37 @@ class GoogleMapsScraper:
                     service = Service(ChromeDriverManager().install())
             else:
                 # Windows/Mac : utiliser ChromeDriverManager
-                # ✅ ChromeDriverManager détecte automatiquement la version de Chrome et télécharge la bonne version
-                # Le cache sera automatiquement mis à jour si nécessaire
-                service = Service(ChromeDriverManager().install())
+                # ✅ ChromeDriverManager détecte automatiquement la version de Chrome installée
+                # et télécharge la version compatible. Si le cache contient une ancienne version,
+                # ChromeDriverManager la détectera et téléchargera automatiquement la bonne version.
+                # Pas besoin de vider le cache manuellement - ChromeDriverManager gère cela.
+                try:
+                    driver_path = ChromeDriverManager().install()
+                    service = Service(driver_path)
+                except Exception as e:
+                    # Fallback : essayer sans cache
+                    logger.warning(f"⚠️ Erreur ChromeDriverManager: {e}, nouvelle tentative...")
+                    try:
+                        # Forcer le téléchargement en vidant le cache si possible
+                        import shutil
+                        cache_path = os.path.join(os.path.expanduser("~"), ".wdm", "drivers", "chromedriver")
+                        if os.path.exists(cache_path):
+                            try:
+                                # Supprimer seulement les anciennes versions (114.x)
+                                for item in os.listdir(cache_path):
+                                    item_path = os.path.join(cache_path, item)
+                                    if os.path.isdir(item_path) and item.startswith("114"):
+                                        try:
+                                            shutil.rmtree(item_path)
+                                        except:
+                                            pass
+                            except:
+                                pass
+                        driver_path = ChromeDriverManager().install()
+                        service = Service(driver_path)
+                    except Exception as e2:
+                        logger.error(f"❌ Erreur critique ChromeDriver: {e2}")
+                        raise
             
             self.driver = webdriver.Chrome(service=service, options=chrome_options)
             
@@ -2360,7 +2407,24 @@ class GoogleMapsScraper:
             # ✅ Attendre un peu plus longtemps sur GitHub Actions pour que les résultats se chargent
             if self.is_github_actions:
                 logger.info("   ⏳ GitHub Actions détecté, attente supplémentaire pour le chargement...")
-                time.sleep(int(5 * self.delay_multiplier))
+                time.sleep(int(10 * self.delay_multiplier))  # Augmenté de 5 à 10
+                
+                # ✅ Vérifier si Google Maps a bloqué avec un CAPTCHA ou une page d'erreur
+                current_url = self.driver.current_url
+                page_text = self.driver.page_source.lower()
+                
+                if 'sorry' in page_text or 'captcha' in page_text or 'unusual traffic' in page_text:
+                    logger.error("   ❌ Google Maps a détecté l'automatisation (CAPTCHA/blocage)")
+                    return []
+                
+                # ✅ Faire un scroll pour déclencher le chargement des résultats
+                try:
+                    self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight/2);")
+                    time.sleep(2 * self.delay_multiplier)
+                    self.driver.execute_script("window.scrollTo(0, 0);")
+                    time.sleep(1 * self.delay_multiplier)
+                except:
+                    pass
             
             # Chercher TOUS les liens vers des établissements dans toute la page
             # C'est le sélecteur le plus fiable qui fonctionne toujours
@@ -2376,22 +2440,48 @@ class GoogleMapsScraper:
                 # Attendre encore un peu et réessayer
                 if self.is_github_actions:
                     logger.info("   ⏳ Attente supplémentaire (GitHub Actions)...")
-                    time.sleep(int(10 * self.delay_multiplier))
+                    time.sleep(int(15 * self.delay_multiplier))  # Augmenté de 10 à 15
+                    
+                    # ✅ Essayer de scroller dans le panneau de résultats
+                    try:
+                        panneau = self.driver.find_element(By.CSS_SELECTOR, 'div[role="main"]')
+                        self.driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight/2;", panneau)
+                        time.sleep(3 * self.delay_multiplier)
+                        self.driver.execute_script("arguments[0].scrollTop = 0;", panneau)
+                        time.sleep(1 * self.delay_multiplier)
+                    except:
+                        pass
+                    
                     etablissements_elems = self.driver.find_elements(By.CSS_SELECTOR, 'a[href*="/maps/place/"]')
                 
-                # Méthode alternative : chercher dans feed ou articles
+                # ✅ Méthode alternative améliorée : chercher avec plusieurs sélecteurs
                 if len(etablissements_elems) == 0:
                     try:
-                        feed = self.driver.find_elements(By.CSS_SELECTOR, 'div[role="feed"]')
-                        if feed:
-                            etablissements_elems = feed[0].find_elements(By.CSS_SELECTOR, 'a, div[jsaction]')
-                            logger.info(f"   📍 {len(etablissements_elems)} éléments trouvés dans feed")
+                        # ✅ Essayer plusieurs sélecteurs alternatifs
+                        alt_selectors = [
+                            ('div[role="feed"]', 'a, div[jsaction]'),
+                            ('div[role="article"]', None),
+                            ('div[jsaction*="pane"]', 'a'),
+                            ('div[data-value]', 'a'),
+                            ('div[class*="result"]', 'a'),
+                            ('div[class*="place"]', 'a'),
+                            ('div[role="button"][data-value]', None),
+                        ]
                         
-                        if len(etablissements_elems) == 0:
-                            articles = self.driver.find_elements(By.CSS_SELECTOR, 'div[role="article"]')
-                            if articles:
-                                etablissements_elems = articles
-                                logger.info(f"   📍 {len(articles)} articles trouvés")
+                        for container_selector, child_selector in alt_selectors:
+                            try:
+                                containers = self.driver.find_elements(By.CSS_SELECTOR, container_selector)
+                                if containers:
+                                    if child_selector:
+                                        etablissements_elems = containers[0].find_elements(By.CSS_SELECTOR, child_selector)
+                                    else:
+                                        etablissements_elems = containers
+                                    
+                                    if len(etablissements_elems) > 0:
+                                        logger.info(f"   📍 {len(etablissements_elems)} éléments trouvés avec {container_selector}")
+                                        break
+                            except:
+                                continue
                     except:
                         pass
             
