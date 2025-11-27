@@ -17,7 +17,21 @@ st.set_page_config(page_title="Scraping Google Maps", page_icon="🔍", layout="
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from whatsapp_database.queries import ajouter_artisan, get_statistiques, is_already_scraped, get_scraping_history
+from whatsapp_database.queries import ajouter_artisan, get_statistiques
+
+# ✅ Import des fonctions de tracking (avec fallback si elles n'existent pas)
+try:
+    from whatsapp_database.queries import is_already_scraped, get_scraping_history, mark_scraping_done
+except ImportError:
+    # Si les fonctions n'existent pas encore, créer des stubs
+    def is_already_scraped(metier: str, departement: str, ville: str) -> bool:
+        return False
+    
+    def get_scraping_history(metier: str = None, departement: str = None):
+        return []
+    
+    def mark_scraping_done(metier: str, departement: str, ville: str, results_count: int = 0):
+        pass
 import logging
 
 logging.basicConfig(level=logging.INFO)
