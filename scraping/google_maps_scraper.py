@@ -2013,19 +2013,36 @@ class GoogleMapsScraper:
             
             # Cliquer pour ouvrir le détail
             try:
+                logger.info(f"  [{index}] 🖱️ Clic sur l'élément pour ouvrir le panneau de détail...")
                 # Scroll jusqu'à l'élément pour le rendre visible
                 self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
-                time.sleep(0.3)
+                time.sleep(0.3 * self.delay_multiplier)
                 # Essayer plusieurs méthodes de clic
                 try:
                     element.click()
+                    logger.info(f"  [{index}] ✅ Clic réussi (méthode normale)")
                 except:
                     # Si clic normal échoue, utiliser JavaScript
                     self.driver.execute_script("arguments[0].click();", element)
+                    logger.info(f"  [{index}] ✅ Clic réussi (méthode JavaScript)")
+                
                 # ✅ FIX CRITIQUE : Augmenter le délai pour éviter la contamination du panneau
-                time.sleep(2.5)  # 2.5 secondes pour laisser le panneau se rafraîchir complètement
+                # Sur GitHub Actions, attendre plus longtemps
+                delay_after_click = 2.5 * self.delay_multiplier  # 2.5s local, 7.5s sur GitHub Actions
+                logger.info(f"  [{index}] ⏳ Attente {delay_after_click:.1f}s après clic pour chargement panneau...")
+                time.sleep(delay_after_click)
+                
+                # ✅ Vérifier que le panneau de détail s'est bien ouvert
+                try:
+                    panneau_detected = self.driver.find_elements(By.CSS_SELECTOR, 'div[role="complementary"], div[jsaction*="pane"], div[class*="m6QErb"]')
+                    if panneau_detected:
+                        logger.info(f"  [{index}] ✅ Panneau de détail détecté ({len(panneau_detected)} éléments)")
+                    else:
+                        logger.warning(f"  [{index}] ⚠️ Panneau de détail non détecté après clic")
+                except:
+                    logger.debug(f"  [{index}] Impossible de vérifier le panneau de détail")
             except Exception as e:
-                logger.debug(f"  Erreur clic panneau [{index}]: {e}")
+                logger.error(f"  [{index}] ❌ Erreur clic panneau: {e}")
             
             # ==================== MISE À JOUR DU NOM DEPUIS LE PANNEAU ====================
             if not info.get('nom') or (info.get('nom') and info['nom'].lower() in ['pereira', 'résultats', 'results']):  # Si pas de nom OU mauvais nom
@@ -2069,12 +2086,13 @@ class GoogleMapsScraper:
             try:
                 # Téléphone
                 try:
+                    logger.info(f"  [{index}] 🔍 Recherche du téléphone dans le panneau de détail...")
                     # ✅ FIX : Chercher directement avec les bons sélecteurs
                     # Priorité 1 : aria-label avec "Numéro de téléphone" (le plus fiable)
                     tel_buttons = search_context.find_elements(By.CSS_SELECTOR, 
                         'button[aria-label*="Numéro de téléphone"]'
                     )
-                    logger.debug(f"  [{index}] Téléphone (panneau): {len(tel_buttons)} boutons trouvés")
+                    logger.info(f"  [{index}] 📞 Téléphone (panneau): {len(tel_buttons)} boutons trouvés")
                     for tel_btn in tel_buttons:
                         try:
                             aria_label = tel_btn.get_attribute('aria-label')
@@ -2137,12 +2155,14 @@ class GoogleMapsScraper:
                 
                 # ==================== EXTRACTION SITE WEB ====================
                 try:
+                    logger.info(f"  [{index}] 🔍 Recherche du site web dans le panneau de détail...")
                     # Attendre que le panneau soit mis à jour (déjà fait avec le délai de 2.5s après le clic)
                     
                     # Priorité 1 : a[data-item-id*="authority"] (le plus fiable)
                     site_links = search_context.find_elements(By.CSS_SELECTOR, 
                         'a[data-item-id*="authority"]'
                     )
+                    logger.info(f"  [{index}] 🌐 Site web (panneau): {len(site_links)} liens trouvés")
                     
                     if site_links:
                         for site_link in site_links:
