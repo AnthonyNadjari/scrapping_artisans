@@ -2032,6 +2032,18 @@ class GoogleMapsScraper:
                 logger.info(f"  [{index}] ⏳ Attente {delay_after_click:.1f}s après clic pour chargement panneau...")
                 time.sleep(delay_after_click)
                 
+                # ✅ Attendre que le panneau de détail soit complètement chargé
+                # Essayer de détecter quand le contenu est prêt (présence de texte ou d'éléments spécifiques)
+                try:
+                    WebDriverWait(self.driver, int(5 * self.timeout_multiplier)).until(
+                        lambda d: len(d.find_elements(By.CSS_SELECTOR, 'div[role="complementary"]')) > 0 or
+                                  len(d.find_elements(By.CSS_SELECTOR, 'div[jsaction*="pane"]')) > 0
+                    )
+                    # Attendre un peu plus pour que le contenu se charge
+                    time.sleep(1 * self.delay_multiplier)
+                except:
+                    pass  # Si timeout, continuer quand même
+                
                 # ✅ Vérifier que le panneau de détail s'est bien ouvert
                 try:
                     panneau_detected = self.driver.find_elements(By.CSS_SELECTOR, 'div[role="complementary"], div[jsaction*="pane"], div[class*="m6QErb"]')
@@ -2239,6 +2251,30 @@ class GoogleMapsScraper:
                 except Exception as e:
                     logger.error(f"  ❌ Erreur extraction téléphone (panneau): {e}")
                 
+                # ✅ PRIORITÉ 4 : Chercher le téléphone dans le texte brut du panneau
+                if not info.get('telephone') and search_context != self.driver:
+                    try:
+                        panneau_text = search_context.text
+                        # Chercher un numéro de téléphone français dans le texte
+                        tel_patterns = [
+                            r'(\+33|0)[\s\-\.]?([1-9][\s\-\.]?\d{2}[\s\-\.]?\d{2}[\s\-\.]?\d{2}[\s\-\.]?\d{2})',
+                            r'(\+33|0)\s*[1-9](?:\s*\d{2}){4}',
+                            r'0[1-9][\s\-\.]?\d{2}[\s\-\.]?\d{2}[\s\-\.]?\d{2}[\s\-\.]?\d{2}'
+                        ]
+                        for pattern in tel_patterns:
+                            tel_match = re.search(pattern, panneau_text)
+                            if tel_match:
+                                tel_brut = tel_match.group(0).replace(' ', '').replace('-', '').replace('.', '').replace('+33', '0')
+                                tel_clean = ''.join(filter(str.isdigit, tel_brut))
+                                if len(tel_clean) == 10 and tel_clean.startswith('0'):
+                                    tel_normalise = self._normaliser_telephone(tel_clean)
+                                    if tel_normalise:
+                                        info['telephone'] = tel_normalise
+                                        logger.info(f"  [{index}] ✅ Téléphone trouvé via texte du panneau: {info['telephone']}")
+                                        break
+                    except Exception as e:
+                        logger.debug(f"  [{index}] Erreur extraction téléphone depuis texte: {e}")
+                
                 # ==================== EXTRACTION SITE WEB ====================
                 try:
                     logger.info(f"  [{index}] 🔍 Recherche du site web dans le panneau de détail...")
@@ -2266,28 +2302,51 @@ class GoogleMapsScraper:
                                        'goo.gl' not in href.lower() and \
                                        'googleapis.com' not in href.lower() and \
                                        'aclk' not in href.lower():
-                                        # ✅ VÉRIFICATION : S'assurer que le lien est dans le bon panneau
+                                        # ✅ VÉRIFICATION CRITIQUE : S'assurer que le lien est dans le bon panneau
                                         # Vérifier que le lien est visible et dans le panneau de détail
                                         try:
                                             # Si on cherche dans un panneau spécifique (pas toute la page)
                                             if search_context != self.driver:
-                                                # Vérifier que le lien est bien dans ce panneau
-                                                # En cherchant le lien dans le panneau
-                                                links_in_panel = search_context.find_elements(By.CSS_SELECTOR, f'a[href="{href}"]')
-                                                if links_in_panel and site_link in links_in_panel:
-                                                    info['site_web'] = href
-                                                    logger.info(f"  [{index}] ✅ Site web trouvé: {href}")
-                                                    break
+                                                # Vérifier que le lien est bien dans ce panneau en vérifiant son parent
+                                                # Utiliser une méthode plus robuste : vérifier si le lien est un descendant du panneau
+                                                try:
+                                                    # Vérifier que le lien est dans le panneau en cherchant un ancêtre commun
+                                                    is_in_panel = False
+                                                    current = site_link
+                                                    for _ in range(10):  # Max 10 niveaux de profondeur
+                                                        try:
+                                                            parent = current.find_element(By.XPATH, './..')
+                                                            if parent == search_context:
+                                                                is_in_panel = True
+                                                                break
+                                                            # Vérifier si le parent est dans le panneau
+                                                            if parent in search_context.find_elements(By.XPATH, './/*'):
+                                                                is_in_panel = True
+                                                                break
+                                                            current = parent
+                                                        except:
+                                                            break
+                                                    
+                                                    if is_in_panel:
+                                                        info['site_web'] = href
+                                                        logger.info(f"  [{index}] ✅ Site web trouvé: {href}")
+                                                        break
+                                                    else:
+                                                        logger.debug(f"  [{index}] ⚠️ Lien {href[:50]}... non dans le panneau, ignoré")
+                                                        continue
+                                                except:
+                                                    # Si la vérification échoue, ne pas prendre le lien (éviter contamination)
+                                                    logger.debug(f"  [{index}] ⚠️ Lien {href[:50]}... non vérifié, ignoré")
+                                                    continue
                                             else:
                                                 # Si on cherche dans toute la page, prendre le premier lien valide
                                                 info['site_web'] = href
                                                 logger.info(f"  [{index}] ✅ Site web trouvé: {href}")
                                                 break
                                         except:
-                                            # Si la vérification échoue, prendre quand même le lien (fallback)
-                                            info['site_web'] = href
-                                            logger.info(f"  [{index}] ✅ Site web trouvé (fallback): {href}")
-                                            break
+                                            # Si la vérification échoue, ne pas prendre le lien (éviter contamination)
+                                            logger.debug(f"  [{index}] ⚠️ Lien {href[:50]}... non vérifié, ignoré")
+                                            continue
                             except:
                                 continue
                     
