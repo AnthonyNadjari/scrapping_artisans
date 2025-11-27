@@ -18,11 +18,20 @@ from selenium.webdriver.chrome.service import Service
 from selenium.common.exceptions import TimeoutException, NoSuchElementException, StaleElementReferenceException
 from webdriver_manager.chrome import ChromeDriverManager
 
-# ✅ Réduire les logs pour améliorer les performances
-logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-# Logger seulement les erreurs et warnings, pas les infos
-logger.setLevel(logging.WARNING)
+# ✅ Réduire les logs pour améliorer les performances (sauf sur GitHub Actions)
+import os
+is_github_env = os.getenv('GITHUB_ACTIONS') is not None
+
+if is_github_env:
+    # Sur GitHub Actions, logger INFO pour le debugging
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+else:
+    # Localement, seulement WARNING
+    logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.WARNING)
 
 # ✅ Réduire les logs de webdriver-manager - DÉSACTIVER COMPLÈTEMENT
 import logging as wdm_logging
@@ -72,6 +81,8 @@ class GoogleMapsScraper:
             self.timeout_multiplier = 3.0  # Timeouts triplés (augmenté de 2.0 à 3.0)
             self.delay_multiplier = 3.0    # Delays triplés (augmenté de 2.0 à 3.0)
             logger.info("🔧 Mode GitHub Actions détecté - timeouts/delays triplés")
+            logger.info(f"   ⏱️ Timeout multiplier: {self.timeout_multiplier}x")
+            logger.info(f"   ⏱️ Delay multiplier: {self.delay_multiplier}x")
         else:
             self.timeout_multiplier = 1.0  # Pas de changement local
             self.delay_multiplier = 1.0    # Pas de changement local
@@ -2367,9 +2378,16 @@ class GoogleMapsScraper:
         Returns:
             Liste de dicts avec les infos de chaque établissement
         """
+        logger.info(f"🚀 Démarrage scraping: {recherche} à {ville} (max: {max_results})")
+        logger.info(f"   🌍 Environnement: {'GitHub Actions' if self.is_github_actions else 'Local'}")
+        logger.info(f"   ⏱️ Multiplicateurs: timeout={self.timeout_multiplier}x, delay={self.delay_multiplier}x")
+        
         if not self._setup_driver():
+            logger.error("❌ Échec initialisation driver")
             self.is_running = False
             return []
+        
+        logger.info("✅ Driver initialisé avec succès")
         
         # S'assurer que is_running est True avant de commencer
         self.is_running = True
@@ -2377,17 +2395,22 @@ class GoogleMapsScraper:
         
         try:
             # Recherche - récupérer le sélecteur qui a fonctionné
+            logger.info("🔍 Étape 1: Recherche des établissements...")
             recherche_ok, selector_panneau = self._rechercher_etablissements(recherche, ville)
             if not recherche_ok:
+                logger.error("❌ Échec de la recherche")
                 return []
+            
+            logger.info(f"✅ Recherche réussie, sélecteur: {selector_panneau}")
             
             # Utiliser le sélecteur qui a fonctionné, ou un par défaut
             if not selector_panneau:
                 selector_panneau = 'div[role="feed"]'
             
             # Scroller pour charger plus de résultats
-            # ✅ Réduire les logs pour améliorer les performances
+            logger.info(f"📜 Étape 2: Scroll du panneau (max_scrolls=50, selector={selector_panneau})...")
             self._scroller_panneau_lateral(max_scrolls=50, selector=selector_panneau)  # ✅ Augmenté de 15 à 50 pour charger plus de résultats
+            logger.info("✅ Scroll terminé")
             
             # ✅ FIX : Chercher DIRECTEMENT les établissements dans toute la page
             # Ne pas chercher dans un panneau spécifique qui peut ne pas contenir les résultats
@@ -2429,9 +2452,9 @@ class GoogleMapsScraper:
             # Chercher TOUS les liens vers des établissements dans toute la page
             # C'est le sélecteur le plus fiable qui fonctionne toujours
             # On scraper TOUS les établissements, pas seulement ceux avec le mot-clé
+            logger.info("   🔍 Recherche des établissements avec a[href*='/maps/place/']...")
             etablissements_elems = self.driver.find_elements(By.CSS_SELECTOR, 'a[href*="/maps/place/"]')
-            
-            # ✅ Réduire les logs - seulement logger les erreurs importantes
+            logger.info(f"   📊 {len(etablissements_elems)} établissements trouvés avec le sélecteur principal")
             
             # Si 0 établissements trouvés, essayer des méthodes alternatives
             if len(etablissements_elems) == 0:
