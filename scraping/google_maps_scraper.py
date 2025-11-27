@@ -2011,6 +2011,25 @@ class GoogleMapsScraper:
                 logger.error(f"  [{index}] ❌ Erreur extraction nom: {e}")
                 info['nom'] = None
             
+            # ✅ FIX CRITIQUE : Fermer le panneau précédent avant d'ouvrir le suivant
+            try:
+                # Chercher et fermer les panneaux de détail ouverts
+                panneaux_ouverts = self.driver.find_elements(By.CSS_SELECTOR, 
+                    'div[role="complementary"] button[aria-label*="Fermer"], '
+                    'div[jsaction*="pane"] button[aria-label*="Fermer"], '
+                    'button[aria-label*="Fermer"][data-value="close"]'
+                )
+                if panneaux_ouverts:
+                    try:
+                        # Fermer le panneau le plus à droite (le plus récent)
+                        panneaux_ouverts[-1].click()
+                        logger.info(f"  [{index}] 🔒 Panneau précédent fermé")
+                        time.sleep(0.5 * self.delay_multiplier)
+                    except:
+                        pass
+            except:
+                pass
+            
             # Cliquer pour ouvrir le détail
             try:
                 logger.info(f"  [{index}] 🖱️ Clic sur l'élément pour ouvrir le panneau de détail...")
@@ -2028,7 +2047,7 @@ class GoogleMapsScraper:
                 
                 # ✅ FIX CRITIQUE : Augmenter le délai pour éviter la contamination du panneau
                 # Sur GitHub Actions, attendre plus longtemps
-                delay_after_click = 2.5 * self.delay_multiplier  # 2.5s local, 7.5s sur GitHub Actions
+                delay_after_click = 3.0 * self.delay_multiplier  # 3.0s local, 9.0s sur GitHub Actions
                 logger.info(f"  [{index}] ⏳ Attente {delay_after_click:.1f}s après clic pour chargement panneau...")
                 time.sleep(delay_after_click)
                 
@@ -2251,27 +2270,37 @@ class GoogleMapsScraper:
                 except Exception as e:
                     logger.error(f"  ❌ Erreur extraction téléphone (panneau): {e}")
                 
-                # ✅ PRIORITÉ 4 : Chercher le téléphone dans le texte brut du panneau
+                # ✅ PRIORITÉ 4 : Chercher le téléphone dans le texte brut du panneau (AVEC VÉRIFICATION)
                 if not info.get('telephone') and search_context != self.driver:
                     try:
                         panneau_text = search_context.text
-                        # Chercher un numéro de téléphone français dans le texte
-                        tel_patterns = [
-                            r'(\+33|0)[\s\-\.]?([1-9][\s\-\.]?\d{2}[\s\-\.]?\d{2}[\s\-\.]?\d{2}[\s\-\.]?\d{2})',
-                            r'(\+33|0)\s*[1-9](?:\s*\d{2}){4}',
-                            r'0[1-9][\s\-\.]?\d{2}[\s\-\.]?\d{2}[\s\-\.]?\d{2}[\s\-\.]?\d{2}'
-                        ]
-                        for pattern in tel_patterns:
-                            tel_match = re.search(pattern, panneau_text)
-                            if tel_match:
-                                tel_brut = tel_match.group(0).replace(' ', '').replace('-', '').replace('.', '').replace('+33', '0')
-                                tel_clean = ''.join(filter(str.isdigit, tel_brut))
-                                if len(tel_clean) == 10 and tel_clean.startswith('0'):
-                                    tel_normalise = self._normaliser_telephone(tel_clean)
-                                    if tel_normalise:
-                                        info['telephone'] = tel_normalise
-                                        logger.info(f"  [{index}] ✅ Téléphone trouvé via texte du panneau: {info['telephone']}")
-                                        break
+                        nom_etablissement = info.get('nom', '').strip()
+                        
+                        # ✅ VÉRIFICATION CRITIQUE : S'assurer que le panneau contient bien le nom de l'établissement
+                        if nom_etablissement and len(nom_etablissement) > 3:
+                            nom_short = nom_etablissement[:10].lower().strip()
+                            if nom_short not in panneau_text.lower():
+                                logger.warning(f"  [{index}] ⚠️ Le panneau ne contient pas le nom '{nom_short}', risque de contamination - téléphone IGNORÉ")
+                            else:
+                                # Chercher un numéro de téléphone français dans le texte
+                                tel_patterns = [
+                                    r'(\+33|0)[\s\-\.]?([1-9][\s\-\.]?\d{2}[\s\-\.]?\d{2}[\s\-\.]?\d{2}[\s\-\.]?\d{2})',
+                                    r'(\+33|0)\s*[1-9](?:\s*\d{2}){4}',
+                                    r'0[1-9][\s\-\.]?\d{2}[\s\-\.]?\d{2}[\s\-\.]?\d{2}[\s\-\.]?\d{2}'
+                                ]
+                                for pattern in tel_patterns:
+                                    tel_match = re.search(pattern, panneau_text)
+                                    if tel_match:
+                                        tel_brut = tel_match.group(0).replace(' ', '').replace('-', '').replace('.', '').replace('+33', '0')
+                                        tel_clean = ''.join(filter(str.isdigit, tel_brut))
+                                        if len(tel_clean) == 10 and tel_clean.startswith('0'):
+                                            tel_normalise = self._normaliser_telephone(tel_clean)
+                                            if tel_normalise:
+                                                info['telephone'] = tel_normalise
+                                                logger.info(f"  [{index}] ✅ Téléphone trouvé via texte du panneau (vérifié): {info['telephone']}")
+                                                break
+                        else:
+                            logger.warning(f"  [{index}] ⚠️ Pas de nom pour vérifier le panneau, téléphone ignoré (risque contamination)")
                     except Exception as e:
                         logger.debug(f"  [{index}] Erreur extraction téléphone depuis texte: {e}")
                 
@@ -2327,9 +2356,18 @@ class GoogleMapsScraper:
                                                         except:
                                                             break
                                                     
+                                                    # ✅ VÉRIFICATION SUPPLÉMENTAIRE : Le panneau doit contenir le nom de l'établissement
+                                                    nom_etablissement = info.get('nom', '').strip()
+                                                    if nom_etablissement and len(nom_etablissement) > 3:
+                                                        panneau_text_check = search_context.text
+                                                        nom_short = nom_etablissement[:10].lower().strip()
+                                                        if nom_short not in panneau_text_check.lower():
+                                                            logger.warning(f"  [{index}] ⚠️ Le panneau ne contient pas le nom '{nom_short}', site web IGNORÉ (risque contamination)")
+                                                            continue
+                                                    
                                                     if is_in_panel:
                                                         info['site_web'] = href
-                                                        logger.info(f"  [{index}] ✅ Site web trouvé: {href}")
+                                                        logger.info(f"  [{index}] ✅ Site web trouvé (vérifié): {href}")
                                                         break
                                                     else:
                                                         logger.debug(f"  [{index}] ⚠️ Lien {href[:50]}... non dans le panneau, ignoré")

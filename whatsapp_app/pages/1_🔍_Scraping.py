@@ -198,10 +198,11 @@ else:
     github_repo = ""
 
 # ✅ Section : Gestion des workflows GitHub Actions (VISIBLE EN HAUT, DÈS LE DÉMARRAGE)
+# ✅ TOUJOURS AFFICHÉE - même si pas de token (pour montrer qu'il faut configurer)
+st.markdown("---")
+st.subheader("⚙️ Gestion des Workflows GitHub Actions")
+
 if github_token and github_repo:
-    st.markdown("---")
-    st.subheader("⚙️ Gestion des Workflows GitHub Actions")
-    
     # Lister les workflows en cours
     try:
         workflows_en_cours = list_github_workflows(github_token, github_repo)
@@ -210,9 +211,22 @@ if github_token and github_repo:
         workflows_en_cours = []
     
     if workflows_en_cours:
-        st.info(f"📊 **{len(workflows_en_cours)} workflow(s) en cours**")
+        # ✅ AFFICHER LE NOMBRE DE WORKFLOWS EN COURS (comme demandé)
+        col_count1, col_count2 = st.columns([1, 4])
+        with col_count1:
+            st.metric("Workflows actifs", len(workflows_en_cours))
+        with col_count2:
+            if st.button("⏹️ Arrêter tous", key="cancel_all_workflows_top", help="Arrêter tous les workflows en cours"):
+                with st.spinner("⏹️ Annulation de tous les workflows..."):
+                    success, message = cancel_all_github_workflows(github_token, github_repo)
+                    if success:
+                        st.success(message)
+                    else:
+                        st.warning(message)
+                    st.experimental_rerun()
         
-        # Afficher chaque workflow avec possibilité de le tuer
+        # Afficher chaque workflow avec possibilité de le tuer individuellement
+        st.markdown("**Détails des workflows :**")
         for workflow in workflows_en_cours:
             col_wf1, col_wf2, col_wf3 = st.columns([3, 1, 1])
             with col_wf1:
@@ -233,21 +247,10 @@ if github_token and github_repo:
                             st.error(f"❌ Erreur lors de l'annulation du workflow #{workflow['run_number']}")
     else:
         st.success("✅ Aucun workflow en cours")
+else:
+    st.warning("⚠️ Configuration GitHub manquante. La gestion des workflows nécessite un token et un repository configurés.")
     
-    # Bouton pour annuler tous les workflows
-    if workflows_en_cours:
-        col_cancel_all1, col_cancel_all2 = st.columns([1, 4])
-        with col_cancel_all1:
-            if st.button("⏹️ Arrêter tous les workflows", help="Annule tous les workflows en cours", key="cancel_all_workflows_top"):
-                with st.spinner("⏹️ Annulation de tous les workflows..."):
-                    success, message = cancel_all_github_workflows(github_token, github_repo)
-                    if success:
-                        st.success(message)
-                    else:
-                        st.warning(message)
-                    st.experimental_rerun()
-    
-    st.markdown("---")
+st.markdown("---")
 
 # ✅ Initialiser les variables GitHub Actions dans session_state AVANT de les utiliser
 if 'github_workflow_id' not in st.session_state:
@@ -866,13 +869,13 @@ def cancel_all_github_workflows(token, repo):
 
 # ✅ Cette section a été déplacée en haut pour être visible dès le démarrage (voir ligne ~200)
 
-# ✅ Boutons de contrôle simplifiés
-col_btn1, col_btn2 = st.columns(2)
+# ✅ Boutons de contrôle SIMPLIFIÉS (comme demandé)
+col_btn1, col_btn2, col_btn3 = st.columns(3)
 
 with col_btn1:
     # ✅ GitHub Actions uniquement - pas de mode local
     button_disabled = st.session_state.scraping_running or (st.session_state.github_workflow_status == 'in_progress')
-    button_text = "☁️ LANCER SUR GITHUB ACTIONS"
+    button_text = "☁️ LANCER"
     
     if st.button(button_text, disabled=button_disabled):
         if not metiers or not departements:
@@ -951,33 +954,25 @@ with col_btn1:
                     st.error(f"❌ {message}")
 
 with col_btn2:
-    # ✅ Bouton pour annuler tous les workflows GitHub Actions
-    if use_github_actions and github_token and github_repo:
-        if st.session_state.get('confirm_cancel_workflows', False):
-            if st.button("✅ Confirmer l'annulation", key="confirm_cancel_workflows_btn", help="Confirmer l'annulation de tous les workflows"):
-                with st.spinner("⏹️ Annulation des workflows..."):
-                    success, message = cancel_all_github_workflows(github_token, github_repo)
-                    if success:
-                        st.success(f"✅ {message}")
-                        # Réinitialiser l'état
-                        st.session_state.scraping_running = False
-                        st.session_state.github_workflow_status = None
-                        st.session_state.github_workflow_id = None
-                        st.session_state.scraped_results = []
-                        st.session_state.confirm_cancel_workflows = False
-                        st.success("✅ Tous les workflows ont été annulés. L'état a été réinitialisé.")
-                        st.experimental_rerun()
-                    else:
-                        st.error(f"❌ {message}")
-                        st.session_state.confirm_cancel_workflows = False
-            elif st.button("❌ Annuler", key="cancel_cancel_workflows"):
-                st.session_state.confirm_cancel_workflows = False
-                st.experimental_rerun()
-        else:
-            if st.button("⏹️ Annuler tous les workflows", help="Annule tous les workflows GitHub Actions en cours", key="cancel_all_workflows"):
-                st.session_state.confirm_cancel_workflows = True
-                st.warning("⚠️ **ATTENTION** : Cliquez sur 'Confirmer l'annulation' pour annuler tous les workflows GitHub Actions en cours. Cette action est irréversible !")
-                st.experimental_rerun()
+    # ✅ Bouton ARRÊTER (simplifié - pas de confirmation)
+    if github_token and github_repo:
+        if st.button("⏹️ ARRÊTER", help="Arrêter tous les workflows GitHub Actions en cours", key="stop_all_workflows"):
+            with st.spinner("⏹️ Arrêt des workflows..."):
+                success, message = cancel_all_github_workflows(github_token, github_repo)
+                if success:
+                    st.success(f"✅ {message}")
+                    st.session_state.scraping_running = False
+                    st.session_state.github_workflow_status = None
+                    st.session_state.github_workflow_id = None
+                    st.session_state.scraped_results = []
+                    st.experimental_rerun()
+                else:
+                    st.error(f"❌ {message}")
+
+with col_btn3:
+    # ✅ Bouton RAFRAÎCHIR
+    if st.button("🔄 RAFRAÎCHIR", help="Rafraîchir le statut des workflows et les résultats", key="refresh_workflows"):
+        st.experimental_rerun()
 
 st.markdown("---")
 
