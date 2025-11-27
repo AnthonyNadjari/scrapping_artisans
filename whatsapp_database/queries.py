@@ -166,6 +166,62 @@ def get_artisans(filtres: Optional[Dict] = None, limit: int = 10000) -> List[Dic
     conn.close()
     return [dict(row) for row in rows]
 
+def mark_scraping_done(metier: str, departement: str, ville: str, results_count: int = 0):
+    """Marque une combinaison métier/département/ville comme scrapée"""
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("""
+            INSERT OR REPLACE INTO scraping_history (metier, departement, ville, scraped_at, results_count)
+            VALUES (?, ?, ?, CURRENT_TIMESTAMP, ?)
+        """, (metier, departement, ville, results_count))
+        conn.commit()
+    except Exception as e:
+        print(f"Erreur marquage scraping: {e}")
+    finally:
+        conn.close()
+
+def is_already_scraped(metier: str, departement: str, ville: str) -> bool:
+    """Vérifie si une combinaison métier/département/ville a déjà été scrapée"""
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("""
+            SELECT COUNT(*) FROM scraping_history
+            WHERE metier = ? AND departement = ? AND ville = ?
+        """, (metier, departement, ville))
+        count = cursor.fetchone()[0]
+        return count > 0
+    finally:
+        conn.close()
+
+def get_scraping_history(metier: str = None, departement: str = None) -> List[Dict]:
+    """Récupère l'historique des scrapings"""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    
+    query = "SELECT * FROM scraping_history WHERE 1=1"
+    params = []
+    
+    if metier:
+        query += " AND metier = ?"
+        params.append(metier)
+    
+    if departement:
+        query += " AND departement = ?"
+        params.append(departement)
+    
+    query += " ORDER BY scraped_at DESC"
+    
+    cursor.execute(query, params)
+    rows = cursor.fetchall()
+    conn.close()
+    
+    return [dict(row) for row in rows]
+
 def get_statistiques() -> Dict:
     """Retourne les statistiques globales"""
     conn = get_connection()

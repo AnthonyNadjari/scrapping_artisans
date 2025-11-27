@@ -92,6 +92,19 @@ def init_database():
         )
     """)
     
+    # ✅ Table de tracking des scrapings (pour éviter les doublons)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS scraping_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            metier TEXT NOT NULL,
+            departement TEXT NOT NULL,
+            ville TEXT NOT NULL,
+            scraped_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            results_count INTEGER DEFAULT 0,
+            UNIQUE(metier, departement, ville)
+        )
+    """)
+    
     # Ajouter les nouvelles colonnes si elles n'existent pas (migration)
     nouvelles_colonnes = [
         ("siret", "TEXT"),
@@ -125,6 +138,7 @@ def init_database():
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_a_repondu ON artisans(a_repondu)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_statut_reponse ON artisans(statut_reponse)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_source_telephone ON artisans(source_telephone)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_scraping_history ON scraping_history(metier, departement, ville)")
     
     conn.commit()
     conn.close()

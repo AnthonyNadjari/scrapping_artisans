@@ -131,6 +131,12 @@ if filtre_dept:
 if filtre_recherche:
     filtres['recherche'] = filtre_recherche
 
+# ✅ Bouton pour requêter la BDD (rafraîchir)
+col_refresh1, col_refresh2 = st.columns([1, 4])
+with col_refresh1:
+    if st.button("🔄 Rafraîchir la base de données", help="Recharge les données depuis la base de données"):
+        st.experimental_rerun()
+
 # Récupérer artisans
 artisans = get_artisans(filtres=filtres, limit=500)
 

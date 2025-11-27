@@ -17,7 +17,7 @@ st.set_page_config(page_title="Scraping Google Maps", page_icon="🔍", layout="
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from whatsapp_database.queries import ajouter_artisan, get_statistiques
+from whatsapp_database.queries import ajouter_artisan, get_statistiques, is_already_scraped, get_scraping_history
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -687,6 +687,63 @@ def get_github_workflow_logs(token, repo, run_id):
         logger.error(f"Erreur récupération logs: {e}")
         return []
 
+def list_github_workflows(token, repo):
+    """Liste tous les workflows GitHub Actions en cours"""
+    try:
+        # Récupérer les runs du workflow scraping
+        runs_url = f"https://api.github.com/repos/{repo}/actions/runs"
+        headers = {
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {token}",
+            "X-GitHub-Api-Version": "2022-11-28"
+        }
+        
+        params = {
+            "status": "in_progress,queued",
+            "per_page": 100
+        }
+        
+        response = requests.get(runs_url, headers=headers, params=params)
+        if response.status_code != 200:
+            return []
+        
+        runs_data = response.json()
+        workflows = []
+        
+        for run in runs_data.get('workflow_runs', []):
+            workflows.append({
+                'id': run.get('id'),
+                'run_number': run.get('run_number'),
+                'status': run.get('status'),
+                'conclusion': run.get('conclusion'),
+                'created_at': run.get('created_at'),
+                'updated_at': run.get('updated_at'),
+                'head_branch': run.get('head_branch'),
+                'workflow_id': run.get('workflow_id'),
+                'html_url': run.get('html_url')
+            })
+        
+        return workflows
+    except Exception as e:
+        logger.error(f"Erreur liste workflows: {e}")
+        return []
+
+def cancel_github_workflow(token, repo, run_id):
+    """Annule un workflow GitHub Actions spécifique"""
+    try:
+        cancel_url = f"https://api.github.com/repos/{repo}/actions/runs/{run_id}/cancel"
+        headers = {
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {token}",
+            "X-GitHub-Api-Version": "2022-11-28"
+        }
+        
+        response = requests.post(cancel_url, headers=headers)
+        return response.status_code == 202
+    except Exception as e:
+        logger.error(f"Erreur annulation workflow {run_id}: {e}")
+        return False
+
 def cancel_all_github_workflows(token, repo):
     """Annule tous les workflows GitHub Actions en cours (in_progress et queued)"""
     try:
@@ -741,6 +798,48 @@ def cancel_all_github_workflows(token, repo):
         logger.error(f"Erreur annulation workflows: {e}")
         return False, f"Erreur: {str(e)}"
 
+# ✅ Section : Gestion des workflows GitHub Actions
+if github_token and github_repo:
+    st.markdown("---")
+    st.subheader("⚙️ Gestion des Workflows GitHub Actions")
+    
+    # Lister les workflows en cours
+    workflows_en_cours = list_github_workflows(github_token, github_repo)
+    
+    if workflows_en_cours:
+        st.info(f"📊 {len(workflows_en_cours)} workflow(s) en cours")
+        
+        # Afficher chaque workflow avec possibilité de le tuer
+        for workflow in workflows_en_cours:
+            col_wf1, col_wf2, col_wf3 = st.columns([3, 1, 1])
+            with col_wf1:
+                status_emoji = "🟢" if workflow['status'] == 'in_progress' else "🟡"
+                st.markdown(f"{status_emoji} **Run #{workflow['run_number']}** - {workflow['status']} - {workflow['created_at'][:19]}")
+            with col_wf2:
+                if st.button(f"🔗 Voir", key=f"view_{workflow['id']}"):
+                    st.markdown(f"[Ouvrir sur GitHub]({workflow['html_url']})")
+            with col_wf3:
+                if st.button(f"⏹️ Arrêter", key=f"cancel_{workflow['id']}"):
+                    if cancel_github_workflow(github_token, github_repo, workflow['id']):
+                        st.success(f"✅ Workflow #{workflow['run_number']} annulé")
+                        st.experimental_rerun()
+                    else:
+                        st.error(f"❌ Erreur lors de l'annulation du workflow #{workflow['run_number']}")
+    else:
+        st.success("✅ Aucun workflow en cours")
+    
+    # Bouton pour annuler tous les workflows
+    if workflows_en_cours:
+        if st.button("⏹️ Arrêter tous les workflows", help="Annule tous les workflows en cours"):
+            success, message = cancel_all_github_workflows(github_token, github_repo)
+            if success:
+                st.success(message)
+            else:
+                st.warning(message)
+            st.experimental_rerun()
+
+st.markdown("---")
+
 # ✅ Boutons de contrôle simplifiés
 col_btn1, col_btn2 = st.columns(2)
 
@@ -755,42 +854,75 @@ with col_btn1:
         elif not github_token or not github_repo:
             st.error("⚠️ Veuillez renseigner le token GitHub et le repository")
         else:
-            # Déclencher le workflow GitHub Actions
-            result = trigger_github_workflow(
-                github_token,
-                github_repo,
-                metiers,
-                departements,
-                max_results,
-                num_threads,
-                use_api_communes,
-                min_pop if use_api_communes else 0,
-                max_pop if use_api_communes else 50000
-            )
+            # ✅ Vérifier les villes déjà scrapées
+            villes_deja_scrapees = []
+            villes_a_scraper = []
             
-            # ✅ Gérer le retour (peut être (success, message) ou (success, message, run_id))
-            if len(result) == 3:
-                success, message, run_id = result
-            else:
-                success, message = result
-                run_id = None
-            
-            if success:
-                st.success(f"✅ {message}")
-                st.info("⏳ Le scraping est en cours sur GitHub Actions. Utilisez le bouton 'Rafraîchir' pour voir la progression.")
-                st.session_state.scraping_running = True
-                st.session_state.github_workflow_status = 'in_progress'
-                st.session_state.departements_selected = departements
-                st.session_state.metiers_selected = metiers
+            # Préparer la liste des villes à scraper
+            for dept in departements:
+                if use_api_communes:
+                    communes = get_communes_from_api(dept, min_pop if use_api_communes else 0, max_pop if use_api_communes else 50000)
+                    villes_dept = [c['nom'] for c in communes]
+                else:
+                    villes_dept = villes_par_dept.get(dept, [])
                 
-                # ✅ Stocker le run_id si disponible
-                if run_id:
-                    st.session_state.github_workflow_id = run_id
-                # ✅ Marquer qu'on vient de lancer un workflow pour ne pas l'annuler
-                st.session_state.workflow_just_launched = True
-                st.experimental_rerun()
+                for metier in metiers:
+                    for ville in villes_dept:
+                        if is_already_scraped(metier, dept, ville):
+                            villes_deja_scrapees.append(f"{metier} - {dept} - {ville}")
+                        else:
+                            villes_a_scraper.append(f"{metier} - {dept} - {ville}")
+            
+            # Afficher un avertissement si certaines villes sont déjà scrapées
+            if villes_deja_scrapees:
+                st.warning(f"⚠️ {len(villes_deja_scrapees)} combinaison(s) métier/département/ville déjà scrapée(s). Elles seront ignorées si vous continuez.")
+                with st.expander("📋 Voir les villes déjà scrapées"):
+                    for v in villes_deja_scrapees[:20]:  # Limiter à 20 pour l'affichage
+                        st.text(v)
+                    if len(villes_deja_scrapees) > 20:
+                        st.caption(f"... et {len(villes_deja_scrapees) - 20} autres")
+            
+            if not villes_a_scraper:
+                st.error("❌ Toutes les combinaisons sélectionnées ont déjà été scrapées. Veuillez sélectionner d'autres options.")
             else:
-                st.error(f"❌ {message}")
+                st.info(f"✅ {len(villes_a_scraper)} combinaison(s) à scraper")
+                
+                # Déclencher le workflow GitHub Actions
+                result = trigger_github_workflow(
+                    github_token,
+                    github_repo,
+                    metiers,
+                    departements,
+                    max_results,
+                    num_threads,
+                    use_api_communes,
+                    min_pop if use_api_communes else 0,
+                    max_pop if use_api_communes else 50000
+                )
+                
+                # ✅ Gérer le retour (peut être (success, message) ou (success, message, run_id))
+                if len(result) == 3:
+                    success, message, run_id = result
+                else:
+                    success, message = result
+                    run_id = None
+                
+                if success:
+                    st.success(f"✅ {message}")
+                    st.info("⏳ Le scraping est en cours sur GitHub Actions. Les résultats sont sauvegardés directement dans la BDD.")
+                    st.session_state.scraping_running = True
+                    st.session_state.github_workflow_status = 'in_progress'
+                    st.session_state.departements_selected = departements
+                    st.session_state.metiers_selected = metiers
+                    
+                    # ✅ Stocker le run_id si disponible
+                    if run_id:
+                        st.session_state.github_workflow_id = run_id
+                    # ✅ Marquer qu'on vient de lancer un workflow pour ne pas l'annuler
+                    st.session_state.workflow_just_launched = True
+                    st.experimental_rerun()
+                else:
+                    st.error(f"❌ {message}")
 
 with col_btn2:
     # ✅ Bouton pour annuler tous les workflows GitHub Actions

@@ -14,6 +14,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from scraping.google_maps_scraper import GoogleMapsScraper
 import requests
+from whatsapp_database.queries import ajouter_artisan
+from whatsapp_database.models import init_database
 
 def get_communes_from_api(dept, min_pop, max_pop):
     """Récupère les communes d'un département depuis l'API data.gouv.fr"""
@@ -44,24 +46,68 @@ def get_communes_from_api(dept, min_pop, max_pop):
         print(f"Erreur API communes: {e}")
     return []
 
+def save_callback(artisan_data):
+    """Callback pour sauvegarder directement dans la BDD à chaque établissement trouvé"""
+    try:
+        # Préparer les données pour la BDD
+        data = {
+            'nom': artisan_data.get('nom'),
+            'telephone': artisan_data.get('telephone'),
+            'site_web': artisan_data.get('site_web'),
+            'adresse': artisan_data.get('adresse'),
+            'code_postal': artisan_data.get('code_postal'),
+            'ville': artisan_data.get('ville'),
+            'departement': artisan_data.get('departement'),
+            'note': artisan_data.get('note'),
+            'nombre_avis': artisan_data.get('nb_avis'),
+            'ville_recherche': artisan_data.get('ville_recherche'),
+            'source': 'google_maps',
+            'source_telephone': 'google_maps',
+            'type_artisan': artisan_data.get('recherche')
+        }
+        
+        # Sauvegarder dans la BDD
+        artisan_id = ajouter_artisan(data)
+        print(f"✅ Artisan sauvegardé (ID: {artisan_id}): {data.get('nom', 'N/A')}")
+        return artisan_id
+    except Exception as e:
+        print(f"⚠️ Erreur sauvegarde artisan: {e}")
+        return None
+
 def scrape_ville(task_info, max_results, status_file):
     """Scrape une ville et met à jour le statut"""
     metier_actuel = task_info['metier']
     ville_actuelle = task_info['ville']
+    departement_actuel = task_info['departement']
+    
+    # ✅ Vérifier si déjà scrapé (optionnel - peut être désactivé pour re-scraping)
+    # if is_already_scraped(metier_actuel, departement_actuel, ville_actuelle):
+    #     print(f"⏭️ {metier_actuel} - {departement_actuel} - {ville_actuelle} déjà scrapé, ignoré")
+    #     update_status_file(status_file, task_info, 0, 'skipped')
+    #     return []
+    
     try:
         scraper = GoogleMapsScraper(headless=True)
         scraper.is_running = True
+        
+        # ✅ Callback pour sauvegarder directement dans la BDD
+        def progress_callback(index, total, info):
+            if info:
+                info['ville_recherche'] = ville_actuelle
+                info['recherche'] = metier_actuel
+                info['departement'] = departement_actuel
+                save_callback(info)
+        
         resultats = scraper.scraper(
             recherche=metier_actuel,
             ville=ville_actuelle,
             max_results=max_results,
-            progress_callback=None
+            progress_callback=progress_callback
         )
         scraper.quit()
-        if resultats:
-            for r in resultats:
-                r['ville_recherche'] = ville_actuelle
-                r['recherche'] = metier_actuel
+        
+        # ✅ Marquer comme scrapé dans l'historique
+        mark_scraping_done(metier_actuel, departement_actuel, ville_actuelle, len(resultats) if resultats else 0)
         
         # ✅ Mettre à jour le statut après chaque ville
         update_status_file(status_file, task_info, len(resultats) if resultats else 0, 'completed')
@@ -141,6 +187,9 @@ def save_progress(results_file, new_results):
         print(f"⚠️ Erreur sauvegarde progressive: {e}")
 
 if __name__ == "__main__":
+    # ✅ Initialiser la base de données
+    init_database()
+    
     # Récupérer les paramètres depuis les variables d'environnement
     metiers = json.loads(os.environ.get('METIERS', '[]'))
     departements = json.loads(os.environ.get('DEPARTEMENTS', '[]'))
@@ -155,6 +204,7 @@ if __name__ == "__main__":
     print(f'📍 Départements: {departements}')
     print(f'🔢 Max résultats: {max_results}')
     print(f'🧵 Threads: {num_threads}')
+    print(f'💾 Sauvegarde directe dans la BDD activée')
     
     # Charger les villes par département
     try:
