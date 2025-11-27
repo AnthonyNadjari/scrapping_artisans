@@ -184,7 +184,7 @@ st.session_state.use_github_actions = True
 st.info("☁️ **Mode GitHub Actions activé** - Le scraping s'exécutera sur GitHub Actions (gratuit jusqu'à 2000 min/mois)")
 
 if use_github_actions:
-    st.info("ℹ️ Le scraping s'exécutera sur GitHub Actions. Vous pouvez fermer cette page, les résultats seront disponibles une fois terminé.")
+    st.info("ℹ️ Le scraping s'exécutera sur GitHub Actions. Les résultats sont sauvegardés directement dans la BDD en temps réel.")
     
     # ✅ Utiliser les valeurs du fichier de config automatiquement (pas de champs visibles)
     github_token = github_token_default
@@ -196,6 +196,58 @@ else:
     # Si GitHub Actions n'est pas activé, utiliser des valeurs vides
     github_token = ""
     github_repo = ""
+
+# ✅ Section : Gestion des workflows GitHub Actions (VISIBLE EN HAUT, DÈS LE DÉMARRAGE)
+if github_token and github_repo:
+    st.markdown("---")
+    st.subheader("⚙️ Gestion des Workflows GitHub Actions")
+    
+    # Lister les workflows en cours
+    try:
+        workflows_en_cours = list_github_workflows(github_token, github_repo)
+    except Exception as e:
+        logger.error(f"Erreur récupération workflows: {e}")
+        workflows_en_cours = []
+    
+    if workflows_en_cours:
+        st.info(f"📊 **{len(workflows_en_cours)} workflow(s) en cours**")
+        
+        # Afficher chaque workflow avec possibilité de le tuer
+        for workflow in workflows_en_cours:
+            col_wf1, col_wf2, col_wf3 = st.columns([3, 1, 1])
+            with col_wf1:
+                status_emoji = "🟢" if workflow['status'] == 'in_progress' else "🟡"
+                status_text = "En cours" if workflow['status'] == 'in_progress' else "En attente"
+                created_time = workflow['created_at'][:19].replace('T', ' ')
+                st.markdown(f"{status_emoji} **Run #{workflow['run_number']}** - {status_text} - {created_time}")
+            with col_wf2:
+                github_url = workflow.get('html_url', f"https://github.com/{github_repo}/actions/runs/{workflow['id']}")
+                st.markdown(f"[🔗 Voir]({github_url})")
+            with col_wf3:
+                if st.button(f"⏹️ Arrêter", key=f"cancel_{workflow['id']}"):
+                    with st.spinner(f"⏹️ Annulation du workflow #{workflow['run_number']}..."):
+                        if cancel_github_workflow(github_token, github_repo, workflow['id']):
+                            st.success(f"✅ Workflow #{workflow['run_number']} annulé")
+                            st.experimental_rerun()
+                        else:
+                            st.error(f"❌ Erreur lors de l'annulation du workflow #{workflow['run_number']}")
+    else:
+        st.success("✅ Aucun workflow en cours")
+    
+    # Bouton pour annuler tous les workflows
+    if workflows_en_cours:
+        col_cancel_all1, col_cancel_all2 = st.columns([1, 4])
+        with col_cancel_all1:
+            if st.button("⏹️ Arrêter tous les workflows", help="Annule tous les workflows en cours", key="cancel_all_workflows_top"):
+                with st.spinner("⏹️ Annulation de tous les workflows..."):
+                    success, message = cancel_all_github_workflows(github_token, github_repo)
+                    if success:
+                        st.success(message)
+                    else:
+                        st.warning(message)
+                    st.experimental_rerun()
+    
+    st.markdown("---")
 
 # ✅ Initialiser les variables GitHub Actions dans session_state AVANT de les utiliser
 if 'github_workflow_id' not in st.session_state:
@@ -812,47 +864,7 @@ def cancel_all_github_workflows(token, repo):
         logger.error(f"Erreur annulation workflows: {e}")
         return False, f"Erreur: {str(e)}"
 
-# ✅ Section : Gestion des workflows GitHub Actions
-if github_token and github_repo:
-    st.markdown("---")
-    st.subheader("⚙️ Gestion des Workflows GitHub Actions")
-    
-    # Lister les workflows en cours
-    workflows_en_cours = list_github_workflows(github_token, github_repo)
-    
-    if workflows_en_cours:
-        st.info(f"📊 {len(workflows_en_cours)} workflow(s) en cours")
-        
-        # Afficher chaque workflow avec possibilité de le tuer
-        for workflow in workflows_en_cours:
-            col_wf1, col_wf2, col_wf3 = st.columns([3, 1, 1])
-            with col_wf1:
-                status_emoji = "🟢" if workflow['status'] == 'in_progress' else "🟡"
-                st.markdown(f"{status_emoji} **Run #{workflow['run_number']}** - {workflow['status']} - {workflow['created_at'][:19]}")
-            with col_wf2:
-                if st.button(f"🔗 Voir", key=f"view_{workflow['id']}"):
-                    st.markdown(f"[Ouvrir sur GitHub]({workflow['html_url']})")
-            with col_wf3:
-                if st.button(f"⏹️ Arrêter", key=f"cancel_{workflow['id']}"):
-                    if cancel_github_workflow(github_token, github_repo, workflow['id']):
-                        st.success(f"✅ Workflow #{workflow['run_number']} annulé")
-                        st.experimental_rerun()
-                    else:
-                        st.error(f"❌ Erreur lors de l'annulation du workflow #{workflow['run_number']}")
-    else:
-        st.success("✅ Aucun workflow en cours")
-    
-    # Bouton pour annuler tous les workflows
-    if workflows_en_cours:
-        if st.button("⏹️ Arrêter tous les workflows", help="Annule tous les workflows en cours"):
-            success, message = cancel_all_github_workflows(github_token, github_repo)
-            if success:
-                st.success(message)
-            else:
-                st.warning(message)
-            st.experimental_rerun()
-
-st.markdown("---")
+# ✅ Cette section a été déplacée en haut pour être visible dès le démarrage (voir ligne ~200)
 
 # ✅ Boutons de contrôle simplifiés
 col_btn1, col_btn2 = st.columns(2)

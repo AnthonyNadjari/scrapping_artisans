@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from scraping.google_maps_scraper import GoogleMapsScraper
 import requests
-from whatsapp_database.queries import ajouter_artisan
+from whatsapp_database.queries import ajouter_artisan, mark_scraping_done
 from whatsapp_database.models import init_database
 
 def get_communes_from_api(dept, min_pop, max_pop):
