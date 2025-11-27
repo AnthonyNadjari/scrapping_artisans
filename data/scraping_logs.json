@@ -1,16 +1,19 @@
 [
   {
-    "timestamp": "2025-11-27T00:09:52.628345",
-    "message": "🚀 Démarrage: 10 tâches à exécuter"
+    "timestamp": "2025-11-27T09:32:04.867830",
+    "message": "📡 API: 505 communes trouvées pour 77"
   },
   {
-    "timestamp": "2025-11-27T00:09:52.644489",
+    "timestamp": "2025-11-27T09:32:04.890802",
+    "message": "🚀 Démarrage: 505 tâches à exécuter"
+  },
+  {
+    "timestamp": "2025-11-27T09:32:04.910964",
     "message": "🚀 Multi-threading activé (3 threads)"
   },
   {
-    "timestamp": "2025-11-27T00:09:52.663304",
-    "message": "🔍 [ThreadPoolExecutor-1_0] plombier - 77 - Meaux"
+    "timestamp": "2025-11-27T09:32:04.934963",
+    "message": "🔍 [ThreadPoolExecutor-4_0] plombier - 77 - Montenils"
   }
-]
-  }
+]  }
 ]

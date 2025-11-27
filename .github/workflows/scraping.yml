@@ -104,10 +104,14 @@ jobs:
       
       - name: Upload results as artifact
         uses: actions/upload-artifact@v4
+        if: always()  # Upload même en cas d'échec
         with:
           name: scraping-results
-          path: data/scraping_results_github_actions.json
+          path: |
+            data/scraping_results_github_actions.json
+            data/github_actions_status.json
           retention-days: 7
+          if-no-files-found: warn
       
       - name: Summary
         run: |

@@ -44,8 +44,8 @@ def get_communes_from_api(dept, min_pop, max_pop):
         print(f"Erreur API communes: {e}")
     return []
 
-def scrape_ville(task_info, max_results):
-    """Scrape une ville"""
+def scrape_ville(task_info, max_results, status_file):
+    """Scrape une ville et met à jour le statut"""
     metier_actuel = task_info['metier']
     ville_actuelle = task_info['ville']
     try:
@@ -61,10 +61,84 @@ def scrape_ville(task_info, max_results):
         if resultats:
             for r in resultats:
                 r['ville_recherche'] = ville_actuelle
+                r['recherche'] = metier_actuel
+        
+        # ✅ Mettre à jour le statut après chaque ville
+        update_status_file(status_file, task_info, len(resultats) if resultats else 0, 'completed')
+        
         return resultats or []
     except Exception as e:
         print(f"❌ Erreur {ville_actuelle}: {e}")
+        update_status_file(status_file, task_info, 0, 'failed', str(e))
         return []
+
+def update_status_file(status_file, task_info, results_count, status, error=None):
+    """Met à jour le fichier de statut"""
+    try:
+        if status_file.exists():
+            with open(status_file, 'r', encoding='utf-8') as f:
+                status_data = json.load(f)
+        else:
+            status_data = {
+                'started_at': datetime.now().isoformat(),
+                'total_tasks': 0,
+                'completed_tasks': 0,
+                'failed_tasks': 0,
+                'total_results': 0,
+                'tasks': {}
+            }
+        
+        task_key = f"{task_info['metier']}_{task_info['departement']}_{task_info['ville']}"
+        status_data['tasks'][task_key] = {
+            'status': status,
+            'results_count': results_count,
+            'completed_at': datetime.now().isoformat(),
+            'error': error
+        }
+        
+        # Mettre à jour les compteurs
+        status_data['completed_tasks'] = sum(1 for t in status_data['tasks'].values() if t['status'] == 'completed')
+        status_data['failed_tasks'] = sum(1 for t in status_data['tasks'].values() if t['status'] == 'failed')
+        status_data['total_results'] = sum(t['results_count'] for t in status_data['tasks'].values())
+        status_data['last_updated'] = datetime.now().isoformat()
+        
+        with open(status_file, 'w', encoding='utf-8') as f:
+            json.dump(status_data, f, ensure_ascii=False, indent=2)
+        
+        # ✅ Logger la progression pour visibilité dans les logs GitHub
+        if status_data['total_tasks'] > 0:
+            progress_pct = (status_data['completed_tasks'] / status_data['total_tasks'] * 100)
+            print(f"📊 Progression: {status_data['completed_tasks']}/{status_data['total_tasks']} villes ({progress_pct:.1f}%) | {status_data['total_results']} résultats trouvés")
+    except Exception as e:
+        print(f"⚠️ Erreur mise à jour statut: {e}")
+
+def save_progress(results_file, new_results):
+    """Sauvegarde les résultats progressivement"""
+    try:
+        if results_file.exists():
+            with open(results_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+        else:
+            data = {
+                'timestamp': datetime.now().isoformat(),
+                'total_results': 0,
+                'results': []
+            }
+        
+        # Ajouter les nouveaux résultats (éviter les doublons)
+        existing_ids = {f"{r.get('nom', '')}_{r.get('telephone', '')}_{r.get('ville_recherche', '')}" for r in data['results']}
+        for r in new_results:
+            r_id = f"{r.get('nom', '')}_{r.get('telephone', '')}_{r.get('ville_recherche', '')}"
+            if r_id not in existing_ids:
+                data['results'].append(r)
+        
+        data['total_results'] = len(data['results'])
+        data['last_updated'] = datetime.now().isoformat()
+        
+        with open(results_file, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"⚠️ Erreur sauvegarde progressive: {e}")
 
 if __name__ == "__main__":
     # Récupérer les paramètres depuis les variables d'environnement
@@ -111,17 +185,45 @@ if __name__ == "__main__":
     
     print(f'📊 Total villes à scraper: {len(toutes_villes)}')
     
+    # ✅ Fichiers de statut et résultats
+    os.makedirs('data', exist_ok=True)
+    status_file = Path('data/github_actions_status.json')
+    results_file = Path('data/scraping_results_github_actions.json')
+    
+    # Initialiser le fichier de statut
+    initial_status = {
+        'started_at': datetime.now().isoformat(),
+        'total_tasks': len(toutes_villes),
+        'completed_tasks': 0,
+        'failed_tasks': 0,
+        'total_results': 0,
+        'tasks': {}
+    }
+    with open(status_file, 'w', encoding='utf-8') as f:
+        json.dump(initial_status, f, ensure_ascii=False, indent=2)
+    
+    # Initialiser le fichier de résultats
+    initial_results = {
+        'timestamp': datetime.now().isoformat(),
+        'total_results': 0,
+        'results': []
+    }
+    with open(results_file, 'w', encoding='utf-8') as f:
+        json.dump(initial_results, f, ensure_ascii=False, indent=2)
+    
     # Multi-threading
     tous_resultats = []
     if num_threads > 1:
         print(f'🚀 Multi-threading activé ({num_threads} threads)')
         with ThreadPoolExecutor(max_workers=num_threads) as executor:
-            futures = {executor.submit(scrape_ville, task, max_results): task for task in toutes_villes}
+            futures = {executor.submit(scrape_ville, task, max_results, status_file): task for task in toutes_villes}
             for future in as_completed(futures):
                 try:
                     resultats = future.result()
                     if resultats:
                         tous_resultats.extend(resultats)
+                        # ✅ Sauvegarder progressivement
+                        save_progress(results_file, resultats)
                         print(f'✅ {len(resultats)} résultats ajoutés (total: {len(tous_resultats)})')
                 except Exception as e:
                     print(f'❌ Erreur thread: {e}')
@@ -129,22 +231,28 @@ if __name__ == "__main__":
         # Mode séquentiel
         for i, task in enumerate(toutes_villes, 1):
             print(f'🔍 [{i}/{len(toutes_villes)}] {task["metier"]} - {task["departement"]} - {task["ville"]}')
-            resultats = scrape_ville(task, max_results)
+            resultats = scrape_ville(task, max_results, status_file)
             if resultats:
                 tous_resultats.extend(resultats)
+                # ✅ Sauvegarder progressivement
+                save_progress(results_file, resultats)
                 print(f'✅ {len(resultats)} résultats (total: {len(tous_resultats)})')
     
     print(f'✅ Scraping terminé: {len(tous_resultats)} résultats au total')
     
-    # Sauvegarder les résultats
-    output_file = 'data/scraping_results_github_actions.json'
-    os.makedirs('data', exist_ok=True)
-    with open(output_file, 'w', encoding='utf-8') as f:
-        json.dump({
-            'timestamp': datetime.now().isoformat(),
-            'total_results': len(tous_resultats),
-            'results': tous_resultats
-        }, f, ensure_ascii=False, indent=2)
+    # ✅ Mettre à jour le statut final
+    final_status = {
+        'started_at': initial_status['started_at'],
+        'completed_at': datetime.now().isoformat(),
+        'total_tasks': len(toutes_villes),
+        'completed_tasks': len([t for t in initial_status['tasks'].values() if t.get('status') == 'completed']),
+        'failed_tasks': len([t for t in initial_status['tasks'].values() if t.get('status') == 'failed']),
+        'total_results': len(tous_resultats),
+        'status': 'completed'
+    }
+    with open(status_file, 'w', encoding='utf-8') as f:
+        json.dump(final_status, f, ensure_ascii=False, indent=2)
     
-    print(f'💾 Résultats sauvegardés: {output_file}')
+    print(f'💾 Résultats sauvegardés: {results_file}')
+    print(f'💾 Statut sauvegardé: {status_file}')
 

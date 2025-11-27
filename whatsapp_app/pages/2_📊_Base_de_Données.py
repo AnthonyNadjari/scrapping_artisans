@@ -152,24 +152,50 @@ else:
     link_gen = WhatsAppLinkGenerator()
     
     if mode_affichage == "📋 Liste compacte":
-        # Tableau compact
+        # Tableau compact avec TOUTES les informations scrapées
         data = []
         for artisan in artisans:
             lien_whatsapp = link_gen.generer_lien(artisan, template)
-            data.append({
+            row = {
                 'ID': artisan.get('id'),
                 'Entreprise': artisan.get('nom_entreprise', 'N/A'),
                 'Métier': artisan.get('type_artisan', ''),
                 'Ville': artisan.get('ville', ''),
+                'Ville recherche': artisan.get('ville_recherche', ''),
                 'Département': artisan.get('departement', ''),
+                'Adresse': artisan.get('adresse', ''),
+                'Code postal': artisan.get('code_postal', ''),
                 'Téléphone': artisan.get('telephone', ''),
+                'Site web': artisan.get('site_web', ''),
+                'Note': f"{artisan.get('note', 'N/A')}/5" if artisan.get('note') else 'N/A',
+                'Nombre avis': artisan.get('nombre_avis', 'N/A') if artisan.get('nombre_avis') else 'N/A',
                 'Message envoyé': '✅' if artisan.get('message_envoye') else '❌',
                 'A répondu': '✅' if artisan.get('a_repondu') else '❌',
                 'Lien WhatsApp': lien_whatsapp
-            })
+            }
+            data.append(row)
         
         df = pd.DataFrame(data)
-        st.dataframe(df)
+        
+        # ✅ CSS pour améliorer l'affichage du tableau
+        st.markdown("""
+        <style>
+        div[data-testid="stDataFrame"] {
+            width: 100% !important;
+        }
+        div[data-testid="stDataFrame"] table {
+            width: 100% !important;
+        }
+        div[data-testid="stDataFrame"] th, div[data-testid="stDataFrame"] td {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        st.dataframe(df, use_container_width=True, height=600)
         
     else:
         # Vue détaillée avec cartes
@@ -180,7 +206,15 @@ else:
                 with col_a1:
                     st.markdown(f"### {i+1}. {artisan.get('nom_entreprise', 'N/A')}")
                     st.caption(f"**Métier :** {artisan.get('type_artisan', '')} | **Ville :** {artisan.get('ville', '')} ({artisan.get('departement', '')})")
+                    if artisan.get('ville_recherche'):
+                        st.caption(f"**Ville recherche :** {artisan.get('ville_recherche', '')}")
                     st.caption(f"**Téléphone :** {artisan.get('telephone', '')}")
+                    if artisan.get('site_web'):
+                        st.caption(f"**Site web :** [{artisan.get('site_web', '')}]({artisan.get('site_web', '')})")
+                    if artisan.get('note'):
+                        st.caption(f"**Note :** ⭐ {artisan.get('note', '')}/5 ({artisan.get('nombre_avis', 0)} avis)")
+                    if artisan.get('adresse'):
+                        st.caption(f"**Adresse :** {artisan.get('adresse', '')}")
                     
                     # Statuts
                     if artisan.get('message_envoye'):

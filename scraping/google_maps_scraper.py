@@ -43,6 +43,20 @@ class GoogleMapsScraper:
         self.is_running = True  # Par défaut, on est prêt à scraper
         self.scraped_count = 0
         
+        # ✅ Détecter l'environnement (GitHub Actions ou local)
+        import os
+        self.is_github_actions = os.getenv('GITHUB_ACTIONS') is not None
+        
+        # ✅ Multiplicateurs de timeout/delay pour GitHub Actions (plus lent)
+        # Ces valeurs n'affectent QUE les timeouts, pas la logique
+        if self.is_github_actions:
+            self.timeout_multiplier = 2.0  # Timeouts doublés
+            self.delay_multiplier = 2.0    # Delays doublés
+            logger.info("🔧 Mode GitHub Actions détecté - timeouts/delays augmentés")
+        else:
+            self.timeout_multiplier = 1.0  # Pas de changement local
+            self.delay_multiplier = 1.0    # Pas de changement local
+        
     def _setup_driver(self):
         """Configure et lance Chrome avec Selenium - VERSION ULTRA-ROBUSTE"""
         chrome_options = Options()
@@ -58,7 +72,7 @@ class GoogleMapsScraper:
         chrome_options.add_argument('--disable-dev-shm-usage')
         chrome_options.add_argument('--no-sandbox')
         
-        # Réduire les erreurs GCM/notifications
+        # ✅ OPTIMISATIONS MÉMOIRE/CPU
         chrome_options.add_argument('--disable-notifications')
         chrome_options.add_argument('--disable-gpu')
         chrome_options.add_argument('--disable-software-rasterizer')
@@ -67,6 +81,25 @@ class GoogleMapsScraper:
         chrome_options.add_argument('--disable-background-timer-throttling')
         chrome_options.add_argument('--disable-renderer-backgrounding')
         chrome_options.add_argument('--disable-backgrounding-occluded-windows')
+        
+        # ✅ Réduire la consommation mémoire
+        chrome_options.add_argument('--memory-pressure-off')  # Désactiver la gestion de pression mémoire
+        chrome_options.add_argument('--max_old_space_size=512')  # Limiter la mémoire JS à 512MB
+        chrome_options.add_argument('--disable-images')  # Ne pas charger les images (économie mémoire)
+        chrome_options.add_argument('--blink-settings=imagesEnabled=false')  # Désactiver les images
+        chrome_options.add_argument('--disable-javascript-harmony-shipping')  # Réduire les fonctionnalités JS
+        chrome_options.add_argument('--disable-plugins')  # Désactiver les plugins
+        chrome_options.add_argument('--disable-plugins-discovery')  # Ne pas découvrir les plugins
+        chrome_options.add_argument('--disable-preconnect')  # Désactiver la préconnexion
+        chrome_options.add_argument('--disable-translate')  # Désactiver la traduction
+        chrome_options.add_argument('--disable-sync')  # Désactiver la synchronisation
+        chrome_options.add_argument('--disable-features=TranslateUI')  # Désactiver l'UI de traduction
+        chrome_options.add_argument('--disable-ipc-flooding-protection')  # Réduire la protection IPC
+        
+        # ✅ Réduire les erreurs GPU dans les logs (mode headless)
+        chrome_options.add_argument('--log-level=3')  # Seulement les erreurs fatales
+        chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])  # Désactiver les logs Chrome
+        chrome_options.add_experimental_option('useAutomationExtension', False)
         
         # Langue française
         chrome_options.add_argument('--lang=fr-FR')
@@ -103,6 +136,8 @@ class GoogleMapsScraper:
                     service = Service(ChromeDriverManager().install())
             else:
                 # Windows/Mac : utiliser ChromeDriverManager
+                # ✅ ChromeDriverManager détecte automatiquement la version de Chrome et télécharge la bonne version
+                # Le cache sera automatiquement mis à jour si nécessaire
                 service = Service(ChromeDriverManager().install())
             
             self.driver = webdriver.Chrome(service=service, options=chrome_options)
@@ -123,18 +158,29 @@ class GoogleMapsScraper:
     def _normaliser_telephone(self, tel: str) -> Optional[str]:
         """
         Normalise un numéro français au format 0X XX XX XX XX
+        Ignore les numéros internationaux (US +1, UK +44, etc.)
         
         Args:
             tel: Numéro brut (peut contenir espaces, points, tirets)
         
         Returns:
-            Numéro au format 0X XX XX XX XX ou None si invalide
+            Numéro au format 0X XX XX XX XX ou None si invalide ou non français
         """
         if not tel:
             return None
         
+        # ✅ Ignorer les numéros internationaux non français
+        tel_str = str(tel).strip()
+        if tel_str.startswith('+1') or tel_str.startswith('+44') or tel_str.startswith('+33'):
+            # Si c'est +33, convertir en 0
+            if tel_str.startswith('+33'):
+                tel_str = '0' + tel_str[3:]
+            else:
+                # Numéro non français (US, UK, etc.) - ignorer
+                return None
+        
         # Nettoyer le numéro (garder seulement les chiffres)
-        tel_clean = ''.join(filter(str.isdigit, tel))
+        tel_clean = ''.join(filter(str.isdigit, tel_str))
         
         # Vérifier format français (10 chiffres commençant par 0)
         if len(tel_clean) == 10 and tel_clean.startswith('0'):
@@ -143,6 +189,11 @@ class GoogleMapsScraper:
         elif len(tel_clean) == 9 and tel_clean.startswith('0'):
             # Cas spécial : 9 chiffres (ajouter le 0)
             return f"0{tel_clean[0:1]} {tel_clean[1:3]} {tel_clean[3:5]} {tel_clean[5:7]} {tel_clean[7:9]}"
+        elif len(tel_clean) == 11 and tel_clean.startswith('33'):
+            # Format international français : 33XXXXXXXXX -> 0XXXXXXXXX
+            tel_clean = '0' + tel_clean[2:]
+            if len(tel_clean) == 10:
+                return f"{tel_clean[0:2]} {tel_clean[2:4]} {tel_clean[4:6]} {tel_clean[6:8]} {tel_clean[8:10]}"
         
         return None
     
@@ -817,9 +868,8 @@ class GoogleMapsScraper:
                     
                     # Attendre que Google Maps charge COMPLÈTEMENT
                     logger.info("   ⏳ Attente chargement complet Google Maps...")
-                    # ✅ Augmenter le timeout pour GitHub Actions (environnement plus lent)
-                    import os
-                    timeout_chargement = 60 if os.getenv('GITHUB_ACTIONS') else 30
+                    # ✅ Utiliser le multiplicateur pour GitHub Actions (sans changer la logique locale)
+                    timeout_chargement = int(30 * self.timeout_multiplier)
                     self._attendre_chargement_complet(timeout=timeout_chargement)
                 
                 # ÉTAPE 2 : Fermer les popups (cookies, géolocalisation, etc.)
@@ -831,15 +881,13 @@ class GoogleMapsScraper:
                 logger.info("   ⏳ Attente du panneau de résultats...")
                 
                 # Essayer plusieurs sélecteurs avec timeouts progressifs
-                # ✅ Augmenter les timeouts pour GitHub Actions (environnement plus lent)
-                import os
-                timeout_mult = 2 if os.getenv('GITHUB_ACTIONS') else 1
+                # ✅ Utiliser le multiplicateur pour GitHub Actions (sans changer la logique locale)
                 selecteurs_panneau = [
-                    ('div[role="feed"]', 20 * timeout_mult),
-                    ('div[role="main"]', 10 * timeout_mult),
-                    ('div[jsaction]', 10 * timeout_mult),
-                    ('div[data-value]', 10 * timeout_mult),
-                    ('div[class*="result"]', 10 * timeout_mult),
+                    ('div[role="feed"]', int(20 * self.timeout_multiplier)),
+                    ('div[role="main"]', int(10 * self.timeout_multiplier)),
+                    ('div[jsaction]', int(10 * self.timeout_multiplier)),
+                    ('div[data-value]', int(10 * self.timeout_multiplier)),
+                    ('div[class*="result"]', int(10 * self.timeout_multiplier)),
                 ]
                 
                 panneau_trouve = False
@@ -884,10 +932,9 @@ class GoogleMapsScraper:
                                 time.sleep(1)
                         
                         # ✅ Attendre plus longtemps sur GitHub Actions avant de chercher le panneau
-                        import os
-                        if os.getenv('GITHUB_ACTIONS'):
+                        if self.is_github_actions:
                             logger.info("   ⏳ GitHub Actions: attente supplémentaire avant recherche panneau...")
-                            time.sleep(5)
+                            time.sleep(int(5 * self.delay_multiplier))
                         
                         # Réessayer de trouver le panneau après relance
                         for selector, timeout in selecteurs_panneau:
@@ -905,9 +952,8 @@ class GoogleMapsScraper:
                     # Attendre explicitement que les RÉSULTATS apparaissent
                     if panneau_trouve:
                         logger.info("   ⏳ Attente des résultats de recherche...")
-                        # ✅ Augmenter le timeout pour GitHub Actions (environnement plus lent)
-                        import os
-                        timeout_results = 60 if os.getenv('GITHUB_ACTIONS') else 30
+                        # ✅ Utiliser le multiplicateur pour GitHub Actions (sans changer la logique locale)
+                        timeout_results = int(30 * self.timeout_multiplier)
                         try:
                             WebDriverWait(self.driver, timeout_results).until(
                                 lambda d: len(d.find_elements(By.CSS_SELECTOR, 'a[href*="/maps/place/"]')) > 0 or
@@ -918,8 +964,7 @@ class GoogleMapsScraper:
                             logger.info(f"   ✅ Résultats de recherche détectés: {nb_etablissements} liens /maps/place/, {nb_articles} articles")
                         except TimeoutException:
                             # ✅ Sur GitHub Actions, c'est normal d'avoir un timeout - les résultats peuvent être plus lents
-                            import os
-                            if os.getenv('GITHUB_ACTIONS'):
+                            if self.is_github_actions:
                                 logger.info("   ⏳ Timeout attente résultats (GitHub Actions - normal), vérification directe...")
                             else:
                                 logger.warning("   ⚠️ Timeout attente résultats, mais on continue quand même...")
@@ -2313,10 +2358,9 @@ class GoogleMapsScraper:
             time.sleep(2)
             
             # ✅ Attendre un peu plus longtemps sur GitHub Actions pour que les résultats se chargent
-            import os
-            if os.getenv('GITHUB_ACTIONS'):
+            if self.is_github_actions:
                 logger.info("   ⏳ GitHub Actions détecté, attente supplémentaire pour le chargement...")
-                time.sleep(5)  # Attendre 5 secondes supplémentaires
+                time.sleep(int(5 * self.delay_multiplier))
             
             # Chercher TOUS les liens vers des établissements dans toute la page
             # C'est le sélecteur le plus fiable qui fonctionne toujours
@@ -2330,9 +2374,9 @@ class GoogleMapsScraper:
                 logger.warning("⚠️ Aucun établissement trouvé avec a[href*='/maps/place/'], recherche alternative...")
                 
                 # Attendre encore un peu et réessayer
-                if os.getenv('GITHUB_ACTIONS'):
+                if self.is_github_actions:
                     logger.info("   ⏳ Attente supplémentaire (GitHub Actions)...")
-                    time.sleep(10)  # Attendre 10 secondes supplémentaires sur GitHub Actions
+                    time.sleep(int(10 * self.delay_multiplier))
                     etablissements_elems = self.driver.find_elements(By.CSS_SELECTOR, 'a[href*="/maps/place/"]')
                 
                 # Méthode alternative : chercher dans feed ou articles

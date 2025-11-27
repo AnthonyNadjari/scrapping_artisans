@@ -103,7 +103,10 @@ def init_database():
         ("source_telephone", "TEXT"),
         ("statut_reponse", "TEXT"),
         ("commentaire", "TEXT"),
-        ("site_web", "TEXT")
+        ("site_web", "TEXT"),
+        ("note", "REAL"),  # Note Google Maps (0-5)
+        ("nombre_avis", "INTEGER"),  # Nombre d'avis Google Maps
+        ("ville_recherche", "TEXT")  # Ville utilisée pour la recherche
     ]
     
     for colonne, type_col in nouvelles_colonnes:

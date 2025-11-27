@@ -574,29 +574,80 @@ def download_github_artifact(token, repo, run_id):
                             # Sauvegarder le zip
                             import zipfile
                             import io
-                            zip_path = Path(__file__).parent.parent.parent / "data" / "github_artifact.zip"
+                            data_dir = Path(__file__).parent.parent.parent / "data"
+                            zip_path = data_dir / "github_artifact.zip"
                             with open(zip_path, 'wb') as f:
                                 f.write(download_response.content)
                             
                             # Extraire le JSON
                             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                                zip_ref.extractall(Path(__file__).parent.parent.parent / "data")
+                                zip_ref.extractall(data_dir)
                             
-                            # Lire le JSON
-                            results_file = Path(__file__).parent.parent.parent / "data" / "scraping_results_github_actions.json"
+                            # Lire les fichiers
+                            results_file = data_dir / "scraping_results_github_actions.json"
+                            status_file = data_dir / "github_actions_status.json"
+                            
+                            result_data = None
+                            status_data = None
+                            
                             if results_file.exists():
                                 with open(results_file, 'r', encoding='utf-8') as f:
-                                    return json.load(f)
+                                    result_data = json.load(f)
+                            
+                            if status_file.exists():
+                                with open(status_file, 'r', encoding='utf-8') as f:
+                                    status_data = json.load(f)
                             
                             # Nettoyer
                             zip_path.unlink()
+                            
+                            # ✅ Retourner dans le format attendu (compatibilité)
+                            if result_data and isinstance(result_data, dict) and 'results' in result_data:
+                                return result_data  # Format: {'results': [...], 'total_results': ...}
+                            elif result_data and isinstance(result_data, list):
+                                return {'results': result_data, 'total_results': len(result_data)}
+                            else:
+                                return {'results': [], 'total_results': 0, 'status': status_data}
             return None
         return None
     except Exception as e:
         logger.error(f"Erreur téléchargement artifact: {e}")
         return None
 
-# Boutons de contrôle
+def get_github_workflow_logs(token, repo, run_id):
+    """Récupère les logs du workflow GitHub Actions"""
+    try:
+        # Récupérer les jobs du workflow
+        url = f"https://api.github.com/repos/{repo}/actions/runs/{run_id}/jobs"
+        headers = {
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {token}",
+            "X-GitHub-Api-Version": "2022-11-28"
+        }
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            jobs = response.json().get('jobs', [])
+            logs = []
+            for job in jobs:
+                if job.get('status') == 'completed':
+                    # Récupérer les logs du job
+                    logs_url = job.get('logs_url')
+                    if logs_url:
+                        logs_response = requests.get(logs_url, headers=headers)
+                        if logs_response.status_code == 200:
+                            # Les logs sont dans un format spécifique GitHub
+                            logs.append({
+                                'job_name': job.get('name'),
+                                'status': job.get('conclusion'),
+                                'logs_url': logs_url
+                            })
+            return logs
+        return []
+    except Exception as e:
+        logger.error(f"Erreur récupération logs: {e}")
+        return []
+
+# ✅ Boutons de contrôle simplifiés
 col_btn1, col_btn2 = st.columns(2)
 
 with col_btn1:
@@ -626,7 +677,7 @@ with col_btn1:
                 
                 if success:
                     st.success(f"✅ {message}")
-                    st.info("⏳ Le scraping est en cours sur GitHub Actions. Vous pouvez suivre la progression ci-dessous.")
+                    st.info("⏳ Le scraping est en cours sur GitHub Actions. Utilisez le bouton 'Rafraîchir' pour voir la progression.")
                     st.session_state.scraping_running = True
                     st.session_state.github_workflow_status = 'in_progress'
                     st.session_state.departements_selected = departements
@@ -671,20 +722,23 @@ with col_btn1:
             st.experimental_rerun()
 
 with col_btn2:
-    if st.button("⏹️ ARRÊTER", disabled=not st.session_state.scraping_running):
-        if st.session_state.scraper:
-            st.session_state.scraper.stop()
-        st.session_state.scraping_running = False
-        
-        status_file = Path(__file__).parent.parent.parent / "data" / "scraping_status.json"
+    # ✅ Bouton pour télécharger la base de données
+    if st.button("📥 Télécharger la base de données"):
         try:
-            with open(status_file, 'w', encoding='utf-8') as f:
-                json.dump({'running': False, 'started': False}, f)
-        except:
-            pass
-        
-        st.success("⏹️ Scraping arrêté. Les résultats déjà scrapés sont sauvegardés.")
-        st.experimental_rerun()
+            from whatsapp_database.models import DB_PATH
+            if DB_PATH.exists():
+                with open(DB_PATH, 'rb') as f:
+                    db_data = f.read()
+                st.download_button(
+                    label="💾 Télécharger le fichier .db",
+                    data=db_data,
+                    file_name=f"whatsapp_artisans_{datetime.now().strftime('%Y%m%d_%H%M%S')}.db",
+                    mime="application/x-sqlite3"
+                )
+            else:
+                st.error("❌ Base de données introuvable")
+        except Exception as e:
+            st.error(f"❌ Erreur: {e}")
 
 st.markdown("---")
 
@@ -695,94 +749,246 @@ if st.session_state.scraping_running:
     # ✅ Vérifier si on utilise GitHub Actions (vérifier la checkbox actuelle)
     current_use_github = st.session_state.get('use_github_actions', False)
     if current_use_github and github_token and github_repo:
-        st.subheader("☁️ Scraping en cours sur GitHub Actions...")
+        st.subheader("☁️ Dashboard GitHub Actions")
         
         # Vérifier le statut du workflow
         status, conclusion, run_id = get_github_workflow_status(github_token, github_repo, st.session_state.github_workflow_id)
+        
+        # ✅ Maintenir scraping_running = True si on a un workflow_id
+        if run_id:
+            st.session_state.github_workflow_id = run_id
+            # Maintenir scraping_running si le workflow est actif
+            if status in ['in_progress', 'queued']:
+                st.session_state.scraping_running = True
+            elif status == 'completed':
+                # Si terminé, on garde scraping_running pour permettre le téléchargement
+                st.session_state.scraping_running = True
+            else:
+                # Si pas de statut mais qu'on a un run_id, maintenir scraping_running
+                st.session_state.scraping_running = True
         
         if status:
             st.session_state.github_workflow_status = status
             if run_id and not st.session_state.github_workflow_id:
                 st.session_state.github_workflow_id = run_id
+                st.session_state.scraping_running = True
             
-            if status == 'completed':
-                if conclusion == 'success':
-                    st.success("✅ Scraping terminé avec succès sur GitHub Actions !")
-                    
-                    # Télécharger les résultats
-                    if run_id:
-                        with st.spinner("📥 Téléchargement des résultats..."):
-                            results_data = download_github_artifact(github_token, github_repo, run_id)
-                            
-                            if results_data and 'results' in results_data:
-                                # Sauvegarder automatiquement en BDD
-                                saved_count = 0
-                                for info in results_data['results']:
-                                    try:
-                                        artisan_data = {
-                                            'nom_entreprise': info.get('nom', 'N/A'),
-                                            'telephone': info.get('telephone', '').replace(' ', '') if info.get('telephone') else None,
-                                            'adresse': info.get('adresse', ''),
-                                            'code_postal': info.get('code_postal', ''),
-                                            'ville': info.get('ville', ''),
-                                            'type_artisan': info.get('recherche', metiers[0] if metiers else 'plombier'),
-                                            'source': 'google_maps_github_actions'
-                                        }
-                                        
-                                        if info.get('site_web'):
-                                            artisan_data['site_web'] = info.get('site_web')
-                                        
-                                        ajouter_artisan(artisan_data)
-                                        saved_count += 1
-                                    except Exception as e:
-                                        if "UNIQUE constraint" not in str(e) and "duplicate" not in str(e).lower():
-                                            logger.error(f"Erreur sauvegarde: {e}")
-                                
-                                # Ajouter aux résultats affichés
-                                st.session_state.scraped_results = results_data['results']
-                                st.session_state.saved_count = saved_count
-                                st.session_state.scraping_running = False
-                                st.session_state.github_workflow_status = None
-                                st.session_state.github_workflow_id = None
-                                
-                                st.success(f"✅ {len(results_data['results'])} résultats téléchargés et {saved_count} sauvegardés en BDD !")
-                                st.experimental_rerun()
-                            else:
-                                st.error("❌ Impossible de télécharger les résultats")
-                elif conclusion == 'failure':
-                    st.error("❌ Le scraping a échoué sur GitHub Actions. Vérifiez les logs sur GitHub.")
-                    st.session_state.scraping_running = False
-                    st.session_state.github_workflow_status = None
+            # ✅ Dashboard visuel avec colonnes
+            col_status, col_progress, col_actions = st.columns([2, 3, 1])
+            
+            with col_status:
+                # Statut avec badge coloré
+                if status == 'completed':
+                    if conclusion == 'success':
+                        st.success("✅ **Terminé avec succès**")
+                    elif conclusion == 'failure':
+                        st.error("❌ **Échec**")
+                    else:
+                        st.warning(f"⚠️ **{conclusion}**")
+                elif status == 'in_progress':
+                    st.info("🔄 **En cours...**")
+                elif status == 'queued':
+                    st.info("⏳ **En attente...**")
                 else:
-                    st.warning(f"⚠️ Statut: {conclusion}")
-            elif status == 'in_progress' or status == 'queued':
-                st.info(f"⏳ Statut: {status} - Le scraping est en cours sur GitHub Actions...")
-                st.caption("💡 Vous pouvez suivre la progression sur GitHub : Actions → Workflows")
-                
-                # Lien vers GitHub Actions
+                    st.info(f"📊 **{status}**")
+            
+            with col_progress:
+                # ✅ Essayer de charger le statut depuis le fichier local (si téléchargé)
+                status_file = Path(__file__).parent.parent.parent / "data" / "github_actions_status.json"
+                if status_file.exists():
+                    try:
+                        with open(status_file, 'r', encoding='utf-8') as f:
+                            status_data = json.load(f)
+                            total_tasks = status_data.get('total_tasks', 0)
+                            completed_tasks = status_data.get('completed_tasks', 0)
+                            total_results = status_data.get('total_results', 0)
+                            
+                            if total_tasks > 0:
+                                progress_pct = (completed_tasks / total_tasks) * 100
+                                st.progress(progress_pct / 100)
+                                st.caption(f"📊 {completed_tasks}/{total_tasks} villes scrapées | {total_results} résultats trouvés")
+                            else:
+                                st.caption("⏳ Initialisation...")
+                    except:
+                        pass
+                else:
+                    if status == 'in_progress' or status == 'queued':
+                        st.caption("⏳ En attente des premières données...")
+            
+            with col_actions:
                 if run_id:
                     github_url = f"https://github.com/{github_repo}/actions/runs/{run_id}"
-                    st.markdown(f"🔗 [Voir sur GitHub Actions]({github_url})")
+                    st.markdown(f"[🔗 Voir logs]({github_url})")
+            
+            # ✅ Section détaillée
+            with st.expander("📋 Détails du workflow", expanded=True):
+                # Informations du workflow
+                if run_id:
+                    st.write(f"**Run ID:** `{run_id}`")
+                    st.write(f"**Statut:** {status}")
+                    if conclusion:
+                        st.write(f"**Conclusion:** {conclusion}")
+                
+                # ✅ Charger et afficher le statut détaillé
+                status_file = Path(__file__).parent.parent.parent / "data" / "github_actions_status.json"
+                if status_file.exists():
+                    try:
+                        with open(status_file, 'r', encoding='utf-8') as f:
+                            status_data = json.load(f)
+                            
+                            col_info1, col_info2, col_info3 = st.columns(3)
+                            with col_info1:
+                                st.metric("Villes totales", status_data.get('total_tasks', 0))
+                            with col_info2:
+                                st.metric("Villes complétées", status_data.get('completed_tasks', 0))
+                            with col_info3:
+                                st.metric("Résultats trouvés", status_data.get('total_results', 0))
+                            
+                            # Afficher les résultats progressifs si disponibles
+                            results_file = Path(__file__).parent.parent.parent / "data" / "scraping_results_github_actions.json"
+                            if results_file.exists():
+                                try:
+                                    with open(results_file, 'r', encoding='utf-8') as f:
+                                        results_data = json.load(f)
+                                        if results_data.get('results'):
+                                            # Mettre à jour les résultats affichés
+                                            st.session_state.scraped_results = results_data.get('results', [])
+                                            st.success(f"📥 {len(results_data.get('results', []))} résultats disponibles localement")
+                                            
+                                            # Afficher un aperçu
+                                            if len(results_data.get('results', [])) > 0:
+                                                preview_df = pd.DataFrame(results_data.get('results', [])[:10])
+                                                if not preview_df.empty:
+                                                    st.caption("👀 Aperçu des résultats (10 premiers):")
+                                                    st.dataframe(preview_df[['nom', 'telephone', 'site_web', 'ville_recherche']].head(10), use_container_width=True)
+                                except Exception as e:
+                                    st.error(f"Erreur lecture résultats: {e}")
+                    except Exception as e:
+                        st.error(f"Erreur lecture statut: {e}")
+            
+            # ✅ Boutons de contrôle simplifiés
+            col_btn1, col_btn2, col_btn3 = st.columns(3)
+            
+            with col_btn1:
+                # Bouton pour rafraîchir le statut (remplace auto-refresh)
+                if st.button("🔄 Rafraîchir", key="refresh_github"):
+                    # ✅ Forcer la vérification du statut sans réinitialiser l'état
+                    # On garde scraping_running = True si on a un workflow_id
+                    if st.session_state.github_workflow_id:
+                        st.session_state.scraping_running = True
+                    st.experimental_rerun()
+            
+            with col_btn2:
+                # Bouton pour télécharger les résultats progressivement (même si en cours)
+                if status == 'in_progress' or status == 'queued' or (status == 'completed' and conclusion == 'success'):
+                    if st.button("📥 Télécharger les résultats", key="download_progress"):
+                        # ✅ Télécharger depuis l'artifact ou le fichier local
+                        results_file = Path(__file__).parent.parent.parent / "data" / "scraping_results_github_actions.json"
+                        results_list = []
+                        
+                        # Essayer d'abord le fichier local (si déjà téléchargé)
+                        if results_file.exists():
+                            try:
+                                with open(results_file, 'r', encoding='utf-8') as f:
+                                    results_data = json.load(f)
+                                    if isinstance(results_data, dict) and 'results' in results_data:
+                                        results_list = results_data['results']
+                                    elif isinstance(results_data, list):
+                                        results_list = results_data
+                            except:
+                                pass
+                        
+                        # Si pas de fichier local et workflow terminé, télécharger l'artifact
+                        if not results_list and status == 'completed' and run_id:
+                            with st.spinner("📥 Téléchargement depuis GitHub..."):
+                                artifact_data = download_github_artifact(github_token, github_repo, run_id)
+                                if artifact_data:
+                                    if isinstance(artifact_data, dict) and 'results' in artifact_data:
+                                        results_data = artifact_data['results']
+                                        if isinstance(results_data, dict) and 'results' in results_data:
+                                            results_list = results_data['results']
+                                        elif isinstance(results_data, list):
+                                            results_list = results_data
+                        
+                        if results_list:
+                            # Sauvegarder automatiquement en BDD avec TOUTES les données
+                            saved_count = 0
+                            for info in results_list:
+                                try:
+                                    artisan_data = {
+                                        'nom_entreprise': info.get('nom', 'N/A'),
+                                        'telephone': info.get('telephone', '').replace(' ', '') if info.get('telephone') else None,
+                                        'adresse': info.get('adresse', ''),
+                                        'code_postal': info.get('code_postal', ''),
+                                        'ville': info.get('ville', ''),
+                                        'ville_recherche': info.get('ville_recherche', ''),
+                                        'type_artisan': info.get('recherche', metiers[0] if metiers else 'plombier'),
+                                        'source': 'google_maps_github_actions'
+                                    }
+                                    
+                                    if info.get('site_web'):
+                                        artisan_data['site_web'] = info.get('site_web')
+                                    
+                                    # ✅ Ajouter note et nombre_avis
+                                    if info.get('note'):
+                                        artisan_data['note'] = float(info.get('note'))
+                                    if info.get('nb_avis') or info.get('nombre_avis'):
+                                        artisan_data['nombre_avis'] = int(info.get('nb_avis') or info.get('nombre_avis', 0))
+                                    
+                                    ajouter_artisan(artisan_data)
+                                    saved_count += 1
+                                except Exception as e:
+                                    if "UNIQUE constraint" not in str(e) and "duplicate" not in str(e).lower():
+                                        logger.error(f"Erreur sauvegarde: {e}")
+                            
+                            # Mettre à jour les résultats affichés
+                            st.session_state.scraped_results = results_list
+                            st.session_state.saved_count = saved_count
+                            
+                            st.success(f"✅ {len(results_list)} résultats téléchargés et {saved_count} sauvegardés en BDD !")
+                            st.experimental_rerun()
+                        else:
+                            st.warning("⚠️ Aucun résultat disponible pour le moment. Le scraping est peut-être encore en cours.")
+            
+            with col_btn3:
+                # Bouton pour arrêter le workflow
+                if status == 'in_progress' or status == 'queued':
+                    if st.button("⏹️ Arrêter", key="stop_github"):
+                        try:
+                            url = f"https://api.github.com/repos/{github_repo}/actions/runs/{run_id}/cancel"
+                            headers = {
+                                "Accept": "application/vnd.github+json",
+                                "Authorization": f"Bearer {github_token}",
+                                "X-GitHub-Api-Version": "2022-11-28"
+                            }
+                            response = requests.post(url, headers=headers)
+                            if response.status_code == 202:
+                                st.success("⏹️ Annulation demandée")
+                            else:
+                                st.warning(f"⚠️ Erreur: {response.status_code}")
+                        except Exception as e:
+                            st.error(f"❌ Erreur: {e}")
+                        st.experimental_rerun()
+            
+            # ✅ Ne plus faire d'auto-refresh - l'utilisateur clique sur "Rafraîchir"
+            if status == 'completed' and conclusion == 'failure':
+                st.error("❌ Le scraping a échoué sur GitHub Actions. Vérifiez les logs sur GitHub.")
+                if st.button("🔄 Réinitialiser", key="reset_failed"):
+                    st.session_state.scraping_running = False
+                    st.session_state.github_workflow_status = None
+                    st.session_state.github_workflow_id = None
+                    st.experimental_rerun()
+        else:
+            # ✅ Si on a un workflow_id mais pas de statut, c'est qu'on attend encore
+            if st.session_state.github_workflow_id:
+                st.warning("⏳ En attente du statut du workflow...")
+                st.info("💡 Cliquez sur 'Rafraîchir' pour vérifier à nouveau")
+                # ✅ Maintenir scraping_running pour garder le dashboard visible
+                st.session_state.scraping_running = True
             else:
-                st.info(f"📊 Statut: {status}")
-        else:
-            st.warning("⏳ En attente du démarrage du workflow...")
-            # Ne pas faire de refresh automatique si le workflow n'est pas encore démarré
-            if not st.session_state.github_workflow_id:
-                # Attendre un peu avant de réessayer
-                time.sleep(2)
-                st.experimental_rerun()
-        
-        # Auto-refresh pour vérifier le statut SEULEMENT si le workflow est en cours
-        if status and (status == 'in_progress' or status == 'queued'):
-            time.sleep(5)
-            st.experimental_rerun()
-        elif status == 'completed':
-            # Workflow terminé, ne plus refresh
-            pass
-        else:
-            # Statut inconnu ou erreur, ne plus refresh automatiquement
-            pass
+                st.warning("⏳ En attente du démarrage du workflow...")
+                # Ne plus faire d'auto-refresh automatique
+                # L'utilisateur doit cliquer sur "Rafraîchir"
     
     else:
         # ✅ Mode local (code existant) - SEULEMENT si GitHub Actions n'est PAS activé
@@ -802,6 +1008,12 @@ if st.session_state.scraping_running:
                 logs_expander = st.expander("📋 Logs en temps réel", expanded=True)
                 logs_display = logs_expander.empty()
             
+            # ✅ Stocker dans session_state pour y accéder plus tard
+            st.session_state.progress_bar = progress_bar
+            st.session_state.status_text = status_text
+            st.session_state.stats_text = stats_text
+            st.session_state.logs_display = logs_display
+            
             # Initialiser le scraper si nécessaire
             if not st.session_state.scraper:
                 st.session_state.scraper = GoogleMapsScraper(headless=headless)
@@ -811,6 +1023,11 @@ if st.session_state.scraping_running:
         else:
             # Si GitHub Actions est activé mais pas encore configuré, ne rien faire
             st.info("⏳ Configuration GitHub Actions en cours...")
+            # ✅ S'assurer que les variables ne sont pas dans session_state en mode GitHub
+            if 'stats_text' in st.session_state:
+                del st.session_state.stats_text
+            if 'logs_display' in st.session_state:
+                del st.session_state.logs_display
     
     # ✅ Fonction de sauvegarde automatique en BDD
     def save_to_db_auto(info, metier_actuel):
@@ -1076,34 +1293,42 @@ if st.session_state.scraping_running:
         except:
             pass
     
-    # ✅ Charger et afficher les logs en temps réel
-    logs_file = Path(__file__).parent.parent.parent / "data" / "scraping_logs.json"
-    try:
-        if logs_file.exists():
-            with open(logs_file, 'r', encoding='utf-8') as f:
-                logs_data = json.load(f)
-                # Afficher les 50 derniers logs
-                recent_logs = logs_data[-50:] if len(logs_data) > 50 else logs_data
-                if recent_logs:
-                    logs_html = "<div style='font-family: monospace; font-size: 0.85em; max-height: 500px; overflow-y: auto; background: #f8f9fa; padding: 10px; border-radius: 5px;'>"
-                    for log_entry in recent_logs:
-                        timestamp = log_entry.get('timestamp', '')
-                        message = log_entry.get('message', '')
-                        # Formater le timestamp
-                        try:
-                            dt = datetime.fromisoformat(timestamp)
-                            time_str = dt.strftime('%H:%M:%S')
-                        except:
-                            time_str = timestamp[:8] if len(timestamp) > 8 else timestamp
-                        logs_html += f"<div style='margin: 3px 0; padding: 6px; border-left: 3px solid #007bff; padding-left: 10px; background: white; border-radius: 3px;'><span style='color: #6c757d; font-weight: bold;'>{time_str}</span> <span style='color: #212529;'>{message}</span></div>"
-                    logs_html += "</div>"
-                    logs_display.markdown(logs_html, unsafe_allow_html=True)
-                else:
-                    logs_display.info("⏳ En attente des premiers logs...")
-        else:
-            logs_display.info("⏳ En attente des premiers logs...")
-    except Exception as e:
-        logs_display.error(f"Erreur chargement logs: {e}")
+    # ✅ Charger et afficher les logs en temps réel SEULEMENT si on est en mode local
+    # Vérifier si on est en mode local (pas GitHub Actions) et si logs_display est dans session_state
+    current_use_github_check = st.session_state.get('use_github_actions', False)
+    if not current_use_github_check and st.session_state.scraping_running and 'logs_display' in st.session_state:
+        # Mode local - logs_display est dans session_state
+        try:
+            logs_file = Path(__file__).parent.parent.parent / "data" / "scraping_logs.json"
+            if logs_file.exists():
+                with open(logs_file, 'r', encoding='utf-8') as f:
+                    logs_data = json.load(f)
+                    # Afficher les 50 derniers logs
+                    recent_logs = logs_data[-50:] if len(logs_data) > 50 else logs_data
+                    if recent_logs:
+                        logs_html = "<div style='font-family: monospace; font-size: 0.85em; max-height: 500px; overflow-y: auto; background: #f8f9fa; padding: 10px; border-radius: 5px;'>"
+                        for log_entry in recent_logs:
+                            timestamp = log_entry.get('timestamp', '')
+                            message = log_entry.get('message', '')
+                            # Formater le timestamp
+                            try:
+                                dt = datetime.fromisoformat(timestamp)
+                                time_str = dt.strftime('%H:%M:%S')
+                            except:
+                                time_str = timestamp[:8] if len(timestamp) > 8 else timestamp
+                            logs_html += f"<div style='margin: 3px 0; padding: 6px; border-left: 3px solid #007bff; padding-left: 10px; background: white; border-radius: 3px;'><span style='color: #6c757d; font-weight: bold;'>{time_str}</span> <span style='color: #212529;'>{message}</span></div>"
+                        logs_html += "</div>"
+                        st.session_state.logs_display.markdown(logs_html, unsafe_allow_html=True)
+                    else:
+                        st.session_state.logs_display.info("⏳ En attente des premiers logs...")
+            else:
+                st.session_state.logs_display.info("⏳ En attente des premiers logs...")
+        except Exception as e:
+            # ✅ Utiliser st.error au lieu de logs_display.error si erreur
+            try:
+                st.session_state.logs_display.error(f"Erreur chargement logs: {e}")
+            except:
+                st.error(f"Erreur chargement logs: {e}")
     
     # Charger le compteur de sauvegardes
     saved_file = Path(__file__).parent.parent.parent / "data" / "saved_count.json"
@@ -1127,24 +1352,34 @@ if st.session_state.scraping_running:
         except:
             pass
     
-    # Mettre à jour l'affichage
+    # Mettre à jour l'affichage SEULEMENT si on est en mode local (stats_text est défini)
     if st.session_state.scraped_results:
         avec_tel = sum(1 for r in st.session_state.scraped_results if r.get('telephone'))
         avec_site = sum(1 for r in st.session_state.scraped_results if r.get('site_web'))
         sans_site = len(st.session_state.scraped_results) - avec_site
         
-        stats_text.success(
+        # ✅ Afficher les stats - utiliser stats_text si disponible (mode local), sinon st.success
+        current_use_github_check = st.session_state.get('use_github_actions', False)
+        stats_message = (
             f"📊 **{len(st.session_state.scraped_results)}** scrapés | "
             f"📞 {avec_tel} avec téléphone | "
             f"🌐 {avec_site} avec site | "
             f"⭐ {sans_site} SANS site (prospects !) | "
             f"💾 {st.session_state.saved_count} sauvegardés"
         )
+        
+        if not current_use_github_check and 'stats_text' in st.session_state:
+            # Mode local - utiliser stats_text depuis session_state
+            try:
+                st.session_state.stats_text.success(stats_message)
+            except:
+                st.success(stats_message)
+        else:
+            # Mode GitHub Actions ou stats_text non disponible - utiliser st.success
+            st.success(stats_message)
     
-    # Auto-refresh
-    if st.session_state.scraping_running:
-        time.sleep(2)
-        st.experimental_rerun()
+    # ✅ Auto-refresh désactivé - l'utilisateur utilise le bouton "Rafraîchir"
+    # Plus de refresh automatique pour économiser les ressources CPU/mémoire
 
 # Afficher les résultats scrapés
 if st.session_state.scraped_results:
