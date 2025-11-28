@@ -383,6 +383,16 @@ def download_github_artifact(token, repo, run_id):
         return None
 
 if github_token and github_repo:
+    # ✅ Bouton Rafraîchir TOUJOURS visible EN HAUT pour forcer la mise à jour
+    col_refresh_top1, col_refresh_top2 = st.columns([1, 1])
+    with col_refresh_top1:
+        if st.button("🔄 Rafraîchir les workflows", key="refresh_workflows_top", help="Afficher tous les workflows et leurs statistiques"):
+            # Forcer la mise à jour en réinitialisant le cache de session
+            if 'workflows_last_refresh' in st.session_state:
+                del st.session_state.workflows_last_refresh
+            # Forcer le rerun immédiatement
+            st.experimental_rerun()
+    
     # Lister les workflows en cours
     try:
         workflows_en_cours = list_github_workflows(github_token, github_repo)
@@ -427,12 +437,8 @@ if github_token and github_repo:
                             st.error(f"❌ Erreur lors de l'annulation du workflow #{workflow['run_number']}")
     # ✅ Supprimé le message "Aucun workflow en cours"
     
-    # ✅ Bouton Rafraîchir TOUJOURS visible pour voir les workflows et leurs stats
-    col_refresh1, col_refresh2 = st.columns([1, 1])
-    with col_refresh1:
-        if st.button("🔄 Rafraîchir les workflows", key="refresh_workflows_list", help="Afficher tous les workflows et leurs statistiques"):
-            st.experimental_rerun()
-    with col_refresh2:
+    # ✅ Bouton Télécharger et importer résultats
+    with col_refresh_top2:
         if st.button("📥 Télécharger et importer résultats", key="download_and_import_results", help="Télécharger les résultats depuis GitHub Actions et les importer dans la base locale"):
             # Télécharger les résultats depuis tous les workflows terminés
             imported_count = 0
