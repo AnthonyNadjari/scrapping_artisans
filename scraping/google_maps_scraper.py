@@ -2062,17 +2062,51 @@ class GoogleMapsScraper:
             # Cliquer pour ouvrir le détail
             try:
                 logger.info(f"  [{index}] 🖱️ Clic sur l'élément pour ouvrir le panneau de détail...")
-                # Scroll jusqu'à l'élément pour le rendre visible
-                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
-                time.sleep(0.3 * self.delay_multiplier)
-                # Essayer plusieurs méthodes de clic
+                
+                # ✅ FIX CRITIQUE : Re-trouver l'élément après avoir fermé le panneau précédent
+                # L'élément peut devenir "stale" après la fermeture du panneau
                 try:
+                    # Essayer de cliquer directement
                     element.click()
                     logger.info(f"  [{index}] ✅ Clic réussi (méthode normale)")
-                except:
+                except StaleElementReferenceException:
+                    # Si l'élément est stale, le re-trouver
+                    logger.warning(f"  [{index}] ⚠️ Élément stale, re-recherche de l'élément...")
+                    try:
+                        # Re-trouver tous les établissements
+                        etablissements_elems = self.driver.find_elements(By.CSS_SELECTOR, 'a[href*="/maps/place/"]')
+                        if len(etablissements_elems) >= index:
+                            element = etablissements_elems[index - 1]  # index est 1-based
+                            # Scroll jusqu'à l'élément
+                            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+                            time.sleep(0.3 * self.delay_multiplier)
+                            element.click()
+                            logger.info(f"  [{index}] ✅ Clic réussi (élément re-trouvé)")
+                        else:
+                            logger.error(f"  [{index}] ❌ Impossible de re-trouver l'élément (index {index} > {len(etablissements_elems)})")
+                            raise
+                    except Exception as e2:
+                        logger.error(f"  [{index}] ❌ Erreur re-trouver élément: {e2}")
+                        raise
+                except Exception as e:
                     # Si clic normal échoue, utiliser JavaScript
-                    self.driver.execute_script("arguments[0].click();", element)
-                    logger.info(f"  [{index}] ✅ Clic réussi (méthode JavaScript)")
+                    try:
+                        self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+                        time.sleep(0.3 * self.delay_multiplier)
+                        self.driver.execute_script("arguments[0].click();", element)
+                        logger.info(f"  [{index}] ✅ Clic réussi (méthode JavaScript)")
+                    except StaleElementReferenceException:
+                        # Si toujours stale avec JavaScript, re-trouver l'élément
+                        logger.warning(f"  [{index}] ⚠️ Élément stale même avec JavaScript, re-recherche...")
+                        etablissements_elems = self.driver.find_elements(By.CSS_SELECTOR, 'a[href*="/maps/place/"]')
+                        if len(etablissements_elems) >= index:
+                            element = etablissements_elems[index - 1]
+                            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+                            time.sleep(0.3 * self.delay_multiplier)
+                            self.driver.execute_script("arguments[0].click();", element)
+                            logger.info(f"  [{index}] ✅ Clic réussi (JavaScript + élément re-trouvé)")
+                        else:
+                            raise
                 
                 # ✅ FIX CRITIQUE : Augmenter le délai pour éviter la contamination du panneau
                 # Sur GitHub Actions, attendre plus longtemps
@@ -2200,6 +2234,29 @@ class GoogleMapsScraper:
                             logger.info(f"  [{index}] ✅ Panneau de détail identifié (score: {best_score}, nom: {nom_check_10})")
                         else:
                             logger.warning(f"  [{index}] ⚠️ Aucun panneau ne correspond suffisamment au nom '{nom_check_10}' (meilleur score: {best_score})")
+                            # ✅ Si aucun panneau ne correspond (score 0), attendre un peu plus et réessayer
+                            if best_score == 0:
+                                logger.info(f"  [{index}] ⏳ Attente supplémentaire pour chargement du panneau...")
+                                time.sleep(2.0 * self.delay_multiplier)
+                                # Réessayer de trouver le panneau
+                                panneaux_detail_retry = self.driver.find_elements(By.CSS_SELECTOR, 
+                                    'div[role="complementary"], '
+                                    'div[jsaction*="pane"], '
+                                    'div[class*="m6QErb"]'
+                                )
+                                if panneaux_detail_retry:
+                                    # Prendre le panneau le plus à droite (le plus récent)
+                                    max_x = -1
+                                    for panneau in panneaux_detail_retry:
+                                        try:
+                                            location = panneau.location
+                                            if location['x'] > max_x:
+                                                max_x = location['x']
+                                                panneau_detail = panneau
+                                        except:
+                                            continue
+                                    if panneau_detail:
+                                        logger.info(f"  [{index}] ✅ Panneau de détail identifié après retry (position X: {max_x})")
                     
                     # Si pas trouvé par nom, prendre le panneau le plus à droite (le plus récent)
                     if not panneau_detail:
@@ -2821,6 +2878,18 @@ class GoogleMapsScraper:
                     break
                 
                 try:
+                    # ✅ FIX CRITIQUE : Re-trouver l'élément à chaque itération pour éviter StaleElementReferenceException
+                    # L'élément peut devenir stale après avoir fermé le panneau précédent
+                    try:
+                        # Re-trouver tous les établissements pour avoir des éléments frais
+                        etablissements_elems_fresh = self.driver.find_elements(By.CSS_SELECTOR, 'a[href*="/maps/place/"]')
+                        if len(etablissements_elems_fresh) >= i:
+                            elem = etablissements_elems_fresh[i - 1]  # i est 1-based
+                        else:
+                            logger.warning(f"  [{i}] ⚠️ Impossible de re-trouver l'élément (index {i} > {len(etablissements_elems_fresh)})")
+                    except Exception as e_refresh:
+                        logger.debug(f"  [{i}] Erreur re-trouver élément: {e_refresh}, utilisation élément original")
+                    
                     # ✅ FIX : Essayer plusieurs méthodes d'extraction avec fallback
                     info = None
                     
