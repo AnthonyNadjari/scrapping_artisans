@@ -47,9 +47,12 @@ def create_scraping_map_by_job(metier=None):
     # Récupérer les artisans
     artisans = get_artisans(limit=10000)
     
-    # Filtrer par métier si spécifié
+    # ✅ Filtrer par métier si spécifié (avec support pour None/vide)
     if metier and metier != "Tous":
-        artisans = [a for a in artisans if a.get('type_artisan') == metier]
+        artisans = [a for a in artisans if a.get('type_artisan') and a.get('type_artisan') == metier]
+    else:
+        # Si "Tous", inclure tous les artisans qui ont un type_artisan
+        artisans = [a for a in artisans if a.get('type_artisan')]
     
     if not artisans:
         return None

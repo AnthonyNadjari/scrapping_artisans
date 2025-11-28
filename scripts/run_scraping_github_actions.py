@@ -65,12 +65,30 @@ def save_callback(artisan_data):
             'ville': artisan_data.get('ville'),
             'departement': artisan_data.get('departement'),
             'note': artisan_data.get('note'),
-            'nombre_avis': artisan_data.get('nb_avis'),
+            'nombre_avis': artisan_data.get('nb_avis') or artisan_data.get('nombre_avis'),  # ✅ Support des deux formats
             'ville_recherche': artisan_data.get('ville_recherche'),
             'source': 'google_maps',
             'source_telephone': 'google_maps',
-            'type_artisan': artisan_data.get('recherche')
+            'type_artisan': artisan_data.get('recherche') or artisan_data.get('type_artisan')  # ✅ Support des deux formats
         }
+        
+        # ✅ Extraire le département depuis le code postal si manquant
+        if not data.get('departement') and data.get('code_postal'):
+            code_postal = str(data['code_postal']).strip()
+            if len(code_postal) >= 2:
+                # Pour les départements d'outre-mer (97x, 98x), prendre les 3 premiers chiffres
+                if code_postal.startswith('97') or code_postal.startswith('98'):
+                    data['departement'] = code_postal[:3]
+                else:
+                    data['departement'] = code_postal[:2]
+        
+        # ✅ Extraire la ville depuis l'adresse si manquante
+        if not data.get('ville') and data.get('adresse'):
+            import re
+            # Chercher le pattern "code_postal ville" dans l'adresse
+            ville_match = re.search(r'\d{5}\s+([A-Za-zÀ-ÿ\s-]+)', data['adresse'])
+            if ville_match:
+                data['ville'] = ville_match.group(1).strip()
         
         # ✅ Vérifier qu'on a au moins une donnée valide avant d'insérer
         has_valid_data = any([

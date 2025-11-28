@@ -411,9 +411,9 @@ if github_token and github_repo:
                     success, message = cancel_all_github_workflows(github_token, github_repo)
                     if success:
                         st.success(message)
+                        st.experimental_rerun()
                     else:
                         st.warning(message)
-        st.experimental_rerun()
 
         # Afficher chaque workflow avec possibilité de le tuer individuellement
         st.markdown("**Détails des workflows :**")
@@ -1491,17 +1491,20 @@ if github_token and github_repo and not st.session_state.get('workflow_just_laun
     if not st.session_state.get('workflows_cancelled_on_start', False):
         with st.spinner("⏹️ Annulation des workflows GitHub Actions en cours..."):
             success, message = cancel_all_github_workflows(github_token, github_repo)
+            # ✅ TOUJOURS définir le flag pour éviter les boucles, même en cas d'échec
+            st.session_state.workflows_cancelled_on_start = True
             if success:
-                st.session_state.workflows_cancelled_on_start = True
                 # Ne pas réinitialiser scraping_running si on a un workflow_id
                 if not st.session_state.get('github_workflow_id'):
                     st.session_state.scraping_running = False
                     st.session_state.github_workflow_status = None
                     st.session_state.github_workflow_id = None
                 st.success(f"✅ {message}")
+                # ✅ Rerun seulement si on a annulé avec succès
+                st.experimental_rerun()
             else:
                 st.warning(f"⚠️ {message}")
-        st.experimental_rerun()
+                # ✅ NE PAS faire de rerun en cas d'échec pour éviter les boucles
 # ✅ Réinitialiser le flag après le premier rerun
 if st.session_state.get('workflow_just_launched', False):
     st.session_state.workflow_just_launched = False

@@ -345,19 +345,26 @@ else:
         data = []
         for artisan in artisans:
             lien_whatsapp = link_gen.generer_lien(artisan, template)
+            # ✅ Formater les valeurs pour éviter les <NA>
+            def format_value(value, default=''):
+                """Formate une valeur pour l'affichage"""
+                if value is None or value == '':
+                    return default
+                return str(value)
+            
             row = {
-                'ID': artisan.get('id'),
-                'Entreprise': artisan.get('nom_entreprise', 'N/A'),
-                'Métier': artisan.get('type_artisan', ''),
-                'Ville': artisan.get('ville', ''),
-                'Ville recherche': artisan.get('ville_recherche', ''),
-                'Département': artisan.get('departement', ''),
-                'Adresse': artisan.get('adresse', ''),
-                'Code postal': artisan.get('code_postal', ''),
-                'Téléphone': artisan.get('telephone', ''),
-                'Site web': artisan.get('site_web', ''),
-                'Note': f"{artisan.get('note', 'N/A')}/5" if artisan.get('note') else 'N/A',
-                'Nombre avis': artisan.get('nombre_avis', 'N/A') if artisan.get('nombre_avis') else 'N/A',
+                'ID': artisan.get('id', ''),
+                'Entreprise': format_value(artisan.get('nom_entreprise'), 'N/A'),
+                'Métier': format_value(artisan.get('type_artisan')),
+                'Ville': format_value(artisan.get('ville')),
+                'Ville recherche': format_value(artisan.get('ville_recherche')),
+                'Département': format_value(artisan.get('departement')),
+                'Adresse': format_value(artisan.get('adresse')),
+                'Code postal': format_value(artisan.get('code_postal')),
+                'Téléphone': format_value(artisan.get('telephone')),
+                'Site web': format_value(artisan.get('site_web')),
+                'Note': f"{artisan.get('note')}/5" if artisan.get('note') else 'N/A',
+                'Nombre avis': format_value(artisan.get('nombre_avis'), 'N/A'),
                 'Message envoyé': '✅' if artisan.get('message_envoye') else '❌',
                 'A répondu': '✅' if artisan.get('a_repondu') else '❌',
                 'Lien WhatsApp': lien_whatsapp
