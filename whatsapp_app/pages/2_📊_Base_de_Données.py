@@ -36,6 +36,58 @@ with col4:
 
 st.markdown("---")
 
+# ✅ SECTION : Carte de scraping par métier (basée sur la BDD locale)
+st.markdown("### 🗺️ Carte des scrapings par métier")
+st.caption("Visualisez les départements scrapés pour chaque métier. La taille des points est proportionnelle au nombre d'artisans.")
+
+# Récupérer la liste des métiers depuis la BDD
+all_artisans_bdd = get_artisans(limit=10000)
+metiers_bdd = sorted(list(set([a.get('type_artisan') for a in all_artisans_bdd if a.get('type_artisan')])))
+
+col_map1, col_map2 = st.columns([1, 3])
+with col_map1:
+    if metiers_bdd:
+        metier_carte = st.selectbox("Sélectionner un métier", ["Tous"] + metiers_bdd, key="map_metier_selection_bdd")
+    else:
+        metier_carte = "Tous"
+        st.info("ℹ️ Aucun métier dans la BDD")
+
+# Importer et utiliser la fonction de carte
+try:
+    from whatsapp_app.utils.map_utils import create_scraping_map_by_job
+    from streamlit_folium import st_folium
+    
+    carte = create_scraping_map_by_job(metier_carte if metier_carte != "Tous" else None)
+    
+    if carte:
+        with col_map2:
+            st_folium(carte, width=None, height=500, returned_objects=[])
+        
+        # Statistiques rapides
+        artisans_filtres = [a for a in all_artisans_bdd if not metier_carte or metier_carte == "Tous" or a.get('type_artisan') == metier_carte]
+        if artisans_filtres:
+            col_stat1, col_stat2, col_stat3 = st.columns(3)
+            with col_stat1:
+                st.metric("Total artisans", len(artisans_filtres))
+            with col_stat2:
+                avec_tel = len([a for a in artisans_filtres if a.get('telephone')])
+                st.metric("Avec téléphone", avec_tel)
+            with col_stat3:
+                avec_site = len([a for a in artisans_filtres if a.get('site_web')])
+                st.metric("Avec site web", avec_site)
+    else:
+        with col_map2:
+            st.info("ℹ️ Aucune donnée de scraping pour ce métier. Lancez un scraping pour voir la carte se remplir.")
+except ImportError as e:
+    st.warning(f"⚠️ Erreur import map_utils: {e}")
+    st.info("💡 Installez les dépendances: `pip install folium streamlit-folium`")
+except Exception as e:
+    st.error(f"❌ Erreur création carte: {e}")
+    import traceback
+    st.code(traceback.format_exc())
+
+st.markdown("---")
+
 # Template de message
 st.subheader("📝 Template de Message WhatsApp")
 

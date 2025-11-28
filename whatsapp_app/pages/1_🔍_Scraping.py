@@ -584,10 +584,63 @@ else:
 
 st.markdown("---")
 
-# ✅ SECTION : Carte de tracking des scrapings
+# ✅ SECTION : Carte de scraping par métier (basée sur la BDD locale)
+st.markdown("### 🗺️ Carte des scrapings par métier")
+st.caption("Visualisez les départements scrapés pour chaque métier. La taille des points est proportionnelle au nombre d'artisans.")
+
+# Récupérer la liste des métiers depuis la BDD
+from whatsapp_database.queries import get_artisans
+all_artisans = get_artisans(limit=10000)
+metiers_bdd = sorted(list(set([a.get('type_artisan') for a in all_artisans if a.get('type_artisan')])))
+
+col_map1, col_map2 = st.columns([1, 3])
+with col_map1:
+    if metiers_bdd:
+        metier_carte = st.selectbox("Sélectionner un métier", ["Tous"] + metiers_bdd, key="map_metier_selection")
+    else:
+        metier_carte = "Tous"
+        st.info("ℹ️ Aucun métier dans la BDD")
+
+# Importer et utiliser la fonction de carte
+try:
+    from whatsapp_app.utils.map_utils import create_scraping_map_by_job
+    from streamlit_folium import st_folium
+    
+    carte = create_scraping_map_by_job(metier_carte if metier_carte != "Tous" else None)
+    
+    if carte:
+        with col_map2:
+            st_folium(carte, width=None, height=500, returned_objects=[])
+        
+        # Statistiques rapides
+        artisans_filtres = [a for a in all_artisans if not metier_carte or metier_carte == "Tous" or a.get('type_artisan') == metier_carte]
+        if artisans_filtres:
+            col_stat1, col_stat2, col_stat3 = st.columns(3)
+            with col_stat1:
+                st.metric("Total artisans", len(artisans_filtres))
+            with col_stat2:
+                avec_tel = len([a for a in artisans_filtres if a.get('telephone')])
+                st.metric("Avec téléphone", avec_tel)
+            with col_stat3:
+                avec_site = len([a for a in artisans_filtres if a.get('site_web')])
+                st.metric("Avec site web", avec_site)
+    else:
+        with col_map2:
+            st.info("ℹ️ Aucune donnée de scraping pour ce métier. Lancez un scraping pour voir la carte se remplir.")
+except ImportError as e:
+    st.warning(f"⚠️ Erreur import map_utils: {e}")
+    st.info("💡 Installez les dépendances: `pip install folium streamlit-folium`")
+except Exception as e:
+    st.error(f"❌ Erreur création carte: {e}")
+    import traceback
+    st.code(traceback.format_exc())
+
+st.markdown("---")
+
+# ✅ SECTION : Ancienne carte de tracking des scrapings (basée sur l'historique)
 col_title, col_filter = st.columns([2, 1])
 with col_title:
-    st.markdown("### 🗺️ Suivi des scrapings par département")
+    st.markdown("### 📊 Historique des scrapings par département")
 with col_filter:
     # Sélection du métier pour filtrer
     from whatsapp_database.queries import get_scraping_history
@@ -809,7 +862,7 @@ with st.expander("⚙️ Options avancées"):
         use_api_communes = st.checkbox(
             "Utiliser API data.gouv.fr pour les communes",
             value=True,  # ✅ Activé par défaut
-            help="Récupère automatiquement les communes depuis l'API officielle (défaut: <100k habitants)"
+            help="✅ RECOMMANDÉ : Récupère automatiquement toutes les communes depuis l'API officielle avec coordonnées GPS. Si désactivé, utilise le fichier data/villes_par_departement.json (liste limitée)"
         )
         if use_api_communes:
             # ✅ Valeurs par défaut : 0 à 100k habitants
@@ -971,12 +1024,15 @@ if st.session_state.get('show_communes', False) and use_api_communes and departe
                     avg_lat = sum(c['latitude'] for c in communes_avec_gps) / len(communes_avec_gps)
                     avg_lon = sum(c['longitude'] for c in communes_avec_gps) / len(communes_avec_gps)
                     
-                    # Créer une carte centrée sur les communes
-                    m = folium.Map(location=[avg_lat, avg_lon], zoom_start=8)
+                    # Créer une carte centrée sur les communes avec un meilleur style
+                    m = folium.Map(
+                        location=[avg_lat, avg_lon], 
+                        zoom_start=8,
+                        tiles='OpenStreetMap'  # Style plus propre
+                    )
                     
-                    # ✅ Calculer les min/max de population POUR LES COMMUNES AFFICHÉES (limitées à 200)
-                    sample_communes = communes_avec_gps[:200] if len(communes_avec_gps) > 200 else communes_avec_gps
-                    populations = [c['population'] for c in sample_communes if c['population'] > 0]
+                    # ✅ AFFICHER TOUTES LES COMMUNES (pas de limite de 200)
+                    populations = [c['population'] for c in communes_avec_gps if c['population'] > 0]
                     
                     if populations:
                         min_pop_displayed = min(populations)
@@ -987,56 +1043,67 @@ if st.session_state.get('show_communes', False) and use_api_communes and departe
                         max_pop_displayed = 1
                         pop_range_displayed = 1
                     
-                    for commune in sample_communes:
+                    # ✅ Améliorer le design : utiliser des clusters pour les grandes quantités
+                    from folium.plugins import MarkerCluster
+                    marker_cluster = MarkerCluster().add_to(m)
+                    
+                    for commune in communes_avec_gps:
                         pop = commune['population']
                         pop_str = f"{pop:,}" if pop > 0 else "N/A"
-                        popup_text = f"<b>{commune['nom']}</b><br>Département: {commune['departement']}<br>Code postal: {commune['code_postal']}<br>Population: {pop_str}"
+                        popup_text = f"""
+                        <div style='font-family: Arial, sans-serif;'>
+                            <h4 style='margin: 0 0 10px 0; color: #2c3e50;'>{commune['nom']}</h4>
+                            <p style='margin: 5px 0;'><strong>Département:</strong> {commune['departement']}</p>
+                            <p style='margin: 5px 0;'><strong>Code postal:</strong> {commune['code_postal']}</p>
+                            <p style='margin: 5px 0;'><strong>Population:</strong> {pop_str}</p>
+                        </div>
+                        """
                         
-                        # ✅ Taille du marqueur proportionnelle à la population RELATIVE au min/max affichés
+                        # ✅ Taille du marqueur proportionnelle à la population (plus petite pour un meilleur design)
                         if pop > 0 and pop_range_displayed > 0:
-                            # Normaliser entre 2 et 8 pixels de radius (réduit pour des points plus petits)
+                            # Normaliser entre 3 et 10 pixels de radius
                             normalized = (pop - min_pop_displayed) / pop_range_displayed
-                            radius = 2 + (normalized * 6)  # Entre 2 et 8 pixels
+                            radius = 3 + (normalized * 7)  # Entre 3 et 10 pixels
                         else:
-                            radius = 2
+                            radius = 3
                         
                         # Couleur selon la population (seuils fixes pour la couleur)
                         if pop > 10000:
-                            icon_color = 'red'
+                            icon_color = '#e74c3c'  # Rouge
                         elif pop > 5000:
-                            icon_color = 'orange'
+                            icon_color = '#f39c12'  # Orange
                         elif pop > 2000:
-                            icon_color = 'blue'
+                            icon_color = '#3498db'  # Bleu
                         else:
-                            icon_color = 'green'
+                            icon_color = '#27ae60'  # Vert
                         
                         folium.CircleMarker(
                             location=[commune['latitude'], commune['longitude']],
                             radius=radius,
-                            popup=folium.Popup(popup_text, max_width=200),
+                            popup=folium.Popup(popup_text, max_width=250),
                             tooltip=f"{commune['nom']} ({pop:,} hab.)" if pop > 0 else commune['nom'],
-                            color=icon_color,
-                            fill=True,
+                            color='white',
+                            weight=1.5,
                             fillColor=icon_color,
-                            fillOpacity=0.6,
-                            weight=1
-                        ).add_to(m)
+                            fillOpacity=0.7,
+                        ).add_to(marker_cluster)
                     
                     # Afficher la carte
                     folium_static(m, width=700, height=600)
                     
-                    if len(communes_avec_gps) > 200:
-                        st.caption(f"🗺️ Affichage de 200 communes sur {len(communes_avec_gps)} avec coordonnées GPS")
-                    else:
-                        st.caption(f"🗺️ {len(communes_avec_gps)} communes avec coordonnées GPS")
+                    st.success(f"🗺️ {len(communes_avec_gps)} communes affichées avec coordonnées GPS")
                     
-                    # Légende
+                    # Légende améliorée
                     st.markdown("""
-                    <div style='background: #f0f0f0; padding: 10px; border-radius: 5px; margin-top: 10px;'>
-                        <strong>Légende :</strong><br>
-                        🔴 Rouge : > 10 000 hab. | 🟠 Orange : 5 000 - 10 000 hab. | 
-                        🔵 Bleu : 2 000 - 5 000 hab. | 🟢 Vert : < 2 000 hab.<br>
-                        <small>La taille des points est proportionnelle à la population</small>
+                    <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 8px; margin-top: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+                        <strong style='font-size: 16px;'>📊 Légende :</strong><br>
+                        <div style='margin-top: 10px; line-height: 1.8;'>
+                            <span style='color: #e74c3c; font-weight: bold;'>●</span> Rouge : > 10 000 hab. | 
+                            <span style='color: #f39c12; font-weight: bold;'>●</span> Orange : 5 000 - 10 000 hab. | 
+                            <span style='color: #3498db; font-weight: bold;'>●</span> Bleu : 2 000 - 5 000 hab. | 
+                            <span style='color: #27ae60; font-weight: bold;'>●</span> Vert : < 2 000 hab.<br>
+                            <small style='opacity: 0.9;'>La taille des points est proportionnelle à la population. Les points proches sont regroupés automatiquement.</small>
+                        </div>
                     </div>
                     """, unsafe_allow_html=True)
                 else:
