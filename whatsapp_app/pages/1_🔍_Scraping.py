@@ -203,6 +203,121 @@ st.markdown("---")
 st.subheader("⚙️ Gestion des Workflows GitHub Actions")
 
 # ✅ FIX CRITIQUE : Définir les fonctions AVANT leur utilisation
+def list_github_workflows(token, repo):
+    """Liste tous les workflows GitHub Actions en cours"""
+    try:
+        headers = {
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {token}",
+            "X-GitHub-Api-Version": "2022-11-28"
+        }
+        
+        workflows = []
+        
+        # ✅ FIX : Faire deux appels séparés car l'API ne supporte pas "in_progress,queued" dans un seul paramètre
+        # Récupérer les runs "in_progress"
+        runs_url_in_progress = f"https://api.github.com/repos/{repo}/actions/runs?status=in_progress&per_page=100"
+        response = requests.get(runs_url_in_progress, headers=headers)
+        if response.status_code == 200:
+            runs_data = response.json()
+            for run in runs_data.get('workflow_runs', []):
+                workflows.append({
+                    'id': run.get('id'),
+                    'run_number': run.get('run_number'),
+                    'status': run.get('status'),
+                    'conclusion': run.get('conclusion'),
+                    'created_at': run.get('created_at'),
+                    'updated_at': run.get('updated_at'),
+                    'head_branch': run.get('head_branch'),
+                    'workflow_id': run.get('workflow_id'),
+                    'html_url': run.get('html_url')
+                })
+        
+        # Récupérer les runs "queued"
+        runs_url_queued = f"https://api.github.com/repos/{repo}/actions/runs?status=queued&per_page=100"
+        response = requests.get(runs_url_queued, headers=headers)
+        if response.status_code == 200:
+            runs_data = response.json()
+            for run in runs_data.get('workflow_runs', []):
+                # Éviter les doublons
+                if not any(w['id'] == run.get('id') for w in workflows):
+                    workflows.append({
+                        'id': run.get('id'),
+                        'run_number': run.get('run_number'),
+                        'status': run.get('status'),
+                        'conclusion': run.get('conclusion'),
+                        'created_at': run.get('created_at'),
+                        'updated_at': run.get('updated_at'),
+                        'head_branch': run.get('head_branch'),
+                        'workflow_id': run.get('workflow_id'),
+                        'html_url': run.get('html_url')
+                    })
+        
+        # Trier par date de création (plus récent en premier)
+        workflows.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+        
+        return workflows
+    except Exception as e:
+        logger.error(f"Erreur liste workflows: {e}")
+        return []
+
+def cancel_github_workflow(token, repo, run_id):
+    """Annule un workflow GitHub Actions spécifique"""
+    try:
+        cancel_url = f"https://api.github.com/repos/{repo}/actions/runs/{run_id}/cancel"
+        headers = {
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {token}",
+            "X-GitHub-Api-Version": "2022-11-28"
+        }
+        
+        response = requests.post(cancel_url, headers=headers)
+        return response.status_code == 202
+    except Exception as e:
+        logger.error(f"Erreur annulation workflow {run_id}: {e}")
+        return False
+
+def cancel_all_github_workflows(token, repo):
+    """Annule tous les workflows GitHub Actions en cours (in_progress et queued)"""
+    try:
+        headers = {
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {token}",
+            "X-GitHub-Api-Version": "2022-11-28"
+        }
+        
+        cancelled_count = 0
+        total_runs = 0
+        
+        # Récupérer les runs "in_progress"
+        url_in_progress = f"https://api.github.com/repos/{repo}/actions/runs?status=in_progress&per_page=100"
+        response = requests.get(url_in_progress, headers=headers)
+        if response.status_code == 200:
+            runs_data = response.json()
+            for run in runs_data.get('workflow_runs', []):
+                total_runs += 1
+                if cancel_github_workflow(token, repo, run.get('id')):
+                    cancelled_count += 1
+        
+        # Récupérer les runs "queued"
+        url_queued = f"https://api.github.com/repos/{repo}/actions/runs?status=queued&per_page=100"
+        response = requests.get(url_queued, headers=headers)
+        if response.status_code == 200:
+            runs_data = response.json()
+            for run in runs_data.get('workflow_runs', []):
+                total_runs += 1
+                if cancel_github_workflow(token, repo, run.get('id')):
+                    cancelled_count += 1
+        
+        if total_runs == 0:
+            return True, "Aucun workflow en cours à annuler"
+        elif cancelled_count == total_runs:
+            return True, f"✅ {cancelled_count} workflow(s) annulé(s) avec succès"
+        else:
+            return False, f"⚠️ {cancelled_count}/{total_runs} workflow(s) annulé(s)"
+    except Exception as e:
+        logger.error(f"Erreur annulation workflows: {e}")
+        return False, f"Erreur: {str(e)}"
 
 if github_token and github_repo:
     # Lister les workflows en cours
@@ -249,6 +364,79 @@ if github_token and github_repo:
                             st.error(f"❌ Erreur lors de l'annulation du workflow #{workflow['run_number']}")
     else:
         st.success("✅ Aucun workflow en cours")
+    
+    # ✅ Bouton Rafraîchir TOUJOURS visible pour voir les workflows et leurs stats
+    if st.button("🔄 Rafraîchir les workflows", key="refresh_workflows_list", help="Afficher tous les workflows et leurs statistiques"):
+        st.experimental_rerun()
+    
+    # ✅ Afficher les statistiques pour chaque workflow (même terminés)
+    # Récupérer TOUS les workflows (pas seulement in_progress/queued)
+    try:
+        headers = {
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {github_token}",
+            "X-GitHub-Api-Version": "2022-11-28"
+        }
+        # Récupérer les 20 derniers workflows (tous statuts)
+        all_workflows_url = f"https://api.github.com/repos/{github_repo}/actions/runs?per_page=20"
+        response = requests.get(all_workflows_url, headers=headers)
+        all_workflows = []
+        if response.status_code == 200:
+            runs_data = response.json()
+            for run in runs_data.get('workflow_runs', []):
+                all_workflows.append({
+                    'id': run.get('id'),
+                    'run_number': run.get('run_number'),
+                    'status': run.get('status'),
+                    'conclusion': run.get('conclusion'),
+                    'created_at': run.get('created_at'),
+                    'html_url': run.get('html_url')
+                })
+            all_workflows.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+    except:
+        all_workflows = workflows_en_cours
+    
+    if all_workflows:
+        st.markdown("### 📊 Statistiques par workflow")
+        from whatsapp_database.queries import get_artisans
+        
+        for workflow in all_workflows[:10]:  # Limiter aux 10 derniers
+            status_emoji = "🟢" if workflow['status'] == 'in_progress' else "🟡" if workflow['status'] == 'queued' else "🔵"
+            conclusion_emoji = "✅" if workflow.get('conclusion') == 'success' else "❌" if workflow.get('conclusion') == 'failure' else "⏹️" if workflow.get('conclusion') == 'cancelled' else ""
+            
+            with st.expander(f"{status_emoji} {conclusion_emoji} Workflow #{workflow['run_number']} - {workflow['status']} ({workflow['created_at'][:19].replace('T', ' ')})"):
+                # Récupérer les artisans scrapés depuis le début de ce workflow
+                workflow_start = workflow['created_at']
+                
+                try:
+                    # Récupérer tous les artisans
+                    all_artisans = get_artisans(limit=10000)
+                    
+                    # Filtrer ceux créés après le début du workflow (approximation)
+                    workflow_artisans = [
+                        a for a in all_artisans 
+                        if a.get('created_at') and a.get('created_at') >= workflow_start
+                    ]
+                    
+                    if workflow_artisans:
+                        total = len(workflow_artisans)
+                        avec_tel = len([a for a in workflow_artisans if a.get('telephone')])
+                        avec_site = len([a for a in workflow_artisans if a.get('site_web')])
+                        sans_site = total - avec_site
+                        
+                        col1, col2, col3, col4 = st.columns(4)
+                        with col1:
+                            st.metric("📊 Scrapés", total)
+                        with col2:
+                            st.metric("📞 Avec téléphone", avec_tel)
+                        with col3:
+                            st.metric("🌐 Avec site web", avec_site)
+                        with col4:
+                            st.metric("⭐ SANS site (prospects)", sans_site)
+                    else:
+                        st.info("⏳ Aucun résultat encore pour ce workflow")
+                except Exception as e:
+                    st.error(f"Erreur calcul stats: {e}")
 else:
     st.warning("⚠️ Configuration GitHub manquante. La gestion des workflows nécessite un token et un repository configurés.")
     
@@ -758,65 +946,8 @@ def get_github_workflow_logs(token, repo, run_id):
         logger.error(f"Erreur récupération logs: {e}")
         return []
 
-def list_github_workflows(token, repo):
-    """Liste tous les workflows GitHub Actions en cours"""
-    try:
-        headers = {
-            "Accept": "application/vnd.github+json",
-            "Authorization": f"Bearer {token}",
-            "X-GitHub-Api-Version": "2022-11-28"
-        }
-        
-        workflows = []
-        
-        # ✅ FIX : Faire deux appels séparés car l'API ne supporte pas "in_progress,queued" dans un seul paramètre
-        # Récupérer les runs "in_progress"
-        runs_url_in_progress = f"https://api.github.com/repos/{repo}/actions/runs?status=in_progress&per_page=100"
-        response = requests.get(runs_url_in_progress, headers=headers)
-        if response.status_code == 200:
-            runs_data = response.json()
-            for run in runs_data.get('workflow_runs', []):
-                workflows.append({
-                    'id': run.get('id'),
-                    'run_number': run.get('run_number'),
-                    'status': run.get('status'),
-                    'conclusion': run.get('conclusion'),
-                    'created_at': run.get('created_at'),
-                    'updated_at': run.get('updated_at'),
-                    'head_branch': run.get('head_branch'),
-                    'workflow_id': run.get('workflow_id'),
-                    'html_url': run.get('html_url')
-                })
-        
-        # Récupérer les runs "queued"
-        runs_url_queued = f"https://api.github.com/repos/{repo}/actions/runs?status=queued&per_page=100"
-        response = requests.get(runs_url_queued, headers=headers)
-        if response.status_code == 200:
-            runs_data = response.json()
-            for run in runs_data.get('workflow_runs', []):
-                # Éviter les doublons
-                if not any(w['id'] == run.get('id') for w in workflows):
-                    workflows.append({
-                        'id': run.get('id'),
-                        'run_number': run.get('run_number'),
-                        'status': run.get('status'),
-                        'conclusion': run.get('conclusion'),
-                        'created_at': run.get('created_at'),
-                        'updated_at': run.get('updated_at'),
-                        'head_branch': run.get('head_branch'),
-                        'workflow_id': run.get('workflow_id'),
-                        'html_url': run.get('html_url')
-                    })
-        
-        # Trier par date de création (plus récent en premier)
-        workflows.sort(key=lambda x: x.get('created_at', ''), reverse=True)
-        
-        return workflows
-    except Exception as e:
-        logger.error(f"Erreur liste workflows: {e}")
-        return []
-
-def cancel_github_workflow(token, repo, run_id):
+# ✅ NOTE : Les fonctions list_github_workflows, cancel_github_workflow et cancel_all_github_workflows 
+# sont maintenant définies plus haut (ligne ~206) pour éviter NameError
     """Annule un workflow GitHub Actions spécifique"""
     try:
         cancel_url = f"https://api.github.com/repos/{repo}/actions/runs/{run_id}/cancel"
