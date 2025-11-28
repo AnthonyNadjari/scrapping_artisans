@@ -21,7 +21,7 @@ def empty_database():
         cursor.execute("PRAGMA foreign_keys = OFF")
         
         # Supprimer toutes les données de toutes les tables
-        tables = ['reponses', 'messages_log', 'artisans']
+        tables = ['reponses', 'messages_log', 'artisans', 'scraping_history']
         
         for table in tables:
             cursor.execute(f"DELETE FROM {table}")
@@ -29,7 +29,7 @@ def empty_database():
             print(f"[OK] {count} ligne(s) supprimee(s) de la table '{table}'")
         
         # Réinitialiser les séquences AUTOINCREMENT
-        cursor.execute("DELETE FROM sqlite_sequence WHERE name IN ('artisans', 'messages_log', 'reponses')")
+        cursor.execute("DELETE FROM sqlite_sequence WHERE name IN ('artisans', 'messages_log', 'reponses', 'scraping_history')")
         
         # Réactiver les foreign keys
         cursor.execute("PRAGMA foreign_keys = ON")

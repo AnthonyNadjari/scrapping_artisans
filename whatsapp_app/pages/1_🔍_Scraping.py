@@ -319,6 +319,69 @@ def cancel_all_github_workflows(token, repo):
         logger.error(f"Erreur annulation workflows: {e}")
         return False, f"Erreur: {str(e)}"
 
+def download_github_artifact(token, repo, run_id):
+    """Télécharge l'artifact depuis GitHub Actions"""
+    try:
+        # Récupérer la liste des artifacts
+        url = f"https://api.github.com/repos/{repo}/actions/runs/{run_id}/artifacts"
+        headers = {
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {token}",
+            "X-GitHub-Api-Version": "2022-11-28"
+        }
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            artifacts = response.json().get('artifacts', [])
+            for artifact in artifacts:
+                if artifact.get('name') == 'scraping-results':
+                    # Télécharger l'artifact
+                    download_url = artifact.get('archive_download_url')
+                    if download_url:
+                        download_response = requests.get(download_url, headers=headers)
+                        if download_response.status_code == 200:
+                            # Sauvegarder le zip
+                            import zipfile
+                            import io
+                            data_dir = Path(__file__).parent.parent.parent / "data"
+                            zip_path = data_dir / "github_artifact.zip"
+                            with open(zip_path, 'wb') as f:
+                                f.write(download_response.content)
+                            
+                            # Extraire le JSON
+                            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                                zip_ref.extractall(data_dir)
+                            
+                            # Lire les fichiers
+                            results_file = data_dir / "scraping_results_github_actions.json"
+                            status_file = data_dir / "github_actions_status.json"
+                            
+                            result_data = None
+                            status_data = None
+                            
+                            if results_file.exists():
+                                with open(results_file, 'r', encoding='utf-8') as f:
+                                    result_data = json.load(f)
+                            
+                            if status_file.exists():
+                                with open(status_file, 'r', encoding='utf-8') as f:
+                                    status_data = json.load(f)
+                            
+                            # Nettoyer
+                            zip_path.unlink()
+                            
+                            # ✅ Retourner dans le format attendu (compatibilité)
+                            if result_data and isinstance(result_data, dict) and 'results' in result_data:
+                                return result_data  # Format: {'results': [...], 'total_results': ...}
+                            elif result_data and isinstance(result_data, list):
+                                return {'results': result_data, 'total_results': len(result_data)}
+                            else:
+                                return {'results': [], 'total_results': 0, 'status': status_data}
+            return None
+        return None
+    except Exception as e:
+        logger.error(f"Erreur téléchargement artifact: {e}")
+        return None
+
 if github_token and github_repo:
     # Lister les workflows en cours
     try:
@@ -340,8 +403,8 @@ if github_token and github_repo:
                         st.success(message)
                     else:
                         st.warning(message)
-                    st.experimental_rerun()
-        
+        st.experimental_rerun()
+
         # Afficher chaque workflow avec possibilité de le tuer individuellement
         st.markdown("**Détails des workflows :**")
         for workflow in workflows_en_cours:
@@ -362,8 +425,7 @@ if github_token and github_repo:
                             st.experimental_rerun()
                         else:
                             st.error(f"❌ Erreur lors de l'annulation du workflow #{workflow['run_number']}")
-    else:
-        st.success("✅ Aucun workflow en cours")
+    # ✅ Supprimé le message "Aucun workflow en cours"
     
     # ✅ Bouton Rafraîchir TOUJOURS visible pour voir les workflows et leurs stats
     col_refresh1, col_refresh2 = st.columns([1, 1])
@@ -381,7 +443,7 @@ if github_token and github_repo:
                     "Authorization": f"Bearer {github_token}",
                     "X-GitHub-Api-Version": "2022-11-28"
                 }
-                all_workflows_url = f"https://api.github.com/repos/{github_repo}/actions/runs?per_page=20&status=completed"
+                all_workflows_url = f"https://api.github.com/repos/{github_repo}/actions/runs?per_page=4&status=completed"
                 response = requests.get(all_workflows_url, headers=headers)
                 if response.status_code == 200:
                     runs = response.json().get('workflow_runs', [])
@@ -433,8 +495,8 @@ if github_token and github_repo:
             "Authorization": f"Bearer {github_token}",
             "X-GitHub-Api-Version": "2022-11-28"
         }
-        # Récupérer les 20 derniers workflows (tous statuts)
-        all_workflows_url = f"https://api.github.com/repos/{github_repo}/actions/runs?per_page=20"
+        # ✅ Récupérer les 4 derniers workflows (tous statuts)
+        all_workflows_url = f"https://api.github.com/repos/{github_repo}/actions/runs?per_page=4"
         response = requests.get(all_workflows_url, headers=headers)
         all_workflows = []
         if response.status_code == 200:
@@ -456,8 +518,8 @@ if github_token and github_repo:
         st.markdown("### 📊 Statistiques par workflow")
         from whatsapp_database.queries import get_artisans
         
-        # ✅ Afficher en grille 2 colonnes x 5 lignes (10 workflows max)
-        workflows_to_show = all_workflows[:10]  # Limiter aux 10 derniers
+        # ✅ Afficher en grille 2 colonnes (4 workflows max)
+        workflows_to_show = all_workflows[:4]  # Limiter aux 4 derniers
         
         # Créer des paires de workflows pour affichage en 2 colonnes
         for i in range(0, len(workflows_to_show), 2):
@@ -519,7 +581,208 @@ if github_token and github_repo:
                                 st.error(f"Erreur calcul stats: {e}")
 else:
     st.warning("⚠️ Configuration GitHub manquante. La gestion des workflows nécessite un token et un repository configurés.")
+
+st.markdown("---")
+
+# ✅ SECTION : Carte de tracking des scrapings
+st.markdown("### 🗺️ Suivi des scrapings par département")
+st.caption("Visualisez les départements scrapés pour chaque métier")
+
+# Sélection du métier pour filtrer
+from whatsapp_database.queries import get_scraping_history
+metiers_disponibles = list(set([h['metier'] for h in get_scraping_history() if h.get('metier')]))
+if metiers_disponibles:
+    metier_selectionne = st.selectbox("Sélectionner un métier", ["Tous"] + sorted(metiers_disponibles), key="tracking_metier")
+else:
+    metier_selectionne = "Tous"
+    st.info("ℹ️ Aucun scraping enregistré pour le moment")
+
+# Récupérer l'historique des scrapings
+if metier_selectionne == "Tous":
+    historique = get_scraping_history()
+else:
+    historique = get_scraping_history(metier=metier_selectionne)
+
+# Calculer les statistiques par département
+departements_stats = {}
+for entry in historique:
+    dept = entry.get('departement', '')
+    metier = entry.get('metier', '')
+    results_count = entry.get('results_count', 0)
     
+    if not dept:
+        continue
+    
+    key = f"{metier}_{dept}"
+    if key not in departements_stats:
+        departements_stats[key] = {
+            'departement': dept,
+            'metier': metier,
+            'total_results': 0,
+            'villes_scrapees': 0,
+            'max_results': 0
+        }
+    
+    departements_stats[key]['total_results'] += results_count
+    departements_stats[key]['villes_scrapees'] += 1
+    departements_stats[key]['max_results'] = max(departements_stats[key]['max_results'], results_count)
+
+# Coordonnées approximatives des départements français (centres)
+dept_coords = {
+    '01': (46.2, 5.2), '02': (49.4, 3.4), '03': (46.3, 3.1), '04': (44.1, 6.1), '05': (44.7, 6.1),
+    '06': (43.7, 7.3), '07': (44.5, 4.4), '08': (49.8, 4.7), '09': (43.0, 1.6), '10': (48.3, 4.1),
+    '11': (43.2, 2.4), '12': (44.3, 2.6), '13': (43.3, 5.4), '14': (49.2, -0.4), '15': (45.0, 2.4),
+    '16': (45.6, 0.2), '17': (46.2, -1.2), '18': (47.1, 2.4), '19': (45.3, 1.8), '21': (47.3, 5.0),
+    '22': (48.5, -2.8), '23': (46.2, 1.9), '24': (45.2, 0.7), '25': (47.2, 6.0), '26': (44.9, 4.9),
+    '27': (49.1, 1.1), '28': (48.4, 1.5), '29': (48.4, -4.5), '30': (44.1, 4.1), '31': (43.6, 1.4),
+    '32': (43.6, 0.6), '33': (44.8, -0.6), '34': (43.6, 3.9), '35': (48.1, -1.7), '36': (46.8, 1.7),
+    '37': (47.4, 0.7), '38': (45.2, 5.7), '39': (46.7, 5.6), '40': (43.9, -0.5), '41': (47.6, 1.3),
+    '42': (45.4, 4.4), '43': (45.0, 3.9), '44': (47.2, -1.6), '45': (47.9, 1.9), '46': (44.4, 1.4),
+    '47': (44.2, 0.6), '48': (44.5, 3.5), '49': (47.5, -0.6), '50': (49.1, -1.1), '51': (49.3, 4.0),
+    '52': (48.1, 5.1), '53': (48.1, -0.8), '54': (48.7, 6.2), '55': (49.1, 5.4), '56': (47.7, -2.8),
+    '57': (49.1, 6.2), '58': (47.0, 3.4), '59': (50.6, 3.1), '60': (49.4, 2.8), '61': (48.4, 0.1),
+    '62': (50.3, 2.8), '63': (45.8, 3.1), '64': (43.3, -0.4), '65': (43.2, 0.1), '66': (42.7, 2.9),
+    '67': (48.6, 7.8), '68': (47.7, 7.3), '69': (45.8, 4.8), '70': (47.6, 6.2), '71': (46.8, 4.9),
+    '72': (48.0, 0.2), '73': (45.6, 5.9), '74': (46.0, 6.1), '75': (48.9, 2.3), '76': (49.4, 1.1),
+    '77': (48.6, 2.7), '78': (48.8, 2.1), '79': (46.3, -0.5), '80': (49.9, 2.3), '81': (43.6, 2.1),
+    '82': (44.0, 1.4), '83': (43.1, 6.0), '84': (44.0, 5.0), '85': (46.7, -1.4), '86': (46.6, 0.3),
+    '87': (45.8, 1.3), '88': (48.2, 6.5), '89': (47.8, 3.6), '90': (47.6, 6.9), '91': (48.6, 2.3),
+    '92': (48.9, 2.2), '93': (48.9, 2.4), '94': (48.8, 2.4), '95': (49.1, 2.3)
+}
+
+# Créer la carte
+if departements_stats:
+    import folium
+    from streamlit_folium import st_folium
+    
+    # Centre de la France
+    m = folium.Map(location=[46.6, 2.2], zoom_start=6)
+    
+    # Seuils pour déterminer le statut
+    SEUIL_FAIT = 5  # Au moins 5 résultats = "fait"
+    SEUIL_PARTIEL = 1  # Entre 1 et 4 = "partiellement fait"
+    
+    for key, stats in departements_stats.items():
+        dept = stats['departement']
+        metier = stats['metier']
+        total_results = stats['total_results']
+        villes_scrapees = stats['villes_scrapees']
+        max_results = stats['max_results']
+        
+        if dept in dept_coords:
+            lat, lon = dept_coords[dept]
+            
+            # Déterminer le statut et la couleur
+            if max_results >= SEUIL_FAIT:
+                couleur = 'green'
+                statut = '✅ Fait'
+                taille = 15
+            elif max_results >= SEUIL_PARTIEL:
+                couleur = 'orange'
+                statut = '⚠️ Partiellement fait'
+                taille = 10
+            else:
+                couleur = 'gray'
+                statut = '❌ Non fait'
+                taille = 5
+            
+            # Popup avec informations
+            popup_text = f"""
+            <b>Département {dept}</b><br>
+            <b>Métier:</b> {metier}<br>
+            <b>Statut:</b> {statut}<br>
+            <b>Villes scrapées:</b> {villes_scrapees}<br>
+            <b>Total résultats:</b> {total_results}<br>
+            <b>Max par ville:</b> {max_results}
+            """
+            
+            folium.CircleMarker(
+                location=[lat, lon],
+                radius=taille,
+                popup=folium.Popup(popup_text, max_width=300),
+                color='black',
+                weight=2,
+                fillColor=couleur,
+                fillOpacity=0.8,
+                tooltip=f"Dépt {dept}: {statut} ({villes_scrapees} villes, {total_results} résultats)"
+            ).add_to(m)
+    
+    # ✅ AUSSI afficher les villes individuelles scrapées (petits points bleus)
+    # Récupérer les coordonnées des villes depuis l'API ou depuis les artisans scrapés
+    from whatsapp_database.queries import get_artisans
+    artisans = get_artisans(limit=10000)
+    
+    # Grouper les villes scrapées par métier/département
+    villes_scrapees_coords = {}
+    for artisan in artisans:
+        if metier_selectionne != "Tous" and artisan.get('type_artisan') != metier_selectionne:
+            continue
+        dept_art = artisan.get('departement', '')
+        ville_art = artisan.get('ville', '')
+        if dept_art and ville_art:
+            key = f"{dept_art}_{ville_art}"
+            if key not in villes_scrapees_coords:
+                # Essayer de récupérer les coordonnées depuis l'API
+                try:
+                    communes = get_communes_from_api(dept_art, 0, 1000000)  # Toutes les communes
+                    for commune in communes:
+                        if commune['nom'].lower() == ville_art.lower():
+                            villes_scrapees_coords[key] = {
+                                'lat': commune.get('latitude'),
+                                'lon': commune.get('longitude'),
+                                'ville': ville_art,
+                                'dept': dept_art
+                            }
+                            break
+                except:
+                    pass
+    
+    # Ajouter les villes sur la carte (petits points bleus)
+    for key, coords in villes_scrapees_coords.items():
+        if coords.get('lat') and coords.get('lon'):
+            folium.CircleMarker(
+                location=[coords['lat'], coords['lon']],
+                radius=3,
+                popup=folium.Popup(f"<b>{coords['ville']}</b><br>Département: {coords['dept']}", max_width=200),
+                color='blue',
+                weight=1,
+                fillColor='blue',
+                fillOpacity=0.6,
+                tooltip=f"{coords['ville']} ({coords['dept']})"
+            ).add_to(m)
+    
+    # Légende
+    legend_html = '''
+    <div style="position: fixed; 
+                bottom: 50px; left: 50px; width: 200px; height: 120px; 
+                background-color: white; z-index:9999; font-size:14px;
+                border:2px solid grey; border-radius:5px; padding: 10px">
+    <b>Légende</b><br>
+    <span style="color:green">●</span> Fait (≥5 résultats)<br>
+    <span style="color:orange">●</span> Partiel (1-4 résultats)<br>
+    <span style="color:gray">●</span> Non fait (0 résultat)<br>
+    <span style="color:blue">●</span> Villes scrapées
+    </div>
+    '''
+    m.get_root().html.add_child(folium.Element(legend_html))
+    
+    # ✅ Afficher la carte EN GRAND
+    st_folium(m, width=None, height=600, returned_objects=[])
+    
+    # Statistiques résumées
+    col_stat1, col_stat2, col_stat3 = st.columns(3)
+    with col_stat1:
+        total_depts = len(departements_stats)
+        st.metric("Départements scrapés", total_depts)
+    with col_stat2:
+        depts_faits = len([s for s in departements_stats.values() if s['max_results'] >= SEUIL_FAIT])
+        st.metric("Départements complets", depts_faits)
+    with col_stat3:
+        total_villes = sum([s['villes_scrapees'] for s in departements_stats.values()])
+        st.metric("Villes scrapées", total_villes)
+else:
+    st.info("ℹ️ Aucun scraping enregistré pour ce métier")
+
 st.markdown("---")
 
 # ✅ Initialiser les variables GitHub Actions dans session_state AVANT de les utiliser
@@ -542,14 +805,16 @@ if 'scraping_running' not in st.session_state:
 with st.expander("⚙️ Options avancées"):
     col_adv1, col_adv2 = st.columns(2)
     with col_adv1:
+        # ✅ API activée par défaut avec filtre <100k habitants
         use_api_communes = st.checkbox(
             "Utiliser API data.gouv.fr pour les communes",
-            value=False,
-            help="Récupère automatiquement les communes depuis l'API officielle"
+            value=True,  # ✅ Activé par défaut
+            help="Récupère automatiquement les communes depuis l'API officielle (défaut: <100k habitants)"
         )
         if use_api_communes:
-            min_pop = st.number_input("Population minimum", min_value=0, value=0, step=100)
-            max_pop = st.number_input("Population maximum", min_value=0, value=50000, step=1000)
+            # ✅ Valeurs par défaut : 0 à 100k habitants
+            min_pop = st.number_input("Population minimum", min_value=0, value=0, step=100, help="Villes avec au moins cette population")
+            max_pop = st.number_input("Population maximum", min_value=0, value=100000, step=1000, help="Villes avec au maximum cette population (défaut: 100k)")
             
             # ✅ Bouton pour afficher les communes trouvées
             if st.button("📋 Afficher les communes trouvées"):
@@ -565,7 +830,7 @@ with st.expander("⚙️ Options avancées"):
             "Nombre de threads",
             min_value=1,
             max_value=20,
-            value=3,
+            value=10,  # ✅ Défaut à 10
             help="Nombre de navigateurs en parallèle (attention: plus de threads = plus rapide mais plus de ressources)"
         )
 
@@ -930,69 +1195,6 @@ def get_github_workflow_status(token, repo, workflow_id=None):
         logger.error(f"Erreur récupération statut: {e}")
         return None, None, None
 
-def download_github_artifact(token, repo, run_id):
-    """Télécharge l'artifact depuis GitHub Actions"""
-    try:
-        # Récupérer la liste des artifacts
-        url = f"https://api.github.com/repos/{repo}/actions/runs/{run_id}/artifacts"
-        headers = {
-            "Accept": "application/vnd.github+json",
-            "Authorization": f"Bearer {token}",
-            "X-GitHub-Api-Version": "2022-11-28"
-        }
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            artifacts = response.json().get('artifacts', [])
-            for artifact in artifacts:
-                if artifact.get('name') == 'scraping-results':
-                    # Télécharger l'artifact
-                    download_url = artifact.get('archive_download_url')
-                    if download_url:
-                        download_response = requests.get(download_url, headers=headers)
-                        if download_response.status_code == 200:
-                            # Sauvegarder le zip
-                            import zipfile
-                            import io
-                            data_dir = Path(__file__).parent.parent.parent / "data"
-                            zip_path = data_dir / "github_artifact.zip"
-                            with open(zip_path, 'wb') as f:
-                                f.write(download_response.content)
-                            
-                            # Extraire le JSON
-                            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                                zip_ref.extractall(data_dir)
-                            
-                            # Lire les fichiers
-                            results_file = data_dir / "scraping_results_github_actions.json"
-                            status_file = data_dir / "github_actions_status.json"
-                            
-                            result_data = None
-                            status_data = None
-                            
-                            if results_file.exists():
-                                with open(results_file, 'r', encoding='utf-8') as f:
-                                    result_data = json.load(f)
-                            
-                            if status_file.exists():
-                                with open(status_file, 'r', encoding='utf-8') as f:
-                                    status_data = json.load(f)
-                            
-                            # Nettoyer
-                            zip_path.unlink()
-                            
-                            # ✅ Retourner dans le format attendu (compatibilité)
-                            if result_data and isinstance(result_data, dict) and 'results' in result_data:
-                                return result_data  # Format: {'results': [...], 'total_results': ...}
-                            elif result_data and isinstance(result_data, list):
-                                return {'results': result_data, 'total_results': len(result_data)}
-                            else:
-                                return {'results': [], 'total_results': 0, 'status': status_data}
-            return None
-        return None
-    except Exception as e:
-        logger.error(f"Erreur téléchargement artifact: {e}")
-        return None
-
 def get_github_workflow_logs(token, repo, run_id):
     """Récupère les logs du workflow GitHub Actions"""
     try:
@@ -1300,20 +1502,8 @@ if st.session_state.scraped_results:
     with col_res4:
         st.metric("⭐ SANS site web", f"{sans_site} ({sans_site/len(df)*100:.1f}%)")
     
-    # Filtrer les résultats
-    st.markdown("### 🔍 Filtres")
-    col_filt1, col_filt2 = st.columns(2)
-    
-    with col_filt1:
-        filtre_tel = st.checkbox("Avec téléphone uniquement", value=False)
-    with col_filt2:
-        filtre_sans_site = st.checkbox("Sans site web uniquement (prospects)", value=False)
-    
+    # ✅ Filtres supprimés comme demandé
     df_filtre = df.copy()
-    if filtre_tel:
-        df_filtre = df_filtre[df_filtre['telephone'].notna()]
-    if filtre_sans_site:
-        df_filtre = df_filtre[df_filtre['site_web'].isna()]
     
     # ✅ Afficher le tableau avec colonne ville_recherche et meilleur affichage
     colonnes_afficher = ['nom', 'telephone', 'site_web', 'adresse', 'ville_recherche', 'ville', 'note', 'nb_avis']
