@@ -88,6 +88,7 @@ def ajouter_artisan(data: Dict) -> int:
         
         if not fields:
             conn.close()
+            print(f"⚠️ ajouter_artisan: Aucune donnée valide à insérer. Données reçues: {data}")
             raise ValueError("Aucune donnée valide à insérer")
         
         placeholders = ', '.join(['?' for _ in fields])
@@ -98,18 +99,22 @@ def ajouter_artisan(data: Dict) -> int:
             artisan_id = cursor.lastrowid
             conn.commit()
             conn.close()
+            print(f"✅ ajouter_artisan: Artisan inséré avec succès (ID: {artisan_id})")
             return artisan_id
         except sqlite3.IntegrityError as e:
-            conn.close()
             # Si erreur d'intégrité (doublon), essayer de récupérer l'ID existant
             if 'telephone' in str(e).lower() or 'unique' in str(e).lower():
                 # Réessayer avec recherche de doublon
                 if data.get('telephone'):
-                    cursor2 = conn.cursor()
-                    cursor2.execute("SELECT id FROM artisans WHERE telephone = ?", (data['telephone'],))
-                    result = cursor2.fetchone()
+                    cursor.execute("SELECT id FROM artisans WHERE telephone = ?", (data['telephone'],))
+                    result = cursor.fetchone()
                     if result:
+                        conn.commit()
+                        conn.close()
+                        print(f"ℹ️ ajouter_artisan: Doublon trouvé (ID: {result[0]}) - Mise à jour effectuée")
                         return result[0]
+            conn.close()
+            print(f"❌ ajouter_artisan: Erreur intégrité: {e}")
             raise
 
 def get_artisans(filtres: Optional[Dict] = None, limit: int = 10000) -> List[Dict]:

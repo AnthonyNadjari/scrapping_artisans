@@ -585,17 +585,17 @@ else:
 st.markdown("---")
 
 # ✅ SECTION : Carte de tracking des scrapings
-st.markdown("### 🗺️ Suivi des scrapings par département")
-st.caption("Visualisez les départements scrapés pour chaque métier")
-
-# Sélection du métier pour filtrer
-from whatsapp_database.queries import get_scraping_history
-metiers_disponibles = list(set([h['metier'] for h in get_scraping_history() if h.get('metier')]))
-if metiers_disponibles:
-    metier_selectionne = st.selectbox("Sélectionner un métier", ["Tous"] + sorted(metiers_disponibles), key="tracking_metier")
-else:
-    metier_selectionne = "Tous"
-    st.info("ℹ️ Aucun scraping enregistré pour le moment")
+col_title, col_filter = st.columns([2, 1])
+with col_title:
+    st.markdown("### 🗺️ Suivi des scrapings par département")
+with col_filter:
+    # Sélection du métier pour filtrer
+    from whatsapp_database.queries import get_scraping_history
+    metiers_disponibles = list(set([h['metier'] for h in get_scraping_history() if h.get('metier')]))
+    if metiers_disponibles:
+        metier_selectionne = st.selectbox("Métier", ["Tous"] + sorted(metiers_disponibles), key="tracking_metier", label_visibility="visible")
+    else:
+        metier_selectionne = "Tous"
 
 # Récupérer l'historique des scrapings
 if metier_selectionne == "Tous":
@@ -781,7 +781,7 @@ if departements_stats:
         total_villes = sum([s['villes_scrapees'] for s in departements_stats.values()])
         st.metric("Villes scrapées", total_villes)
 else:
-    st.info("ℹ️ Aucun scraping enregistré pour ce métier")
+    st.empty()  # Pas de message si aucun scraping - affichage plus compact
 
 st.markdown("---")
 
@@ -994,11 +994,11 @@ if st.session_state.get('show_communes', False) and use_api_communes and departe
                         
                         # ✅ Taille du marqueur proportionnelle à la population RELATIVE au min/max affichés
                         if pop > 0 and pop_range_displayed > 0:
-                            # Normaliser entre 3 et 15 pixels de radius selon le min/max des communes affichées
+                            # Normaliser entre 2 et 8 pixels de radius (réduit pour des points plus petits)
                             normalized = (pop - min_pop_displayed) / pop_range_displayed
-                            radius = 3 + (normalized * 12)  # Entre 3 et 15 pixels
+                            radius = 2 + (normalized * 6)  # Entre 2 et 8 pixels
                         else:
-                            radius = 3
+                            radius = 2
                         
                         # Couleur selon la population (seuils fixes pour la couleur)
                         if pop > 10000:
