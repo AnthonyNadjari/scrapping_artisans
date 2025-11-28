@@ -2011,53 +2011,10 @@ class GoogleMapsScraper:
                 logger.error(f"  [{index}] ❌ Erreur extraction nom: {e}")
                 info['nom'] = None
             
-            # ✅ FIX CRITIQUE : Fermer TOUS les panneaux précédents avant d'ouvrir le suivant
-            try:
-                # Méthode 1 : Chercher et fermer les panneaux de détail ouverts
-                panneaux_ouverts = self.driver.find_elements(By.CSS_SELECTOR, 
-                    'div[role="complementary"] button[aria-label*="Fermer"], '
-                    'div[jsaction*="pane"] button[aria-label*="Fermer"], '
-                    'button[aria-label*="Fermer"][data-value="close"], '
-                    'button[aria-label*="Close"], '
-                    'button[aria-label*="close"]'
-                )
-                if panneaux_ouverts:
-                    try:
-                        # Fermer TOUS les panneaux ouverts (pas juste le dernier)
-                        for btn in panneaux_ouverts:
-                            try:
-                                btn.click()
-                                time.sleep(0.2 * self.delay_multiplier)
-                            except:
-                                pass
-                        logger.info(f"  [{index}] 🔒 {len(panneaux_ouverts)} panneau(x) précédent(s) fermé(s)")
-                        time.sleep(1.0 * self.delay_multiplier)  # Attendre plus longtemps après fermeture
-                    except:
-                        pass
-                
-                # Méthode 2 : Appuyer sur ESC pour fermer les panneaux (plus fiable)
-                try:
-                    from selenium.webdriver.common.keys import Keys
-                    body = self.driver.find_element(By.TAG_NAME, 'body')
-                    body.send_keys(Keys.ESCAPE)
-                    time.sleep(0.5 * self.delay_multiplier)
-                    logger.info(f"  [{index}] 🔒 Panneau fermé via ESC")
-                except:
-                    pass
-                
-                # Méthode 3 : Cliquer sur la carte pour fermer le panneau
-                try:
-                    # Cliquer sur la carte (zone de la carte Google Maps)
-                    map_element = self.driver.find_element(By.CSS_SELECTOR, 'div[role="main"], div#map, canvas')
-                    if map_element:
-                        map_element.click()
-                        time.sleep(0.5 * self.delay_multiplier)
-                        logger.info(f"  [{index}] 🔒 Clic sur la carte pour fermer le panneau")
-                except:
-                    pass
-                    
-            except Exception as e:
-                logger.debug(f"  [{index}] Erreur fermeture panneau: {e}")
+            # ✅ FIX CRITIQUE : NE PAS fermer le panneau précédent - cela cause StaleElementReferenceException
+            # Google Maps gère automatiquement la fermeture/ouverture des panneaux quand on clique sur un nouvel élément
+            # On attend juste un peu pour que le DOM se stabilise
+            time.sleep(0.3 * self.delay_multiplier)
             
             # Cliquer pour ouvrir le détail
             try:

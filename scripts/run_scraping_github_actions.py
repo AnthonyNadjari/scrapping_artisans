@@ -90,13 +90,23 @@ def scrape_ville(task_info, max_results, status_file):
         scraper = GoogleMapsScraper(headless=True)
         scraper.is_running = True
         
-        # ✅ Callback pour sauvegarder directement dans la BDD
+        # ✅ Callback pour sauvegarder directement dans la BDD ET dans le fichier JSON
+        # Définir le chemin du fichier une seule fois
+        results_file = Path('data') / 'scraping_results_github_actions.json'
+        results_file.parent.mkdir(parents=True, exist_ok=True)
+        
         def progress_callback(index, total, info):
             if info:
                 info['ville_recherche'] = ville_actuelle
                 info['recherche'] = metier_actuel
                 info['departement'] = departement_actuel
+                # Sauvegarder dans la BDD
                 save_callback(info)
+                # ✅ Sauvegarder aussi dans le fichier JSON progressivement (à chaque établissement)
+                try:
+                    save_progress(results_file, [info])
+                except Exception as e:
+                    print(f"⚠️ Erreur sauvegarde JSON progressive: {e}")
         
         resultats = scraper.scraper(
             recherche=metier_actuel,

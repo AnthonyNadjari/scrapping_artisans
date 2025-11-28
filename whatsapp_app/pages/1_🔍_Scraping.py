@@ -202,6 +202,8 @@ else:
 st.markdown("---")
 st.subheader("⚙️ Gestion des Workflows GitHub Actions")
 
+# ✅ FIX CRITIQUE : Définir les fonctions AVANT leur utilisation
+
 if github_token and github_repo:
     # Lister les workflows en cours
     try:
