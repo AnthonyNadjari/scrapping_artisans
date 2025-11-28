@@ -6,13 +6,15 @@ import sys
 from pathlib import Path
 from datetime import datetime
 import pandas as pd
+import json
+import requests
 
 # Configuration de la page
 st.set_page_config(page_title="Base de Données", page_icon="📊", layout="wide")
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from whatsapp_database.queries import get_artisans, get_statistiques, marquer_message_envoye
+from whatsapp_database.queries import get_artisans, get_statistiques, marquer_message_envoye, ajouter_artisan
 from whatsapp_database.models import get_connection
 from whatsapp.link_generator import WhatsAppLinkGenerator
 import sqlite3
@@ -134,11 +136,146 @@ if filtre_recherche:
 # ✅ Bouton pour requêter la BDD (rafraîchir)
 col_refresh1, col_refresh2 = st.columns([1, 4])
 with col_refresh1:
-    if st.button("🔄 Rafraîchir la base de données", help="Recharge les données depuis la base de données"):
+    if st.button("🔄 Rafraîchir la base de données", help="Recharge les données depuis la base de données", key="refresh_db_main"):
+        # Forcer le rerun pour recharger les données
+        st.success("🔄 Rechargement des données...")
         st.experimental_rerun()
 
-# Récupérer artisans
+# ✅ Bouton pour importer les résultats depuis GitHub Actions
+col_import1, col_import2 = st.columns([1, 4])
+with col_import1:
+    if st.button("📥 Importer depuis GitHub Actions", key="import_from_github", help="Télécharger et importer les résultats depuis GitHub Actions dans la base locale"):
+        try:
+            # Vérifier si on a la config GitHub
+            config_file = Path(__file__).parent.parent.parent / "config" / "github_config.json"
+            if config_file.exists():
+                with open(config_file, 'r', encoding='utf-8') as f:
+                    github_config = json.load(f)
+                    # ✅ Support des deux formats : 'token'/'repo' ou 'github_token'/'github_repo'
+                    github_token = github_config.get('token') or github_config.get('github_token')
+                    github_repo = github_config.get('repo') or github_config.get('github_repo')
+                    
+                    if github_token and github_repo:
+                        # Fonction pour télécharger les artifacts depuis GitHub Actions (copiée depuis 1_🔍_Scraping.py)
+                        def download_github_artifact(token, repo, run_id):
+                            """Télécharge l'artifact depuis GitHub Actions"""
+                            try:
+                                # Récupérer la liste des artifacts
+                                url = f"https://api.github.com/repos/{repo}/actions/runs/{run_id}/artifacts"
+                                headers = {
+                                    "Accept": "application/vnd.github+json",
+                                    "Authorization": f"Bearer {token}",
+                                    "X-GitHub-Api-Version": "2022-11-28"
+                                }
+                                response = requests.get(url, headers=headers)
+                                if response.status_code == 200:
+                                    artifacts = response.json().get('artifacts', [])
+                                    for artifact in artifacts:
+                                        if artifact.get('name') == 'scraping-results':
+                                            # Télécharger l'artifact
+                                            download_url = artifact.get('archive_download_url')
+                                            if download_url:
+                                                download_response = requests.get(download_url, headers=headers)
+                                                if download_response.status_code == 200:
+                                                    # Sauvegarder le zip
+                                                    import zipfile
+                                                    data_dir = Path(__file__).parent.parent.parent / "data"
+                                                    zip_path = data_dir / "github_artifact.zip"
+                                                    with open(zip_path, 'wb') as f:
+                                                        f.write(download_response.content)
+                                                    
+                                                    # Extraire le JSON
+                                                    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                                                        zip_ref.extractall(data_dir)
+                                                    
+                                                    # Lire les fichiers
+                                                    results_file = data_dir / "scraping_results_github_actions.json"
+                                                    
+                                                    result_data = None
+                                                    if results_file.exists():
+                                                        with open(results_file, 'r', encoding='utf-8') as f:
+                                                            result_data = json.load(f)
+                                                    
+                                                    # Nettoyer
+                                                    zip_path.unlink()
+                                                    
+                                                    # Retourner dans le format attendu
+                                                    if result_data and isinstance(result_data, dict) and 'results' in result_data:
+                                                        return result_data
+                                                    elif result_data and isinstance(result_data, list):
+                                                        return {'results': result_data, 'total_results': len(result_data)}
+                                                    else:
+                                                        return {'results': [], 'total_results': 0}
+                                    return None
+                                return None
+                            except Exception as e:
+                                logger.error(f"Erreur téléchargement artifact: {e}")
+                                return None
+                        
+                        # Récupérer les workflows terminés
+                        headers = {
+                            "Accept": "application/vnd.github+json",
+                            "Authorization": f"Bearer {github_token}",
+                            "X-GitHub-Api-Version": "2022-11-28"
+                        }
+                        all_workflows_url = f"https://api.github.com/repos/{github_repo}/actions/runs?per_page=5&status=completed"
+                        response = requests.get(all_workflows_url, headers=headers)
+                        imported_count = 0
+                        
+                        if response.status_code == 200:
+                            runs = response.json().get('workflow_runs', [])
+                            for run in runs:
+                                run_id = run.get('id')
+                                if run_id:
+                                    artifact_data = download_github_artifact(github_token, github_repo, run_id)
+                                    if artifact_data:
+                                        results_list = artifact_data.get('results', [])
+                                        if isinstance(results_list, list) and len(results_list) > 0:
+                                            for info in results_list:
+                                                try:
+                                                    artisan_data = {
+                                                        'nom_entreprise': info.get('nom', 'N/A'),
+                                                        'telephone': info.get('telephone', '').replace(' ', '') if info.get('telephone') else None,
+                                                        'site_web': info.get('site_web'),
+                                                        'adresse': info.get('adresse', ''),
+                                                        'code_postal': info.get('code_postal', ''),
+                                                        'ville': info.get('ville', ''),
+                                                        'ville_recherche': info.get('ville_recherche', ''),
+                                                        'type_artisan': info.get('recherche', 'plombier'),
+                                                        'source': 'google_maps_github_actions',
+                                                        'note': info.get('note'),
+                                                        'nombre_avis': info.get('nb_avis') or info.get('nombre_avis')
+                                                    }
+                                                    ajouter_artisan(artisan_data)
+                                                    imported_count += 1
+                                                except Exception as e:
+                                                    if "UNIQUE constraint" not in str(e) and "duplicate" not in str(e).lower():
+                                                        st.error(f"Erreur import: {e}")
+                            if imported_count > 0:
+                                st.success(f"✅ {imported_count} résultat(s) importé(s) !")
+                                st.experimental_rerun()
+                            else:
+                                st.info("ℹ️ Aucun nouveau résultat à importer")
+                        else:
+                            st.warning("⚠️ Impossible de récupérer les workflows")
+                    else:
+                        st.warning("⚠️ Configuration GitHub manquante")
+            else:
+                st.warning("⚠️ Fichier de configuration GitHub non trouvé")
+        except Exception as e:
+            st.error(f"❌ Erreur lors de l'import: {e}")
+            import traceback
+            st.code(traceback.format_exc())
+
+# Récupérer artisans (toujours recharger depuis la BDD)
+# ✅ Toujours recharger depuis la BDD pour avoir les dernières données
 artisans = get_artisans(filtres=filtres, limit=500)
+
+# ✅ Afficher un message si des données sont trouvées
+if artisans:
+    st.info(f"✅ {len(artisans)} artisan(s) trouvé(s) dans la base de données")
+else:
+    st.warning("⚠️ Aucun artisan dans la base de données. Les résultats de GitHub Actions doivent être importés manuellement.")
 
 st.markdown("---")
 
@@ -148,16 +285,10 @@ st.subheader(f"📋 Liste des Artisans ({len(artisans)} trouvés)")
 if not artisans:
     st.info("Aucun artisan trouvé avec ces filtres")
 else:
-    # Mode d'affichage
-    mode_affichage = st.radio(
-        "Mode d'affichage",
-        ["📋 Liste compacte", "📄 Vue détaillée"],
-        horizontal=True
-    )
-    
     link_gen = WhatsAppLinkGenerator()
     
-    if mode_affichage == "📋 Liste compacte":
+    # ✅ Suppression de la vue détaillée - on garde seulement la liste compacte
+    if True:  # Toujours afficher la liste compacte
         # Tableau compact avec TOUTES les informations scrapées
         data = []
         for artisan in artisans:
@@ -201,85 +332,7 @@ else:
         </style>
         """, unsafe_allow_html=True)
         
-        st.dataframe(df, use_container_width=True, height=600)
-        
-    else:
-        # Vue détaillée avec cartes
-        for i, artisan in enumerate(artisans):
-            with st.container():
-                col_a1, col_a2, col_a3 = st.columns([3, 2, 1])
-                
-                with col_a1:
-                    st.markdown(f"### {i+1}. {artisan.get('nom_entreprise', 'N/A')}")
-                    st.caption(f"**Métier :** {artisan.get('type_artisan', '')} | **Ville :** {artisan.get('ville', '')} ({artisan.get('departement', '')})")
-                    if artisan.get('ville_recherche'):
-                        st.caption(f"**Ville recherche :** {artisan.get('ville_recherche', '')}")
-                    st.caption(f"**Téléphone :** {artisan.get('telephone', '')}")
-                    if artisan.get('site_web'):
-                        st.caption(f"**Site web :** [{artisan.get('site_web', '')}]({artisan.get('site_web', '')})")
-                    if artisan.get('note'):
-                        st.caption(f"**Note :** ⭐ {artisan.get('note', '')}/5 ({artisan.get('nombre_avis', 0)} avis)")
-                    if artisan.get('adresse'):
-                        st.caption(f"**Adresse :** {artisan.get('adresse', '')}")
-                    
-                    # Statuts
-                    if artisan.get('message_envoye'):
-                        st.success("✅ Message envoyé")
-                        if artisan.get('date_envoi'):
-                            try:
-                                dt = datetime.fromisoformat(artisan['date_envoi'].replace('Z', '+00:00'))
-                                st.caption(f"Le {dt.strftime('%d/%m/%Y à %H:%M')}")
-                            except:
-                                pass
-                    else:
-                        st.warning("❌ Non contacté")
-                    
-                    if artisan.get('a_repondu'):
-                        st.info("💬 A répondu")
-                        if artisan.get('date_reponse'):
-                            try:
-                                dt = datetime.fromisoformat(artisan['date_reponse'].replace('Z', '+00:00'))
-                                st.caption(f"Le {dt.strftime('%d/%m/%Y à %H:%M')}")
-                            except:
-                                pass
-                    else:
-                        st.caption("Pas de réponse")
-                
-                with col_a2:
-                    # Lien WhatsApp
-                    lien_whatsapp = link_gen.generer_lien(artisan, template)
-                    message_preview = link_gen.generer_message(artisan, template)
-                    
-                    with st.expander("📝 Voir le message", expanded=False):
-                        st.code(message_preview)
-                    
-                    st.link_button(
-                        "💬 Ouvrir WhatsApp",
-                        lien_whatsapp
-                    )
-                
-                with col_a3:
-                    # Actions
-                    if not artisan.get('message_envoye'):
-                        if st.button("✓ Marquer envoyé", key=f"envoye_{artisan['id']}"):
-                            marquer_message_envoye(artisan['id'], f"manual_{int(datetime.now().timestamp())}")
-                            st.success("✅ Marqué comme envoyé !")
-                            st.experimental_rerun()
-                    else:
-                        st.success("✅ Déjà envoyé")
-                    
-                    if st.button("📝 Voir détails", key=f"details_{artisan['id']}"):
-                        st.session_state[f'show_details_{artisan["id"]}'] = True
-                
-                # Détails (si demandé)
-                if st.session_state.get(f'show_details_{artisan["id"]}', False):
-                    with st.expander("🔍 Détails complets", expanded=True):
-                        st.json(artisan)
-                        if st.button("Fermer", key=f"close_{artisan['id']}"):
-                            st.session_state[f'show_details_{artisan["id"]}'] = False
-                            st.experimental_rerun()
-                
-                st.markdown("---")
+        st.dataframe(df, height=600)
     
     # Actions rapides
     st.markdown("---")

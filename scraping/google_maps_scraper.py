@@ -1395,6 +1395,9 @@ class GoogleMapsScraper:
                     cp_match = re.search(r'\b(\d{5})\b', info['adresse'])
                     if cp_match:
                         info['code_postal'] = cp_match.group(1)
+                        # ✅ Extraire le département depuis le code postal (2 premiers chiffres)
+                        if len(cp_match.group(1)) >= 2:
+                            info['departement'] = cp_match.group(1)[:2]
                     
                     # Extraire ville (après le code postal)
                     ville_match = re.search(r'\d{5}\s+(.+)', info['adresse'])
@@ -1533,6 +1536,9 @@ class GoogleMapsScraper:
                     cp_match = re.search(r'\b(\d{5})\b', adresse)
                     if cp_match:
                         info['code_postal'] = cp_match.group(1)
+                        # ✅ Extraire le département depuis le code postal (2 premiers chiffres)
+                        if len(cp_match.group(1)) >= 2:
+                            info['departement'] = cp_match.group(1)[:2]
                     
                     ville_match = re.search(r'\d{5}\s+([A-Za-zÀ-ÿ\s-]+)', adresse)
                     if ville_match:
@@ -1831,6 +1837,9 @@ class GoogleMapsScraper:
                             cp_match = re.search(r'\b(\d{5})\b', info['adresse'])
                             if cp_match:
                                 info['code_postal'] = cp_match.group(1)
+                                # ✅ Extraire le département depuis le code postal (2 premiers chiffres)
+                                if len(cp_match.group(1)) >= 2:
+                                    info['departement'] = cp_match.group(1)[:2]
                             ville_match = re.search(r'\d{5}\s+(.+)', info['adresse'])
                             if ville_match:
                                 info['ville'] = ville_match.group(1).strip()
@@ -1853,6 +1862,9 @@ class GoogleMapsScraper:
                                 cp_match = re.search(r'\b(\d{5})\b', info['adresse'])
                                 if cp_match:
                                     info['code_postal'] = cp_match.group(1)
+                                    # ✅ Extraire le département depuis le code postal (2 premiers chiffres)
+                                    if len(cp_match.group(1)) >= 2:
+                                        info['departement'] = cp_match.group(1)[:2]
                                 ville_match = re.search(r'\d{5}\s+(.+)', info['adresse'])
                                 if ville_match:
                                     info['ville'] = ville_match.group(1).strip()
@@ -2523,6 +2535,9 @@ class GoogleMapsScraper:
                                     cp_match = re.search(r'\b(\d{5})\b', info['adresse'])
                                     if cp_match:
                                         info['code_postal'] = cp_match.group(1)
+                                        # ✅ Extraire le département depuis le code postal (2 premiers chiffres)
+                                        if len(cp_match.group(1)) >= 2:
+                                            info['departement'] = cp_match.group(1)[:2]
                                     ville_match = re.search(r'\d{5}\s+(.+)', info['adresse'])
                                     if ville_match:
                                         info['ville'] = ville_match.group(1).strip()
@@ -2545,6 +2560,9 @@ class GoogleMapsScraper:
                                     cp_match = re.search(r'\b(\d{5})\b', info['adresse'])
                                     if cp_match:
                                         info['code_postal'] = cp_match.group(1)
+                                        # ✅ Extraire le département depuis le code postal (2 premiers chiffres)
+                                        if len(cp_match.group(1)) >= 2:
+                                            info['departement'] = cp_match.group(1)[:2]
                                     ville_match = re.search(r'\d{5}\s+(.+)', info['adresse'])
                                     if ville_match:
                                         info['ville'] = ville_match.group(1).strip()

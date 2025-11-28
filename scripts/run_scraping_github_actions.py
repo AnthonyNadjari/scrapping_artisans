@@ -50,8 +50,9 @@ def save_callback(artisan_data):
     """Callback pour sauvegarder directement dans la BDD à chaque établissement trouvé"""
     try:
         # Préparer les données pour la BDD
+        # ✅ FIX : Utiliser 'nom_entreprise' au lieu de 'nom' pour correspondre au schéma de la BDD
         data = {
-            'nom': artisan_data.get('nom'),
+            'nom_entreprise': artisan_data.get('nom'),  # ✅ FIX : nom_entreprise au lieu de nom
             'telephone': artisan_data.get('telephone'),
             'site_web': artisan_data.get('site_web'),
             'adresse': artisan_data.get('adresse'),
@@ -68,10 +69,12 @@ def save_callback(artisan_data):
         
         # Sauvegarder dans la BDD
         artisan_id = ajouter_artisan(data)
-        print(f"✅ Artisan sauvegardé (ID: {artisan_id}): {data.get('nom', 'N/A')}")
+        print(f"✅ Artisan sauvegardé (ID: {artisan_id}): {data.get('nom_entreprise', 'N/A')} - Tel: {data.get('telephone', 'N/A')} - Site: {data.get('site_web', 'N/A')}")
         return artisan_id
     except Exception as e:
         print(f"⚠️ Erreur sauvegarde artisan: {e}")
+        import traceback
+        print(traceback.format_exc())
         return None
 
 def scrape_ville(task_info, max_results, status_file):

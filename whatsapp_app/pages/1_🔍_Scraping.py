@@ -366,8 +366,64 @@ if github_token and github_repo:
         st.success("✅ Aucun workflow en cours")
     
     # ✅ Bouton Rafraîchir TOUJOURS visible pour voir les workflows et leurs stats
-    if st.button("🔄 Rafraîchir les workflows", key="refresh_workflows_list", help="Afficher tous les workflows et leurs statistiques"):
-        st.experimental_rerun()
+    col_refresh1, col_refresh2 = st.columns([1, 1])
+    with col_refresh1:
+        if st.button("🔄 Rafraîchir les workflows", key="refresh_workflows_list", help="Afficher tous les workflows et leurs statistiques"):
+            st.experimental_rerun()
+    with col_refresh2:
+        if st.button("📥 Télécharger et importer résultats", key="download_and_import_results", help="Télécharger les résultats depuis GitHub Actions et les importer dans la base locale"):
+            # Télécharger les résultats depuis tous les workflows terminés
+            imported_count = 0
+            try:
+                # Récupérer tous les workflows terminés
+                headers = {
+                    "Accept": "application/vnd.github+json",
+                    "Authorization": f"Bearer {github_token}",
+                    "X-GitHub-Api-Version": "2022-11-28"
+                }
+                all_workflows_url = f"https://api.github.com/repos/{github_repo}/actions/runs?per_page=20&status=completed"
+                response = requests.get(all_workflows_url, headers=headers)
+                if response.status_code == 200:
+                    runs = response.json().get('workflow_runs', [])
+                    for run in runs[:5]:  # Limiter aux 5 derniers
+                        run_id = run.get('id')
+                        if run_id:
+                            artifact_data = download_github_artifact(github_token, github_repo, run_id)
+                            if artifact_data:
+                                results_list = artifact_data.get('results', [])
+                                if isinstance(results_list, list) and len(results_list) > 0:
+                                    # Importer dans la BDD
+                                    from whatsapp_database.queries import ajouter_artisan
+                                    for info in results_list:
+                                        try:
+                                            artisan_data = {
+                                                'nom_entreprise': info.get('nom', 'N/A'),
+                                                'telephone': info.get('telephone', '').replace(' ', '') if info.get('telephone') else None,
+                                                'site_web': info.get('site_web'),
+                                                'adresse': info.get('adresse', ''),
+                                                'code_postal': info.get('code_postal', ''),
+                                                'ville': info.get('ville', ''),
+                                                'ville_recherche': info.get('ville_recherche', ''),
+                                                'type_artisan': info.get('recherche', 'plombier'),
+                                                'source': 'google_maps_github_actions',
+                                                'note': info.get('note'),
+                                                'nombre_avis': info.get('nb_avis') or info.get('nombre_avis')
+                                            }
+                                            ajouter_artisan(artisan_data)
+                                            imported_count += 1
+                                        except Exception as e:
+                                            if "UNIQUE constraint" not in str(e) and "duplicate" not in str(e).lower():
+                                                logger.error(f"Erreur import: {e}")
+                    if imported_count > 0:
+                        st.success(f"✅ {imported_count} résultat(s) importé(s) dans la base locale !")
+                        st.experimental_rerun()
+                    else:
+                        st.info("ℹ️ Aucun nouveau résultat à importer")
+                else:
+                    st.warning("⚠️ Impossible de récupérer les workflows")
+            except Exception as e:
+                st.error(f"❌ Erreur lors de l'import: {e}")
+                logger.error(f"Erreur import résultats: {e}")
     
     # ✅ Afficher les statistiques pour chaque workflow (même terminés)
     # Récupérer TOUS les workflows (pas seulement in_progress/queued)
@@ -400,43 +456,67 @@ if github_token and github_repo:
         st.markdown("### 📊 Statistiques par workflow")
         from whatsapp_database.queries import get_artisans
         
-        for workflow in all_workflows[:10]:  # Limiter aux 10 derniers
-            status_emoji = "🟢" if workflow['status'] == 'in_progress' else "🟡" if workflow['status'] == 'queued' else "🔵"
-            conclusion_emoji = "✅" if workflow.get('conclusion') == 'success' else "❌" if workflow.get('conclusion') == 'failure' else "⏹️" if workflow.get('conclusion') == 'cancelled' else ""
-            
-            with st.expander(f"{status_emoji} {conclusion_emoji} Workflow #{workflow['run_number']} - {workflow['status']} ({workflow['created_at'][:19].replace('T', ' ')})"):
-                # Récupérer les artisans scrapés depuis le début de ce workflow
-                workflow_start = workflow['created_at']
-                
-                try:
-                    # Récupérer tous les artisans
-                    all_artisans = get_artisans(limit=10000)
+        # ✅ Afficher en grille 2 colonnes x 5 lignes (10 workflows max)
+        workflows_to_show = all_workflows[:10]  # Limiter aux 10 derniers
+        
+        # Créer des paires de workflows pour affichage en 2 colonnes
+        for i in range(0, len(workflows_to_show), 2):
+            cols = st.columns(2)
+            for j, col in enumerate(cols):
+                if i + j < len(workflows_to_show):
+                    workflow = workflows_to_show[i + j]
+                    status_emoji = "🟢" if workflow['status'] == 'in_progress' else "🟡" if workflow['status'] == 'queued' else "🔵"
+                    conclusion_emoji = "✅" if workflow.get('conclusion') == 'success' else "❌" if workflow.get('conclusion') == 'failure' else "⏹️" if workflow.get('conclusion') == 'cancelled' else ""
                     
-                    # Filtrer ceux créés après le début du workflow (approximation)
-                    workflow_artisans = [
-                        a for a in all_artisans 
-                        if a.get('created_at') and a.get('created_at') >= workflow_start
-                    ]
-                    
-                    if workflow_artisans:
-                        total = len(workflow_artisans)
-                        avec_tel = len([a for a in workflow_artisans if a.get('telephone')])
-                        avec_site = len([a for a in workflow_artisans if a.get('site_web')])
-                        sans_site = total - avec_site
-                        
-                        col1, col2, col3, col4 = st.columns(4)
-                        with col1:
-                            st.metric("📊 Scrapés", total)
-                        with col2:
-                            st.metric("📞 Avec téléphone", avec_tel)
-                        with col3:
-                            st.metric("🌐 Avec site web", avec_site)
-                        with col4:
-                            st.metric("⭐ SANS site (prospects)", sans_site)
-                    else:
-                        st.info("⏳ Aucun résultat encore pour ce workflow")
-                except Exception as e:
-                    st.error(f"Erreur calcul stats: {e}")
+                    with col:
+                        with st.expander(f"{status_emoji} {conclusion_emoji} Workflow #{workflow['run_number']} - {workflow['status']} ({workflow['created_at'][:19].replace('T', ' ')})"):
+                            # Récupérer les artisans scrapés depuis le début de ce workflow
+                            workflow_start = workflow['created_at']
+                            
+                            try:
+                                # Récupérer tous les artisans
+                                all_artisans = get_artisans(limit=10000)
+                                
+                                # ✅ Normaliser le format de workflow_start (GitHub API format: "2025-11-28T16:56:17Z")
+                                # Convertir en format comparable (sans Z, avec espace au lieu de T)
+                                workflow_start_normalized = workflow_start.replace('T', ' ').replace('Z', '').split('.')[0]
+                                
+                                # Filtrer ceux créés après le début du workflow
+                                workflow_artisans = []
+                                for a in all_artisans:
+                                    created_at = a.get('created_at')
+                                    if created_at:
+                                        # Normaliser created_at (peut être ISO ou SQLite format)
+                                        created_at_normalized = str(created_at).replace('T', ' ').replace('Z', '').split('.')[0]
+                                        # Comparaison de chaînes ISO normalisées (format: "YYYY-MM-DD HH:MM:SS")
+                                        if created_at_normalized >= workflow_start_normalized:
+                                            workflow_artisans.append(a)
+                                
+                                # ✅ Debug: Afficher le nombre total d'artisans et ceux filtrés
+                                if len(all_artisans) > 0 and len(workflow_artisans) == 0:
+                                    # Si on a des artisans mais aucun ne correspond, c'est peut-être un problème de format
+                                    # Afficher les 3 derniers artisans pour debug
+                                    st.caption(f"🔍 Debug: {len(all_artisans)} artisans totaux, workflow_start: {workflow_start_normalized}")
+                                
+                                if workflow_artisans:
+                                    total = len(workflow_artisans)
+                                    avec_tel = len([a for a in workflow_artisans if a.get('telephone')])
+                                    avec_site = len([a for a in workflow_artisans if a.get('site_web')])
+                                    sans_site = total - avec_site
+                                    
+                                    col1, col2, col3, col4 = st.columns(4)
+                                    with col1:
+                                        st.metric("📊 Scrapés", total)
+                                    with col2:
+                                        st.metric("📞 Avec téléphone", avec_tel)
+                                    with col3:
+                                        st.metric("🌐 Avec site web", avec_site)
+                                    with col4:
+                                        st.metric("⭐ SANS site (prospects)", sans_site)
+                                else:
+                                    st.info("⏳ Aucun résultat encore pour ce workflow")
+                            except Exception as e:
+                                st.error(f"Erreur calcul stats: {e}")
 else:
     st.warning("⚠️ Configuration GitHub manquante. La gestion des workflows nécessite un token et un repository configurés.")
     
@@ -1120,402 +1200,83 @@ with col_btn2:
                     st.error(f"❌ {message}")
 
 st.markdown("---")
+# ✅ NOTE : Le dashboard GitHub Actions a été supprimé car les workflows sont maintenant gérés en haut de la page
+# avec le bouton "Rafraîchir les workflows" qui affiche les statistiques pour chaque workflow
 
-# Zone de scraping
-# ✅ IMPORTANT: Afficher le dashboard si on a un workflow_id OU si scraping_running est True
-# Cela permet de garder le dashboard visible même après un refresh
-current_use_github = st.session_state.get('use_github_actions', True)  # Toujours True maintenant
-has_workflow_id = st.session_state.get('github_workflow_id') is not None
-should_show_dashboard = st.session_state.scraping_running or has_workflow_id
+# Zone de scraping (ancien dashboard supprimé - tout est géré en haut maintenant)
+# Le code du dashboard GitHub Actions a été supprimé car il n'est plus nécessaire
+# Tous les workflows sont maintenant gérés en haut avec le bouton "Rafraîchir les workflows"
 
-if should_show_dashboard:
-    # ✅ Vérifier si on utilise GitHub Actions
-    if current_use_github and github_token and github_repo:
-        st.subheader("☁️ Dashboard GitHub Actions")
-        
-        # ✅ Récupérer le statut frais depuis GitHub API (ne pas utiliser l'ancien statut)
-        # Si le workflow_id stocké est annulé, récupérer le dernier non-annulé
-        current_workflow_id = st.session_state.github_workflow_id
-        status, conclusion, run_id = get_github_workflow_status(github_token, github_repo, current_workflow_id)
-        
-        # ✅ Si le workflow récupéré est annulé mais qu'on a un workflow_id différent, essayer de récupérer le bon
-        if conclusion == 'cancelled' and current_workflow_id and run_id == current_workflow_id:
-            # Le workflow_id stocké a été annulé, récupérer le dernier non-annulé
-            status, conclusion, run_id = get_github_workflow_status(github_token, github_repo, None)
-        
-        # ✅ Mettre à jour le statut dans session_state avec les données fraîches
-        if status:
-            st.session_state.github_workflow_status = status
-        if conclusion:
-            # Stocker aussi la conclusion pour l'affichage
-            st.session_state.github_workflow_conclusion = conclusion
-        if run_id:
-            st.session_state.github_workflow_id = run_id
-            # Maintenir scraping_running pour garder le dashboard visible
-            # Même si terminé (success, failure, cancelled), on garde le dashboard pour voir les résultats
-            st.session_state.scraping_running = True
-        
-        # ✅ Si le workflow est annulé, mettre à jour le statut mais garder le dashboard visible
-        if conclusion == 'cancelled':
-            st.session_state.github_workflow_status = 'completed'
-            # Ne PAS mettre scraping_running = False pour garder le dashboard visible
-            # L'utilisateur peut voir que le workflow a été annulé
-        
-        # ✅ Si on a un workflow_id mais pas de statut, essayer de le récupérer
-        if st.session_state.github_workflow_id and not status:
-            status, conclusion, run_id = get_github_workflow_status(github_token, github_repo, st.session_state.github_workflow_id)
-            if status:
-                st.session_state.github_workflow_status = status
-                if conclusion:
-                    st.session_state.github_workflow_conclusion = conclusion
-                if run_id:
-                    st.session_state.github_workflow_id = run_id
-                st.session_state.scraping_running = True
-        
-        # ✅ Dashboard visuel avec colonnes
-        col_status, col_progress, col_actions = st.columns([2, 3, 1])
-        
-        with col_status:
-            # Statut avec badge coloré
-            if status == 'completed':
-                if conclusion == 'success':
-                    st.success("✅ **Terminé avec succès**")
-                elif conclusion == 'failure':
-                    st.error("❌ **Échec**")
-                elif conclusion == 'cancelled':
-                    st.warning("⏹️ **Annulé**")
-                else:
-                    st.warning(f"⚠️ **{conclusion or 'Terminé'}**")
-            elif status == 'in_progress':
-                st.info("🔄 **En cours...**")
-            elif status == 'queued':
-                st.info("⏳ **En attente...**")
+# Ancien code du dashboard complètement supprimé
+
+# ✅ Vérifier si on doit annuler les workflows au démarrage
+# ✅ NE PAS annuler si on vient juste de lancer un workflow
+if github_token and github_repo and not st.session_state.get('workflow_just_launched', False):
+    # ✅ Tuer automatiquement tous les workflows en cours au démarrage (une seule fois)
+    if not st.session_state.get('workflows_cancelled_on_start', False):
+        with st.spinner("⏹️ Annulation des workflows GitHub Actions en cours..."):
+            success, message = cancel_all_github_workflows(github_token, github_repo)
+            if success:
+                st.session_state.workflows_cancelled_on_start = True
+                # Ne pas réinitialiser scraping_running si on a un workflow_id
+                if not st.session_state.get('github_workflow_id'):
+                    st.session_state.scraping_running = False
+                    st.session_state.github_workflow_status = None
+                    st.session_state.github_workflow_id = None
+                st.success(f"✅ {message}")
             else:
-                st.info(f"📊 **{status}**")
-        
-        with col_progress:
-            # ✅ Essayer de charger le statut depuis le fichier local (si téléchargé)
-            status_file = Path(__file__).parent.parent.parent / "data" / "github_actions_status.json"
-            if status_file.exists():
-                try:
-                    with open(status_file, 'r', encoding='utf-8') as f:
-                        status_data = json.load(f)
-                        total_tasks = status_data.get('total_tasks', 0)
-                        completed_tasks = status_data.get('completed_tasks', 0)
-                        total_results = status_data.get('total_results', 0)
-                        
-                        if total_tasks > 0:
-                            progress_pct = (completed_tasks / total_tasks) * 100
-                            st.progress(progress_pct / 100)
-                            st.caption(f"📊 {completed_tasks}/{total_tasks} villes scrapées | {total_results} résultats trouvés")
-                        else:
-                            st.caption("⏳ Initialisation...")
-                except:
-                    pass
-            else:
-                if status == 'in_progress' or status == 'queued':
-                    st.caption("⏳ En attente des premières données...")
-        
-        with col_actions:
-            if run_id:
-                github_url = f"https://github.com/{github_repo}/actions/runs/{run_id}"
-                st.markdown(f"[🔗 Voir logs]({github_url})")
-        
-        # ✅ Section détaillée
-        with st.expander("📋 Détails du workflow", expanded=True):
-            # Informations du workflow
-            if run_id:
-                st.write(f"**Run ID:** `{run_id}`")
-                st.write(f"**Statut:** {status}")
-                if conclusion:
-                    st.write(f"**Conclusion:** {conclusion}")
-            
-            # ✅ Charger et afficher le statut détaillé
-            status_file = Path(__file__).parent.parent.parent / "data" / "github_actions_status.json"
-            if status_file.exists():
-                try:
-                    with open(status_file, 'r', encoding='utf-8') as f:
-                        status_data = json.load(f)
-                        
-                        col_info1, col_info2, col_info3 = st.columns(3)
-                        with col_info1:
-                            st.metric("Villes totales", status_data.get('total_tasks', 0))
-                        with col_info2:
-                            st.metric("Villes complétées", status_data.get('completed_tasks', 0))
-                        with col_info3:
-                            st.metric("Résultats trouvés", status_data.get('total_results', 0))
-                        
-                        # ✅ Afficher les résultats progressifs si disponibles (chargés automatiquement au refresh)
-                        # Les résultats sont déjà chargés dans session_state par le bouton "Rafraîchir"
-                        if st.session_state.get('scraped_results'):
-                            results_count = len(st.session_state.scraped_results)
-                            st.success(f"📥 {results_count} résultats disponibles")
-                            
-                            # Afficher un aperçu
-                            if results_count > 0:
-                                preview_df = pd.DataFrame(st.session_state.scraped_results[:10])
-                                if not preview_df.empty:
-                                    st.caption("👀 Aperçu des résultats (10 premiers):")
-                                    # Sélectionner les colonnes disponibles
-                                    available_cols = ['nom', 'telephone', 'site_web', 'ville_recherche']
-                                    cols_to_show = [col for col in available_cols if col in preview_df.columns]
-                                    if cols_to_show:
-                                        st.dataframe(preview_df[cols_to_show].head(10), use_container_width=True)
-                        else:
-                            # Essayer de charger depuis le fichier si pas encore chargé
-                            results_file = Path(__file__).parent.parent.parent / "data" / "scraping_results_github_actions.json"
-                            if results_file.exists():
-                                try:
-                                    with open(results_file, 'r', encoding='utf-8') as f:
-                                        results_data = json.load(f)
-                                        if isinstance(results_data, dict) and 'results' in results_data:
-                                            results_list = results_data['results']
-                                        elif isinstance(results_data, list):
-                                            results_list = results_data
-                                        else:
-                                            results_list = []
-                                        
-                                        if results_list:
-                                            st.session_state.scraped_results = results_list
-                                            st.success(f"📥 {len(results_list)} résultats disponibles")
-                                            
-                                            # Afficher un aperçu
-                                            preview_df = pd.DataFrame(results_list[:10])
-                                            if not preview_df.empty:
-                                                st.caption("👀 Aperçu des résultats (10 premiers):")
-                                                available_cols = ['nom', 'telephone', 'site_web', 'ville_recherche']
-                                                cols_to_show = [col for col in available_cols if col in preview_df.columns]
-                                                if cols_to_show:
-                                                    st.dataframe(preview_df[cols_to_show].head(10), use_container_width=True)
-                                except Exception as e:
-                                    logger.error(f"Erreur lecture résultats: {e}")
-                except Exception as e:
-                    st.error(f"Erreur lecture statut: {e}")
-        
-        # ✅ Boutons de contrôle simplifiés
-        col_btn1, col_btn2, col_btn3 = st.columns(3)
-        
-        with col_btn1:
-            # Bouton pour rafraîchir le statut (remplace auto-refresh)
-            if st.button("🔄 Rafraîchir", key="refresh_github"):
-                # ✅ CRITIQUE : Maintenir TOUJOURS le workflow_id et scraping_running pour garder le dashboard visible
-                saved_workflow_id = st.session_state.get('github_workflow_id')
-                
-                # Si on a un workflow_id, on le maintient ABSOLUMENT pour garder le dashboard visible
-                if saved_workflow_id:
-                    st.session_state.github_workflow_id = saved_workflow_id
-                    st.session_state.scraping_running = True  # TOUJOURS True si on a un workflow_id
-                
-                # ✅ Charger automatiquement les résultats progressifs depuis le fichier local ET la BDD
-                results_file = Path(__file__).parent.parent.parent / "data" / "scraping_results_github_actions.json"
-                results_list = []
-                
-                # 1. Charger depuis le fichier JSON (si existe)
-                if results_file.exists():
-                    try:
-                        with open(results_file, 'r', encoding='utf-8') as f:
-                            results_data = json.load(f)
-                            if isinstance(results_data, dict) and 'results' in results_data:
-                                results_list = results_data['results']
-                            elif isinstance(results_data, list):
-                                results_list = results_data
-                    except Exception as e:
-                        logger.error(f"Erreur chargement résultats JSON: {e}")
-                
-                # 2. ✅ AUSSI charger depuis la BDD (pour voir les résultats sauvegardés directement)
-                try:
-                    from whatsapp_database.queries import get_artisans
-                    artisans_bdd = get_artisans(limit=1000)  # Récupérer les derniers artisans
-                    if artisans_bdd:
-                        # Convertir les artisans de la BDD en format compatible
-                        for artisan in artisans_bdd:
-                            # Éviter les doublons (par téléphone)
-                            if not any(r.get('telephone') == artisan.get('telephone') for r in results_list if r.get('telephone')):
-                                results_list.append({
-                                    'nom': artisan.get('nom') or artisan.get('nom_entreprise'),
-                                    'telephone': artisan.get('telephone'),
-                                    'site_web': artisan.get('site_web'),
-                                    'adresse': artisan.get('adresse'),
-                                    'ville': artisan.get('ville'),
-                                    'code_postal': artisan.get('code_postal'),
-                                    'note': artisan.get('note'),
-                                    'nb_avis': artisan.get('nombre_avis'),
-                                    'ville_recherche': artisan.get('ville_recherche'),
-                                    'recherche': artisan.get('type_artisan') or artisan.get('recherche')
-                                })
-                        logger.info(f"✅ {len(artisans_bdd)} artisans chargés depuis la BDD")
-                except Exception as e:
-                    logger.error(f"Erreur chargement BDD: {e}")
-                
-                if results_list:
-                    # Mettre à jour les résultats affichés
-                    st.session_state.scraped_results = results_list
-                    st.session_state.saved_count = len(results_list)
-                    st.success(f"✅ {len(results_list)} résultat(s) chargé(s)")
-                
-                # Le statut sera récupéré frais depuis GitHub API lors du rerun
-                # Ne PAS restaurer l'ancien statut - laisser get_github_workflow_status le récupérer frais
-                
-                # Forcer le rerun pour rafraîchir les données depuis GitHub
-                st.experimental_rerun()
-
-        with col_btn2:
-            # ✅ Bouton pour télécharger les résultats - TOUJOURS visible si on a un workflow_id
-            # Même si le workflow est cancelled ou failed, il peut y avoir des résultats partiels
-            if run_id:
-                if st.button("📥 Télécharger les résultats", key="download_progress"):
-                    # ✅ Télécharger depuis l'artifact ou le fichier local
-                    results_file = Path(__file__).parent.parent.parent / "data" / "scraping_results_github_actions.json"
-                    results_list = []
-                    
-                    # Essayer d'abord le fichier local (si déjà téléchargé)
-                    if results_file.exists():
-                        try:
-                            with open(results_file, 'r', encoding='utf-8') as f:
-                                results_data = json.load(f)
-                                if isinstance(results_data, dict) and 'results' in results_data:
-                                    results_list = results_data['results']
-                                elif isinstance(results_data, list):
-                                    results_list = results_data
-                        except:
-                            pass
-                    
-                    # Si pas de fichier local et workflow terminé, télécharger l'artifact
-                    if not results_list and status == 'completed' and run_id:
-                        with st.spinner("📥 Téléchargement depuis GitHub..."):
-                            artifact_data = download_github_artifact(github_token, github_repo, run_id)
-                            if artifact_data:
-                                if isinstance(artifact_data, dict) and 'results' in artifact_data:
-                                    results_data = artifact_data['results']
-                                    if isinstance(results_data, dict) and 'results' in results_data:
-                                        results_list = results_data['results']
-                                    elif isinstance(results_data, list):
-                                        results_list = results_data
-                    
-                    if results_list:
-                        # Sauvegarder automatiquement en BDD avec TOUTES les données
-                        saved_count = 0
-                        for info in results_list:
-                            try:
-                                artisan_data = {
-                                    'nom_entreprise': info.get('nom', 'N/A'),
-                                    'telephone': info.get('telephone', '').replace(' ', '') if info.get('telephone') else None,
-                                    'adresse': info.get('adresse', ''),
-                                    'code_postal': info.get('code_postal', ''),
-                                    'ville': info.get('ville', ''),
-                                    'ville_recherche': info.get('ville_recherche', ''),
-                                    'type_artisan': info.get('recherche', metiers[0] if metiers else 'plombier'),
-                                    'source': 'google_maps_github_actions'
-                                }
-                                
-                                if info.get('site_web'):
-                                    artisan_data['site_web'] = info.get('site_web')
-                                
-                                # ✅ Ajouter note et nombre_avis
-                                if info.get('note'):
-                                    artisan_data['note'] = float(info.get('note'))
-                                if info.get('nb_avis') or info.get('nombre_avis'):
-                                    artisan_data['nombre_avis'] = int(info.get('nb_avis') or info.get('nombre_avis', 0))
-                                
-                                ajouter_artisan(artisan_data)
-                                saved_count += 1
-                            except Exception as e:
-                                if "UNIQUE constraint" not in str(e) and "duplicate" not in str(e).lower():
-                                    logger.error(f"Erreur sauvegarde: {e}")
-                        
-                        # Mettre à jour les résultats affichés
-                        st.session_state.scraped_results = results_list
-                        st.session_state.saved_count = saved_count
-                        
-                        st.success(f"✅ {len(results_list)} résultats téléchargés et {saved_count} sauvegardés en BDD !")
-                        st.experimental_rerun()
-                    else:
-                        st.warning("⚠️ Aucun résultat disponible pour le moment. Le scraping est peut-être encore en cours.")
-        
-        with col_btn3:
-            # Bouton pour arrêter le workflow
-            if status == 'in_progress' or status == 'queued':
-                if st.button("⏹️ Arrêter", key="stop_github"):
-                    try:
-                        url = f"https://api.github.com/repos/{github_repo}/actions/runs/{run_id}/cancel"
-                        headers = {
-                            "Accept": "application/vnd.github+json",
-                            "Authorization": f"Bearer {github_token}",
-                            "X-GitHub-Api-Version": "2022-11-28"
-                        }
-                        response = requests.post(url, headers=headers)
-                        if response.status_code == 202:
-                            st.success("⏹️ Annulation demandée. Le workflow sera arrêté dans quelques instants.")
-                            # Mettre à jour le statut localement
-                            st.session_state.github_workflow_status = 'cancelled'
-                            # Ne pas réinitialiser scraping_running immédiatement pour permettre de voir le statut final
-                            time.sleep(1)  # Petite pause pour que l'utilisateur voie le message
-                        else:
-                            st.warning(f"⚠️ Erreur lors de l'annulation: {response.status_code}")
-                            if response.text:
-                                logger.error(f"Réponse API: {response.text}")
-                    except Exception as e:
-                        st.error(f"❌ Erreur: {e}")
-                        logger.error(f"Erreur annulation workflow: {e}")
-                    st.experimental_rerun()
-        
-        # ✅ Gestion des workflows terminés (success, failure, ou cancelled)
-        if status == 'completed':
-            if conclusion == 'failure':
-                st.error("❌ Le scraping a échoué sur GitHub Actions. Vérifiez les logs sur GitHub.")
-                st.info("💡 Vous pouvez quand même essayer de télécharger les résultats partiels avec le bouton '📥 Télécharger les résultats' ci-dessus.")
-            elif conclusion == 'success':
-                st.success("✅ Le scraping est terminé avec succès !")
-                st.info("💡 Utilisez le bouton '📥 Télécharger les résultats' ci-dessus pour récupérer les données.")
-            elif conclusion == 'cancelled':
-                st.warning("⏹️ Le scraping a été annulé.")
-                st.info("💡 Si le scraping avait commencé, vous pouvez essayer de télécharger les résultats partiels avec le bouton '📥 Télécharger les résultats' ci-dessus.")
-            
-            # Bouton pour réinitialiser et permettre un nouveau lancement
-            if st.button("🔄 Réinitialiser et permettre nouveau lancement", key="reset_completed"):
-                st.session_state.scraping_running = False
-                st.session_state.github_workflow_status = None
-                st.session_state.github_workflow_id = None
-                st.session_state.github_workflow_conclusion = None
-                st.success("✅ État réinitialisé. Vous pouvez lancer un nouveau scraping.")
-                st.experimental_rerun()
-        elif not status:
-            # ✅ Si on a un workflow_id mais pas de statut, c'est qu'on attend encore ou erreur API
-            if st.session_state.github_workflow_id:
-                st.warning("⏳ En attente du statut du workflow...")
-                st.info("💡 Cliquez sur 'Rafraîchir' pour vérifier à nouveau")
-                # ✅ CRITIQUE : Maintenir scraping_running pour garder le dashboard visible
-                st.session_state.scraping_running = True
-            else:
-                st.warning("⏳ En attente du démarrage du workflow...")
-                # Si on n'a pas encore de workflow_id, on peut réinitialiser
-                # Mais seulement si l'utilisateur le demande explicitement
-
-elif not should_show_dashboard:
-    # ✅ Pas de dashboard à afficher - le formulaire de lancement sera affiché plus haut
-    # Mais d'abord, vérifier si on doit annuler les workflows au démarrage
-    # ✅ NE PAS annuler si on vient juste de lancer un workflow
-    if github_token and github_repo and not st.session_state.get('workflow_just_launched', False):
-        # ✅ Tuer automatiquement tous les workflows en cours au démarrage (une seule fois)
-        if not st.session_state.get('workflows_cancelled_on_start', False):
-            with st.spinner("⏹️ Annulation des workflows GitHub Actions en cours..."):
-                success, message = cancel_all_github_workflows(github_token, github_repo)
-                if success:
-                    st.session_state.workflows_cancelled_on_start = True
-                    # Ne pas réinitialiser scraping_running si on a un workflow_id
-                    if not st.session_state.get('github_workflow_id'):
-                        st.session_state.scraping_running = False
-                        st.session_state.github_workflow_status = None
-                        st.session_state.github_workflow_id = None
-                    st.success(f"✅ {message}")
-                else:
-                    st.warning(f"⚠️ {message}")
-            st.experimental_rerun()
-    # ✅ Réinitialiser le flag après le premier rerun
-    if st.session_state.get('workflow_just_launched', False):
-        st.session_state.workflow_just_launched = False
+                st.warning(f"⚠️ {message}")
+        st.experimental_rerun()
+# ✅ Réinitialiser le flag après le premier rerun
+if st.session_state.get('workflow_just_launched', False):
+    st.session_state.workflow_just_launched = False
 
 # ✅ GitHub Actions uniquement - plus de code local
+
+# ✅ CRITIQUE : Charger automatiquement les résultats depuis le JSON ET la BDD au démarrage
+# Si on n'a pas de résultats en session_state, essayer de les charger depuis le JSON et la BDD
+if not st.session_state.scraped_results:
+    results_file = Path(__file__).parent.parent.parent / "data" / "scraping_results_github_actions.json"
+    results_list = []
+    
+    # 1. Charger depuis le fichier JSON (si existe)
+    if results_file.exists():
+        try:
+            with open(results_file, 'r', encoding='utf-8') as f:
+                results_data = json.load(f)
+                if isinstance(results_data, dict) and 'results' in results_data:
+                    results_list = results_data['results']
+                elif isinstance(results_data, list):
+                    results_list = results_data
+        except Exception as e:
+            logger.error(f"Erreur chargement JSON: {e}")
+    
+    # 2. ✅ AUSSI charger depuis la BDD (pour voir les résultats sauvegardés directement)
+    try:
+        from whatsapp_database.queries import get_artisans
+        artisans_bdd = get_artisans(limit=10000)  # Récupérer tous les artisans
+        if artisans_bdd:
+            # Convertir les artisans de la BDD en format compatible
+            for artisan in artisans_bdd:
+                # Éviter les doublons (par téléphone)
+                if not any(r.get('telephone') == artisan.get('telephone') for r in results_list if r.get('telephone')):
+                    results_list.append({
+                        'nom': artisan.get('nom_entreprise') or artisan.get('nom'),
+                        'telephone': artisan.get('telephone'),
+                        'site_web': artisan.get('site_web'),
+                        'adresse': artisan.get('adresse'),
+                        'ville': artisan.get('ville'),
+                        'code_postal': artisan.get('code_postal'),
+                        'note': artisan.get('note'),
+                        'nb_avis': artisan.get('nombre_avis'),
+                        'ville_recherche': artisan.get('ville_recherche'),
+                        'recherche': artisan.get('type_artisan') or artisan.get('recherche')
+                    })
+    except Exception as e:
+        logger.error(f"Erreur chargement BDD: {e}")
+    
+    if results_list:
+        st.session_state.scraped_results = results_list
 
 # Afficher les résultats scrapés
 if st.session_state.scraped_results:
@@ -1559,34 +1320,23 @@ if st.session_state.scraped_results:
     colonnes_disponibles = [col for col in colonnes_afficher if col in df_filtre.columns]
     
     # CSS amélioré pour le tableau
-    st.markdown("""
-    <style>
-    .stDataFrame {
-        width: 100% !important;
-    }
-    .stDataFrame > div {
-        width: 100% !important;
-    }
-    .stDataFrame table {
-        width: 100% !important;
-        table-layout: auto !important;
-    }
-    .stDataFrame th, .stDataFrame td {
-        padding: 8px !important;
-        word-wrap: break-word !important;
-        overflow-wrap: break-word !important;
-        white-space: normal !important;
-    }
-    .stDataFrame th:nth-child(1) { width: 15% !important; } /* Nom */
-    .stDataFrame th:nth-child(2) { width: 10% !important; } /* Téléphone */
-    .stDataFrame th:nth-child(3) { width: 20% !important; } /* Site web */
-    .stDataFrame th:nth-child(4) { width: 20% !important; } /* Adresse */
-    .stDataFrame th:nth-child(5) { width: 12% !important; } /* Ville recherchée */
-    .stDataFrame th:nth-child(6) { width: 10% !important; } /* Ville */
-    .stDataFrame th:nth-child(7) { width: 6% !important; } /* Note */
-    .stDataFrame th:nth-child(8) { width: 7% !important; } /* Nb avis */
-    </style>
-    """, unsafe_allow_html=True)
+    css_table = (
+        "<style>"
+        ".stDataFrame { width: 100% !important; }"
+        ".stDataFrame > div { width: 100% !important; }"
+        ".stDataFrame table { width: 100% !important; table-layout: auto !important; }"
+        ".stDataFrame th, .stDataFrame td { padding: 8px !important; word-wrap: break-word !important; overflow-wrap: break-word !important; white-space: normal !important; }"
+        ".stDataFrame th:nth-child(1) { width: 15% !important; }"
+        ".stDataFrame th:nth-child(2) { width: 10% !important; }"
+        ".stDataFrame th:nth-child(3) { width: 20% !important; }"
+        ".stDataFrame th:nth-child(4) { width: 20% !important; }"
+        ".stDataFrame th:nth-child(5) { width: 12% !important; }"
+        ".stDataFrame th:nth-child(6) { width: 10% !important; }"
+        ".stDataFrame th:nth-child(7) { width: 6% !important; }"
+        ".stDataFrame th:nth-child(8) { width: 7% !important; }"
+        "</style>"
+    )
+    st.markdown(css_table, unsafe_allow_html=True)
     
     # ✅ Utiliser width au lieu de use_container_width (compatibilité Streamlit)
     st.dataframe(

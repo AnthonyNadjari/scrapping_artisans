@@ -1,0 +1,16 @@
+{
+  "started_at": "2025-11-28T07:27:11.752833",
+  "total_tasks": 10,
+  "completed_tasks": 0,
+  "failed_tasks": 1,
+  "total_results": 0,
+  "tasks": {
+    "plombier_77_Melun": {
+      "status": "failed",
+      "results_count": 0,
+      "completed_at": "2025-11-28T07:30:25.488475",
+      "error": "'GoogleMapsScraper' object has no attribute 'quit'"
+    }
+  },
+  "last_updated": "2025-11-28T07:30:25.488495"
+}
