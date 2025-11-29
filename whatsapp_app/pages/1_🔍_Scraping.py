@@ -379,7 +379,7 @@ if github_token and github_repo:
             if 'workflows_last_refresh' in st.session_state:
                 del st.session_state.workflows_last_refresh
             # Forcer le rerun immédiatement
-        st.experimental_rerun()
+            st.experimental_rerun()
 
     # Lister les workflows en cours
     try:
@@ -675,7 +675,7 @@ if departements_stats:
                                 'dept': dept_art
                             }
                             break
-                            except:
+                except:
                     pass
     
     # Ajouter les villes sur la carte (petits points bleus)
@@ -721,7 +721,7 @@ if departements_stats:
     with col_stat3:
         total_villes = sum([s['villes_scrapees'] for s in departements_stats.values()])
         st.metric("Villes scrapées", total_villes)
-                        else:
+else:
     st.empty()  # Pas de message si aucun scraping - affichage plus compact
 
 # ✅ Initialiser les variables GitHub Actions dans session_state AVANT de les utiliser
@@ -939,7 +939,7 @@ if st.session_state.get('show_communes', False) and use_api_communes and departe
                         min_pop_displayed = min(populations)
                         max_pop_displayed = max(populations)
                         pop_range_displayed = max_pop_displayed - min_pop_displayed if max_pop_displayed > min_pop_displayed else 1
-                        else:
+                    else:
                         min_pop_displayed = 0
                         max_pop_displayed = 1
                         pop_range_displayed = 1
@@ -1011,7 +1011,7 @@ if st.session_state.get('show_communes', False) and use_api_communes and departe
                     st.warning("⚠️ Aucune commune avec coordonnées GPS trouvée")
             except ImportError:
                 st.info("💡 Pour afficher une carte interactive, installez: `pip install folium streamlit-folium`")
-                    except Exception as e:
+            except Exception as e:
                 st.error(f"Erreur lors de la création de la carte: {e}")
     else:
         st.warning("Aucune commune trouvée avec les critères sélectionnés")
@@ -1117,8 +1117,8 @@ def trigger_github_workflow(token, repo, metiers, departements, max_results, num
             if response.status_code == 404:
                 error_msg += f"\n💡 Vérifiez que le workflow existe dans .github/workflows/scraping.yml et qu'il est commité sur GitHub"
             return False, f"Erreur: {response.status_code} - {error_msg}", None
-            except Exception as e:
-        return False, f"Erreur: {str(e)}"
+    except Exception as e:
+        return False, f"Erreur: {str(e)}", None
 
 def get_github_workflow_status(token, repo, workflow_id=None):
     """Récupère le statut du workflow GitHub Actions"""
@@ -1198,74 +1198,6 @@ def get_github_workflow_logs(token, repo, run_id):
 
 # ✅ NOTE : Les fonctions list_github_workflows, cancel_github_workflow et cancel_all_github_workflows 
 # sont maintenant définies plus haut (ligne ~206) pour éviter NameError
-    """Annule un workflow GitHub Actions spécifique"""
-    try:
-        cancel_url = f"https://api.github.com/repos/{repo}/actions/runs/{run_id}/cancel"
-        headers = {
-            "Accept": "application/vnd.github+json",
-            "Authorization": f"Bearer {token}",
-            "X-GitHub-Api-Version": "2022-11-28"
-        }
-        
-        response = requests.post(cancel_url, headers=headers)
-        return response.status_code == 202
-    except Exception as e:
-        logger.error(f"Erreur annulation workflow {run_id}: {e}")
-        return False
-
-def cancel_all_github_workflows(token, repo):
-    """Annule tous les workflows GitHub Actions en cours (in_progress et queued)"""
-    try:
-        headers = {
-            "Accept": "application/vnd.github+json",
-            "Authorization": f"Bearer {token}",
-            "X-GitHub-Api-Version": "2022-11-28"
-        }
-        
-        cancelled_count = 0
-        total_runs = 0
-        
-        # Récupérer les runs "in_progress"
-        url_in_progress = f"https://api.github.com/repos/{repo}/actions/runs?status=in_progress&per_page=100"
-        response = requests.get(url_in_progress, headers=headers)
-        if response.status_code == 200:
-            runs = response.json().get('workflow_runs', [])
-            total_runs += len(runs)
-            for run in runs:
-                run_id = run.get('id')
-                if run_id:
-                    cancel_url = f"https://api.github.com/repos/{repo}/actions/runs/{run_id}/cancel"
-                    cancel_response = requests.post(cancel_url, headers=headers)
-                    if cancel_response.status_code == 202:
-                        cancelled_count += 1
-        elif response.status_code != 200:
-            logger.warning(f"Erreur récupération runs in_progress: {response.status_code}")
-        
-        # Récupérer les runs "queued"
-        url_queued = f"https://api.github.com/repos/{repo}/actions/runs?status=queued&per_page=100"
-        response = requests.get(url_queued, headers=headers)
-        if response.status_code == 200:
-            runs = response.json().get('workflow_runs', [])
-            total_runs += len(runs)
-            for run in runs:
-                run_id = run.get('id')
-                if run_id:
-                    cancel_url = f"https://api.github.com/repos/{repo}/actions/runs/{run_id}/cancel"
-                    cancel_response = requests.post(cancel_url, headers=headers)
-                    if cancel_response.status_code == 202:
-                        cancelled_count += 1
-        elif response.status_code != 200:
-            logger.warning(f"Erreur récupération runs queued: {response.status_code}")
-        
-        if total_runs == 0:
-            return True, "Aucun workflow en cours à annuler"
-        elif cancelled_count == total_runs:
-            return True, f"✅ {cancelled_count} workflow(s) annulé(s) sur {total_runs} trouvé(s)"
-        else:
-            return False, f"⚠️ {cancelled_count} workflow(s) annulé(s) sur {total_runs} trouvé(s) (certains n'ont peut-être pas pu être annulés)"
-    except Exception as e:
-        logger.error(f"Erreur annulation workflows: {e}")
-        return False, f"Erreur: {str(e)}"
 
 # ✅ Cette section a été déplacée en haut pour être visible dès le démarrage (voir ligne ~200)
 
@@ -1349,7 +1281,7 @@ with col_btn1:
                         st.session_state.github_workflow_id = run_id
                     # ✅ Marquer qu'on vient de lancer un workflow pour ne pas l'annuler
                     st.session_state.workflow_just_launched = True
-        st.experimental_rerun()
+                    st.experimental_rerun()
                 else:
                     st.error(f"❌ {message}")
 
@@ -1531,15 +1463,15 @@ if st.session_state.scraped_results:
     )
     
     # ✅ Bouton d'export CSV complet
-        csv_all = df.to_csv(index=False, encoding='utf-8-sig')
+    csv_all = df.to_csv(index=False, encoding='utf-8-sig')
     dept = st.session_state.get('departements_selected', departements)[0] if st.session_state.get('departements_selected') else (departements[0] if departements else '77')
     metier_export = st.session_state.get('metiers_selected', metiers)[0] if st.session_state.get('metiers_selected') else (metiers[0] if metiers else 'plombier')
-        st.download_button(
-            "📥 Télécharger CSV complet",
-            csv_all,
-            f"{metier_export}_{dept}_complet_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-            "text/csv"
-        )
+    st.download_button(
+        "📥 Télécharger CSV complet",
+        csv_all,
+        f"{metier_export}_{dept}_complet_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+        "text/csv"
+    )
     
 # ✅ Expander "Mode d'exécution" tout en bas de la page
 with st.expander("ℹ️ Mode d'exécution", expanded=False):
