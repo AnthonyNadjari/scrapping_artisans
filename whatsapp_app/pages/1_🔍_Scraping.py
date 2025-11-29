@@ -755,8 +755,8 @@ with st.expander("⚙️ Options avancées"):
             min_pop = st.number_input("Population minimum", min_value=0, value=0, step=100, help="Villes avec au moins cette population")
             max_pop = st.number_input("Population maximum", min_value=0, value=100000, step=1000, help="Villes avec au maximum cette population (défaut: 100k)")
             
-            # ✅ Bouton pour afficher les communes trouvées
-            if st.button("📋 Afficher les communes trouvées"):
+            # ✅ Bouton pour afficher les communes trouvées (uniquement pour l'affichage, pas nécessaire pour le scraping)
+            if st.button("📋 Afficher les communes trouvées", help="Affiche la liste des communes qui seront scrapées. Le scraping fonctionne même sans cliquer sur ce bouton."):
                 st.session_state.show_communes = True
     with col_adv2:
         enable_resume = st.checkbox(
@@ -792,7 +792,7 @@ if st.session_state.get('show_communes', False) and use_api_communes and departe
                 'Département': dept,
                 'Commune': commune['nom'],
                 'Code postal': commune['code_postal'],
-                'Population': f"{commune['population']:,}" if commune['population'] > 0 else "N/A"
+                'Population': commune['population'] if commune['population'] > 0 else None
             })
     
     if all_communes:
@@ -804,6 +804,8 @@ if st.session_state.get('show_communes', False) and use_api_communes and departe
         with col_table:
             st.subheader("📋 Liste des communes")
             df_communes = pd.DataFrame(all_communes)
+            # ✅ Garder la population comme nombre pour permettre le tri numérique
+            # Le formatage avec virgules sera géré par Streamlit automatiquement pour l'affichage
             
             # CSS pour autofit toutes les colonnes et éviter la colonne vide
             st.markdown("""
@@ -1417,13 +1419,39 @@ if not st.session_state.scraped_results:
             for artisan in artisans_bdd:
                 # Éviter les doublons (par téléphone)
                 if not any(r.get('telephone') == artisan.get('telephone') for r in results_list if r.get('telephone')):
+                    # ✅ Extraire département depuis code_postal si manquant
+                    dept = artisan.get('departement')
+                    code_postal = artisan.get('code_postal')
+                    if not dept and code_postal:
+                        code_postal_str = str(code_postal).strip()
+                        if len(code_postal_str) >= 2:
+                            if code_postal_str.startswith('97') or code_postal_str.startswith('98'):
+                                dept = code_postal_str[:3]
+                            else:
+                                dept = code_postal_str[:2]
+                    
+                    # ✅ Si toujours pas de département, essayer depuis ville_recherche via API
+                    if not dept and artisan.get('ville_recherche'):
+                        try:
+                            ville_nom = artisan.get('ville_recherche', '').strip()
+                            if ville_nom:
+                                url = f"https://geo.api.gouv.fr/communes?nom={ville_nom}&fields=codeDepartement&limit=1"
+                                response = requests.get(url, timeout=3)
+                                if response.status_code == 200:
+                                    communes = response.json()
+                                    if communes and len(communes) > 0:
+                                        dept = communes[0].get('codeDepartement', '')
+                        except:
+                            pass  # Si l'API échoue, on continue sans département
+                    
                     results_list.append({
                         'nom': artisan.get('nom_entreprise') or artisan.get('nom'),
                         'telephone': artisan.get('telephone'),
                         'site_web': artisan.get('site_web'),
                         'adresse': artisan.get('adresse'),
                         'ville': artisan.get('ville'),
-                        'code_postal': artisan.get('code_postal'),
+                        'code_postal': code_postal,
+                        'departement': dept,
                         'note': artisan.get('note'),
                         'nb_avis': artisan.get('nombre_avis'),
                         'ville_recherche': artisan.get('ville_recherche'),
@@ -1460,8 +1488,8 @@ if st.session_state.scraped_results:
     # ✅ Filtres supprimés comme demandé
     df_filtre = df.copy()
     
-    # ✅ Afficher le tableau avec colonne ville_recherche et meilleur affichage
-    colonnes_afficher = ['nom', 'telephone', 'site_web', 'adresse', 'ville_recherche', 'ville', 'note', 'nb_avis']
+    # ✅ Afficher le tableau avec toutes les colonnes importantes
+    colonnes_afficher = ['nom', 'telephone', 'site_web', 'adresse', 'ville', 'code_postal', 'departement', 'ville_recherche', 'note', 'nb_avis']
     colonnes_disponibles = [col for col in colonnes_afficher if col in df_filtre.columns]
     
     # CSS amélioré pour le tableau

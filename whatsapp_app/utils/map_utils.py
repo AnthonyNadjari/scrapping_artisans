@@ -5,10 +5,33 @@ import folium
 from streamlit_folium import st_folium
 from pathlib import Path
 import sys
+import json
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from whatsapp_database.queries import get_artisans
+
+# ✅ Cache persistant pour ville -> département
+CACHE_FILE = Path(__file__).parent.parent.parent / "data" / "ville_dept_cache.json"
+
+def load_ville_dept_cache():
+    """Charge le cache ville->département depuis le fichier"""
+    try:
+        if CACHE_FILE.exists():
+            with open(CACHE_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+    except:
+        pass
+    return {}
+
+def save_ville_dept_cache(cache):
+    """Sauvegarde le cache ville->département dans le fichier"""
+    try:
+        CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with open(CACHE_FILE, 'w', encoding='utf-8') as f:
+            json.dump(cache, f, ensure_ascii=False, indent=2)
+    except:
+        pass
 
 # Coordonnées approximatives des départements français (centres)
 DEPT_COORDS = {
@@ -57,7 +80,46 @@ def create_scraping_map_by_job(metier=None):
     if not artisans:
         return None
     
-    # Grouper par département et compter
+    # ✅ OPTIMISATION : Charger le cache persistant
+    ville_to_dept_cache = load_ville_dept_cache()
+    cache_updated = False
+    
+    # ✅ OPTIMISATION : Grouper d'abord par ville unique pour éviter les traitements répétés
+    villes_uniques = {}
+    for artisan in artisans:
+        if not artisan.get('departement') and artisan.get('ville_recherche'):
+            ville = artisan.get('ville_recherche', '').strip()
+            if ville and ville not in villes_uniques:
+                villes_uniques[ville] = []
+            if ville:
+                villes_uniques[ville].append(artisan)
+    
+    # ✅ OPTIMISATION : Traiter les villes uniques avec cache
+    for ville, artisans_ville in villes_uniques.items():
+        if ville not in ville_to_dept_cache:
+            # Essayer de trouver le département via API (une seule fois par ville)
+            try:
+                import requests
+                url = f"https://geo.api.gouv.fr/communes?nom={ville}&fields=codeDepartement&limit=1"
+                response = requests.get(url, timeout=2)  # Timeout très court
+                if response.status_code == 200:
+                    communes = response.json()
+                    if communes and len(communes) > 0:
+                        dept = communes[0].get('codeDepartement', '')
+                        ville_to_dept_cache[ville] = dept
+                        cache_updated = True
+                    else:
+                        ville_to_dept_cache[ville] = None
+                        cache_updated = True
+            except:
+                ville_to_dept_cache[ville] = None
+                cache_updated = True
+    
+    # ✅ Sauvegarder le cache si mis à jour
+    if cache_updated:
+        save_ville_dept_cache(ville_to_dept_cache)
+    
+    # ✅ Grouper par département et compter (rapide maintenant)
     dept_counts = {}
     for artisan in artisans:
         dept = artisan.get('departement', '')
@@ -70,22 +132,11 @@ def create_scraping_map_by_job(metier=None):
                 else:
                     dept = code_postal[:2]
         
-        # ✅ Si toujours pas de département, utiliser ville_recherche pour trouver le département
+        # ✅ Si toujours pas de département, utiliser le cache ville->département
         if not dept and artisan.get('ville_recherche'):
-            # Essayer de trouver le département depuis la ville_recherche via l'API
-            try:
-                from whatsapp_app.pages import get_communes_from_api
-                # Chercher dans tous les départements (pas optimal mais fonctionnel)
-                for dept_test in ['77', '78', '91', '92', '93', '94', '95']:  # Départements courants
-                    communes = get_communes_from_api(dept_test, 0, 1000000)
-                    for commune in communes:
-                        if commune['nom'].lower() == artisan.get('ville_recherche', '').lower():
-                            dept = dept_test
-                            break
-                    if dept:
-                        break
-            except:
-                pass
+            ville = artisan.get('ville_recherche', '').strip()
+            if ville and ville in ville_to_dept_cache:
+                dept = ville_to_dept_cache[ville]
         
         if dept:
             if dept not in dept_counts:

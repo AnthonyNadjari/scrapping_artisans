@@ -57,7 +57,8 @@ try:
     from whatsapp_app.utils.map_utils import create_scraping_map_by_job
     from streamlit_folium import st_folium
     
-    carte = create_scraping_map_by_job(metier_carte if metier_carte != "Tous" else None)
+    with st.spinner("🔄 Génération de la carte..."):
+        carte = create_scraping_map_by_job(metier_carte if metier_carte != "Tous" else None)
     
     # Vérifier si des artisans existent pour ce métier
     artisans_filtres = [a for a in all_artisans_bdd if not metier_carte or metier_carte == "Tous" or a.get('type_artisan') == metier_carte]

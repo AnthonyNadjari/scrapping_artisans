@@ -103,6 +103,16 @@ def save_callback(artisan_data):
                     if ville:
                         data['ville'] = ville
         
+        # ✅ DEBUG : Afficher les données extraites
+        print(f"🔍 [DEBUG] Données extraites pour {data.get('nom_entreprise', 'N/A')}:")
+        print(f"   📍 Adresse: {data.get('adresse', 'N/A')}")
+        print(f"   🏙️ Ville: {data.get('ville', 'N/A')}")
+        print(f"   📮 Code postal: {data.get('code_postal', 'N/A')}")
+        print(f"   🗺️ Département: {data.get('departement', 'N/A')}")
+        print(f"   ⭐ Nombre d'avis: {data.get('nombre_avis', 'N/A')}")
+        print(f"   📞 Téléphone: {data.get('telephone', 'N/A')}")
+        print(f"   🌐 Site web: {data.get('site_web', 'N/A')}")
+        
         # ✅ Vérifier qu'on a au moins une donnée valide avant d'insérer
         has_valid_data = any([
             data.get('nom_entreprise'),
@@ -118,7 +128,7 @@ def save_callback(artisan_data):
         # Sauvegarder dans la BDD
         artisan_id = ajouter_artisan(data)
         if artisan_id:
-            print(f"✅ Artisan sauvegardé (ID: {artisan_id}): {data.get('nom_entreprise', 'N/A')} - Tel: {data.get('telephone', 'N/A')} - Site: {data.get('site_web', 'N/A')}")
+            print(f"✅ Artisan sauvegardé (ID: {artisan_id})")
         else:
             print(f"⚠️ save_callback: ajouter_artisan a retourné None pour: {data.get('nom_entreprise', 'N/A')}")
         return artisan_id

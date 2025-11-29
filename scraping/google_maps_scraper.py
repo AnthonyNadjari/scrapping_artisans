@@ -1390,35 +1390,49 @@ class GoogleMapsScraper:
                 aria_label = adresse_button.get_attribute('aria-label')
                 if aria_label:
                     info['adresse'] = aria_label.replace('Adresse: ', '').strip()
+                    logger.info(f"  📍 [DEBUG] Adresse extraite: {info['adresse']}")
                     
                     # Extraire code postal et ville
                     cp_match = re.search(r'\b(\d{5})\b', info['adresse'])
                     if cp_match:
                         info['code_postal'] = cp_match.group(1)
+                        logger.info(f"  📮 [DEBUG] Code postal extrait: {info['code_postal']}")
                         # ✅ Extraire le département depuis le code postal (2 premiers chiffres)
                         if len(cp_match.group(1)) >= 2:
                             info['departement'] = cp_match.group(1)[:2]
+                            logger.info(f"  🗺️ [DEBUG] Département extrait: {info['departement']}")
                     
                     # Extraire ville (après le code postal)
                     ville_match = re.search(r'\d{5}\s+(.+)', info['adresse'])
                     if ville_match:
                         info['ville'] = ville_match.group(1).strip()
-            except:
-                pass
+                        logger.info(f"  🏙️ [DEBUG] Ville extraite: {info['ville']}")
+                    else:
+                        logger.warning(f"  ⚠️ [DEBUG] Ville non trouvée dans l'adresse: {info['adresse']}")
+                else:
+                    logger.warning(f"  ⚠️ [DEBUG] Aucune adresse trouvée (aria-label vide)")
+            except Exception as e:
+                logger.warning(f"  ⚠️ [DEBUG] Erreur extraction adresse: {e}")
             
             # Note
             try:
                 note_elem = self.driver.find_element(By.CSS_SELECTOR, 'span[role="img"]')
                 info['note'] = self._extraire_note(note_elem)
+                if info['note']:
+                    logger.info(f"  ⭐ [DEBUG] Note extraite: {info['note']}")
             except:
-                pass
+                logger.warning(f"  ⚠️ [DEBUG] Note non trouvée")
             
             # Nombre d'avis
             try:
                 avis_elem = self.driver.find_element(By.XPATH, "//span[contains(text(), 'avis')]")
                 info['nb_avis'] = self._extraire_nb_avis(avis_elem)
-            except:
-                pass
+                if info['nb_avis']:
+                    logger.info(f"  📊 [DEBUG] Nombre d'avis extrait: {info['nb_avis']}")
+                else:
+                    logger.warning(f"  ⚠️ [DEBUG] Nombre d'avis non trouvé ou invalide")
+            except Exception as e:
+                logger.warning(f"  ⚠️ [DEBUG] Erreur extraction nombre d'avis: {e}")
             
             # Logs
             log_parts = [f"[{index}/{total}] {info['nom'] or 'N/A'}"]
