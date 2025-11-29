@@ -132,6 +132,31 @@ def save_callback(artisan_data):
                 data['ville'] = ville_recherche
                 data['ville_recherche'] = ville_recherche
         
+        # ✅ FALLBACK : Si on a la ville mais pas le code postal, chercher via l'API data.gouv.fr
+        if not data.get('code_postal') and data.get('ville'):
+            try:
+                ville_nom = data['ville']
+                # Chercher le code postal via l'API
+                url = f"https://geo.api.gouv.fr/communes?nom={ville_nom}&fields=nom,code,codesPostaux"
+                response = requests.get(url, timeout=2)
+                if response.status_code == 200:
+                    communes = response.json()
+                    if communes:
+                        # Prendre la première commune trouvée
+                        codes_postaux = communes[0].get('codesPostaux', [])
+                        if codes_postaux:
+                            data['code_postal'] = codes_postaux[0]
+                            print(f"✅ Code postal trouvé via API pour {ville_nom}: {data['code_postal']}")
+                            # Extraire le département
+                            if len(data['code_postal']) >= 2:
+                                if data['code_postal'].startswith('97') or data['code_postal'].startswith('98'):
+                                    data['departement'] = data['code_postal'][:3]
+                                else:
+                                    data['departement'] = data['code_postal'][:2]
+            except Exception as e:
+                # Silencieux - ne pas bloquer si l'API échoue
+                pass
+        
         # ✅ VALIDATION : Note et nombre d'avis doivent être cohérents
         # Si on a une note mais pas de nombre d'avis, mettre nombre_avis à 0
         if data.get('note') is not None and (data.get('nombre_avis') is None or data.get('nombre_avis') == 0):

@@ -2746,13 +2746,33 @@ class GoogleMapsScraper:
                                     else:
                                         logger.warning(f"  [{index}] 📮 [DEBUG] Code postal NON trouvé dans l'adresse: {info['adresse']}")
                                 
-                                # ✅ Si pas de code postal dans l'adresse, chercher dans TOUT le texte du panneau
-                                # ✅ Si pas de code postal dans l'adresse, chercher dans TOUT le texte du panneau
+                                # ✅ Si pas de code postal dans l'adresse, chercher dans TOUT le texte du panneau ET le HTML
                                 if not info.get('code_postal') and panneau_text:
                                     logger.info(f"  [{index}] 📮 [DEBUG] Recherche code postal dans TOUT le panneau (pas dans adresse)")
                                     logger.info(f"  [{index}] 📮 [DEBUG] Texte du panneau pour recherche CP: {panneau_text[:500]}")
-                                    # Pattern 1: Chercher "code_postal ville" dans le panneau
-                                    cp_ville_match = re.search(r'\b(\d{5})\s+([A-ZÀ-Ÿ][a-zà-ÿ]{2,}(?:\s+[A-ZÀ-Ÿ][a-zà-ÿ]+)*)\b', panneau_text)
+                                    
+                                    # ✅ PRIORITÉ 1 : Chercher dans le HTML du panneau (plus fiable)
+                                    try:
+                                        panneau_html = search_context.get_attribute('outerHTML') if search_context != self.driver else ''
+                                        if not panneau_html and search_context != self.driver:
+                                            panneau_html = self.driver.execute_script("return arguments[0].outerHTML;", search_context) or ''
+                                        
+                                        if panneau_html:
+                                            # Chercher code postal dans le HTML (peut être dans des attributs data, aria-label, etc.)
+                                            cp_html_matches = re.findall(r'\b(\d{5})\b', panneau_html)
+                                            if cp_html_matches:
+                                                # Prendre le premier code postal trouvé (généralement le bon)
+                                                info['code_postal'] = cp_html_matches[0]
+                                                logger.info(f"  [{index}] 📮 [DEBUG] Code postal extrait depuis HTML: {info['code_postal']} (trouvé parmi {len(cp_html_matches)} codes postaux)")
+                                                if len(info['code_postal']) >= 2:
+                                                    info['departement'] = info['code_postal'][:2]
+                                                    logger.info(f"  [{index}] 🗺️ [DEBUG] Département extrait: {info['departement']}")
+                                    except Exception as e:
+                                        logger.debug(f"  [{index}] Erreur recherche CP dans HTML: {e}")
+                                    
+                                    # ✅ PRIORITÉ 2 : Chercher "code_postal ville" dans le texte si pas trouvé dans HTML
+                                    if not info.get('code_postal'):
+                                        cp_ville_match = re.search(r'\b(\d{5})\s+([A-ZÀ-Ÿ][a-zà-ÿ]{2,}(?:\s+[A-ZÀ-Ÿ][a-zà-ÿ]+)*)\b', panneau_text)
                                     if cp_ville_match:
                                         info['code_postal'] = cp_ville_match.group(1)
                                         ville = cp_ville_match.group(2).strip()
@@ -2868,13 +2888,38 @@ class GoogleMapsScraper:
                         except:
                             pass
                     
-                    # Chercher dans ces éléments pour note ET avis
+                    # ✅ FIX CRITIQUE : Prendre le PREMIER élément qui correspond au nom de l'établissement
+                    # Éviter de prendre la note d'un autre établissement dans le panneau
+                    nom_etablissement = info.get('nom', '').strip().lower()
+                    note_trouvee = False
+                    
                     for elem in note_avis_elems:
+                        if note_trouvee:
+                            break
+                            
                         aria_label = elem.get_attribute('aria-label') or ''
                         if aria_label:
+                            # ✅ VÉRIFICATION : S'assurer que cet élément appartient au bon établissement
+                            # Chercher le nom de l'établissement dans le contexte parent de l'élément
+                            try:
+                                # Remonter jusqu'à trouver un parent qui contient le nom
+                                parent = elem.find_element(By.XPATH, './ancestor::*[contains(translate(text(), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "' + nom_etablissement[:20] + '")][1]')
+                                if not parent:
+                                    # Si pas trouvé, vérifier si le texte du panneau contient le nom au début
+                                    elem_text = elem.text or ''
+                                    if nom_etablissement[:10] not in elem_text.lower():
+                                        # Cet élément n'appartient probablement pas au bon établissement
+                                        logger.debug(f"  [{index}] ⚠️ [DEBUG] Élément note ignoré (nom non trouvé dans contexte)")
+                                        continue
+                            except:
+                                # Si erreur, prendre quand même mais seulement si c'est le premier élément
+                                if note_avis_elems.index(elem) > 0:
+                                    # Ce n'est pas le premier élément, vérifier si le premier a déjà été pris
+                                    continue
+                            
                             # Extraire note ET avis depuis le même aria-label
                             note_match = re.search(r'(\d+[,\.]\d+)', aria_label)
-                            avis_match = re.search(r'(\d+)\s*avis?', aria_label, re.I)
+                            avis_match = re.search(r'(\d+)\s*(?:avis?|reviews?)', aria_label, re.I)
                             
                             if note_match and avis_match:
                                 note_str = note_match.group(1).replace(',', '.')
@@ -2885,6 +2930,7 @@ class GoogleMapsScraper:
                                 info['nb_avis'] = avis_val
                                 logger.info(f"  [{index}] ⭐ [DEBUG] Note extraite: {info['note']}")
                                 logger.info(f"  [{index}] 📊 [DEBUG] Nombre d'avis extrait: {info['nb_avis']}")
+                                note_trouvee = True
                                 break
                             elif note_match:
                                 # Si on a la note mais pas l'avis dans aria-label, chercher l'avis ailleurs
@@ -2892,22 +2938,26 @@ class GoogleMapsScraper:
                                 note_val = float(note_str)
                                 info['note'] = note_val
                                 logger.info(f"  [{index}] ⭐ [DEBUG] Note extraite: {info['note']}")
+                                note_trouvee = True
                                 # Continuer à chercher l'avis
                     
                     # ✅ PRIORITÉ 2 : Si pas trouvé ensemble, chercher séparément mais dans search_context
+                    # ✅ FIX : Prendre le PREMIER élément seulement (éviter contamination)
                     if not info.get('note'):
                         note_elems = search_context.find_elements(By.CSS_SELECTOR, 
                             'span[role="img"][aria-label*="étoile"], '
                             'span[role="img"][aria-label*="star"]'
                         )
-                        for note_elem in note_elems:
+                        # ✅ Prendre seulement le PREMIER élément pour éviter la contamination
+                        if note_elems:
+                            note_elem = note_elems[0]  # Premier élément seulement
                             note = self._extraire_note(note_elem)
                             if note:
                                 info['note'] = note
-                                logger.info(f"  [{index}] ⭐ [DEBUG] Note extraite: {info['note']}")
-                                break
+                                logger.info(f"  [{index}] ⭐ [DEBUG] Note extraite (premier élément): {info['note']}")
                     
                     # ✅ PRIORITÉ 3 : Chercher le nombre d'avis dans span.UY7F9 (format Google Maps)
+                    # ✅ FIX : Prendre le PREMIER élément seulement (éviter contamination)
                     if not info.get('nb_avis'):
                         avis_elems = search_context.find_elements(By.CSS_SELECTOR, 
                             'span.UY7F9, '
@@ -2922,12 +2972,13 @@ class GoogleMapsScraper:
                                 logger.info(f"  [{index}] 📊 [DEBUG] span.UY7F9 #{i+1} - text: {text[:100]} | aria-label: {aria[:200]}")
                             except:
                                 pass
-                        for avis_elem in avis_elems:
+                        # ✅ Prendre seulement le PREMIER élément pour éviter la contamination
+                        if avis_elems:
+                            avis_elem = avis_elems[0]  # Premier élément seulement
                             nb = self._extraire_nb_avis(avis_elem)
                             if nb:
                                 info['nb_avis'] = nb
-                                logger.info(f"  [{index}] 📊 [DEBUG] Nombre d'avis extrait: {info['nb_avis']}")
-                                break
+                                logger.info(f"  [{index}] 📊 [DEBUG] Nombre d'avis extrait (premier élément): {info['nb_avis']}")
                     
                     # ✅ PRIORITÉ 4 : Chercher dans le texte avec pattern (X)
                     if not info.get('nb_avis'):
