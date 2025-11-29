@@ -59,25 +59,22 @@ try:
     
     carte = create_scraping_map_by_job(metier_carte if metier_carte != "Tous" else None)
     
+    # Vérifier si des artisans existent pour ce métier
+    artisans_filtres = [a for a in all_artisans_bdd if not metier_carte or metier_carte == "Tous" or a.get('type_artisan') == metier_carte]
+    
     if carte:
         with col_map2:
             st_folium(carte, width=None, height=500, returned_objects=[])
         
-        # Statistiques rapides
-        artisans_filtres = [a for a in all_artisans_bdd if not metier_carte or metier_carte == "Tous" or a.get('type_artisan') == metier_carte]
-        if artisans_filtres:
-            col_stat1, col_stat2, col_stat3 = st.columns(3)
-            with col_stat1:
-                st.metric("Total artisans", len(artisans_filtres))
-            with col_stat2:
-                avec_tel = len([a for a in artisans_filtres if a.get('telephone')])
-                st.metric("Avec téléphone", avec_tel)
-            with col_stat3:
-                avec_site = len([a for a in artisans_filtres if a.get('site_web')])
-                st.metric("Avec site web", avec_site)
+        if not artisans_filtres:
+            with col_map2:
+                st.warning("⚠️ Aucun artisan trouvé pour ce métier dans la base de données")
     else:
         with col_map2:
-            st.info("ℹ️ Aucune donnée de scraping pour ce métier. Lancez un scraping pour voir la carte se remplir.")
+            if artisans_filtres:
+                st.warning(f"⚠️ {len(artisans_filtres)} artisan(s) trouvé(s) mais aucun département détecté. Vérifiez que les artisans ont un code postal ou un département rempli.")
+            else:
+                st.info("ℹ️ Aucune donnée de scraping pour ce métier. Lancez un scraping pour voir la carte se remplir.")
 except ImportError as e:
     st.warning(f"⚠️ Erreur import map_utils: {e}")
     st.info("💡 Installez les dépendances: `pip install folium streamlit-folium`")
@@ -184,14 +181,6 @@ if filtre_dept:
 
 if filtre_recherche:
     filtres['recherche'] = filtre_recherche
-
-# ✅ Bouton pour requêter la BDD (rafraîchir)
-col_refresh1, col_refresh2 = st.columns([1, 4])
-with col_refresh1:
-    if st.button("🔄 Rafraîchir la base de données", help="Recharge les données depuis la base de données", key="refresh_db_main"):
-        # Forcer le rerun pour recharger les données
-        st.success("🔄 Rechargement des données...")
-        st.experimental_rerun()
 
 # ✅ Bouton pour importer les résultats depuis GitHub Actions
 col_import1, col_import2 = st.columns([1, 4])

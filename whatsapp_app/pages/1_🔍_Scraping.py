@@ -173,29 +173,17 @@ try:
 except:
     pass
 
-# ✅ Toggle Local vs GitHub Actions
-st.markdown("### 🚀 Mode d'exécution")
 # ✅ GitHub Actions est maintenant la SEULE option disponible
 # Forcer GitHub Actions à True
 use_github_actions = True
 st.session_state.use_github_actions = True
 
-# Afficher un message informatif
-st.info("☁️ **Mode GitHub Actions activé** - Le scraping s'exécutera sur GitHub Actions (gratuit jusqu'à 2000 min/mois)")
+# ✅ Utiliser les valeurs du fichier de config automatiquement (pas de champs visibles)
+github_token = github_token_default
+github_repo = github_repo_default
 
-if use_github_actions:
-    st.info("ℹ️ Le scraping s'exécutera sur GitHub Actions. Les résultats sont sauvegardés directement dans la BDD en temps réel.")
-    
-    # ✅ Utiliser les valeurs du fichier de config automatiquement (pas de champs visibles)
-    github_token = github_token_default
-    github_repo = github_repo_default
-    
-    if not github_token or not github_repo:
-        st.error("⚠️ Configuration GitHub manquante. Vérifiez que config/github_config.json existe avec token et repo.")
-else:
-    # Si GitHub Actions n'est pas activé, utiliser des valeurs vides
-    github_token = ""
-    github_repo = ""
+if not github_token or not github_repo:
+    st.error("⚠️ Configuration GitHub manquante. Vérifiez que config/github_config.json existe avec token et repo.")
 
 # ✅ Section : Gestion des workflows GitHub Actions (VISIBLE EN HAUT, DÈS LE DÉMARRAGE)
 # ✅ TOUJOURS AFFICHÉE - même si pas de token (pour montrer qu'il faut configurer)
@@ -400,98 +388,11 @@ if github_token and github_repo:
         logger.error(f"Erreur récupération workflows: {e}")
         workflows_en_cours = []
     
+    # ✅ Affichage simplifié - pas de détails individuels qui apparaissent/disparaissent
     if workflows_en_cours:
-        # ✅ AFFICHER LE NOMBRE DE WORKFLOWS EN COURS (comme demandé)
-        col_count1, col_count2 = st.columns([1, 4])
-        with col_count1:
-            st.metric("Workflows actifs", len(workflows_en_cours))
-        with col_count2:
-            if st.button("⏹️ Arrêter tous", key="cancel_all_workflows_top", help="Arrêter tous les workflows en cours"):
-                with st.spinner("⏹️ Annulation de tous les workflows..."):
-                    success, message = cancel_all_github_workflows(github_token, github_repo)
-                    if success:
-                        st.success(message)
-                        st.experimental_rerun()
-                    else:
-                        st.warning(message)
-
-        # Afficher chaque workflow avec possibilité de le tuer individuellement
-        st.markdown("**Détails des workflows :**")
-        for workflow in workflows_en_cours:
-            col_wf1, col_wf2, col_wf3 = st.columns([3, 1, 1])
-            with col_wf1:
-                status_emoji = "🟢" if workflow['status'] == 'in_progress' else "🟡"
-                status_text = "En cours" if workflow['status'] == 'in_progress' else "En attente"
-                created_time = workflow['created_at'][:19].replace('T', ' ')
-                st.markdown(f"{status_emoji} **Run #{workflow['run_number']}** - {status_text} - {created_time}")
-            with col_wf2:
-                github_url = workflow.get('html_url', f"https://github.com/{github_repo}/actions/runs/{workflow['id']}")
-                st.markdown(f"[🔗 Voir]({github_url})")
-            with col_wf3:
-                if st.button(f"⏹️ Arrêter", key=f"cancel_{workflow['id']}"):
-                    with st.spinner(f"⏹️ Annulation du workflow #{workflow['run_number']}..."):
-                        if cancel_github_workflow(github_token, github_repo, workflow['id']):
-                            st.success(f"✅ Workflow #{workflow['run_number']} annulé")
-                            st.experimental_rerun()
-                        else:
-                            st.error(f"❌ Erreur lors de l'annulation du workflow #{workflow['run_number']}")
-    # ✅ Supprimé le message "Aucun workflow en cours"
+        st.info(f"🟢 **{len(workflows_en_cours)} workflow(s) en cours** - Utilisez le bouton 'Rafraîchir les workflows' ci-dessus pour voir les détails")
     
-    # ✅ Bouton Télécharger et importer résultats
-    with col_refresh_top2:
-        if st.button("📥 Télécharger et importer résultats", key="download_and_import_results", help="Télécharger les résultats depuis GitHub Actions et les importer dans la base locale"):
-            # Télécharger les résultats depuis tous les workflows terminés
-            imported_count = 0
-            try:
-                # Récupérer tous les workflows terminés
-                headers = {
-                    "Accept": "application/vnd.github+json",
-                    "Authorization": f"Bearer {github_token}",
-                    "X-GitHub-Api-Version": "2022-11-28"
-                }
-                all_workflows_url = f"https://api.github.com/repos/{github_repo}/actions/runs?per_page=4&status=completed"
-                response = requests.get(all_workflows_url, headers=headers)
-                if response.status_code == 200:
-                    runs = response.json().get('workflow_runs', [])
-                    for run in runs[:5]:  # Limiter aux 5 derniers
-                        run_id = run.get('id')
-                        if run_id:
-                            artifact_data = download_github_artifact(github_token, github_repo, run_id)
-                            if artifact_data:
-                                results_list = artifact_data.get('results', [])
-                                if isinstance(results_list, list) and len(results_list) > 0:
-                                    # Importer dans la BDD
-                                    from whatsapp_database.queries import ajouter_artisan
-                                    for info in results_list:
-                                        try:
-                                            artisan_data = {
-                                                'nom_entreprise': info.get('nom', 'N/A'),
-                                                'telephone': info.get('telephone', '').replace(' ', '') if info.get('telephone') else None,
-                                                'site_web': info.get('site_web'),
-                                                'adresse': info.get('adresse', ''),
-                                                'code_postal': info.get('code_postal', ''),
-                                                'ville': info.get('ville', ''),
-                                                'ville_recherche': info.get('ville_recherche', ''),
-                                                'type_artisan': info.get('recherche', 'plombier'),
-                                                'source': 'google_maps_github_actions',
-                                                'note': info.get('note'),
-                                                'nombre_avis': info.get('nb_avis') or info.get('nombre_avis')
-                                            }
-                                            ajouter_artisan(artisan_data)
-                                            imported_count += 1
-                                        except Exception as e:
-                                            if "UNIQUE constraint" not in str(e) and "duplicate" not in str(e).lower():
-                                                logger.error(f"Erreur import: {e}")
-                    if imported_count > 0:
-                        st.success(f"✅ {imported_count} résultat(s) importé(s) dans la base locale !")
-                        st.experimental_rerun()
-                    else:
-                        st.info("ℹ️ Aucun nouveau résultat à importer")
-                else:
-                    st.warning("⚠️ Impossible de récupérer les workflows")
-            except Exception as e:
-                st.error(f"❌ Erreur lors de l'import: {e}")
-                logger.error(f"Erreur import résultats: {e}")
+    # ✅ Bouton supprimé - déjà présent dans la page Base de données
     
     # ✅ Afficher les statistiques pour chaque workflow (même terminés)
     # Récupérer TOUS les workflows (pas seulement in_progress/queued)
@@ -572,15 +473,8 @@ if github_token and github_repo:
                                     avec_site = len([a for a in workflow_artisans if a.get('site_web')])
                                     sans_site = total - avec_site
                                     
-                                    col1, col2, col3, col4 = st.columns(4)
-                                    with col1:
-                                        st.metric("📊 Scrapés", total)
-                                    with col2:
-                                        st.metric("📞 Avec téléphone", avec_tel)
-                                    with col3:
-                                        st.metric("🌐 Avec site web", avec_site)
-                                    with col4:
-                                        st.metric("⭐ SANS site (prospects)", sans_site)
+                                    # ✅ Stats simples sans colonnes imbriquées
+                                    st.markdown(f"**📊 Scrapés:** {total} | **📞 Avec téléphone:** {avec_tel} | **🌐 Avec site web:** {avec_site} | **⭐ SANS site:** {sans_site}")
                                 else:
                                     st.info("⏳ Aucun résultat encore pour ce workflow")
                             except Exception as e:
@@ -617,19 +511,6 @@ try:
     if carte:
         with col_map2:
             st_folium(carte, width=None, height=500, returned_objects=[])
-        
-        # Statistiques rapides
-        artisans_filtres = [a for a in all_artisans if not metier_carte or metier_carte == "Tous" or a.get('type_artisan') == metier_carte]
-        if artisans_filtres:
-            col_stat1, col_stat2, col_stat3 = st.columns(3)
-            with col_stat1:
-                st.metric("Total artisans", len(artisans_filtres))
-            with col_stat2:
-                avec_tel = len([a for a in artisans_filtres if a.get('telephone')])
-                st.metric("Avec téléphone", avec_tel)
-            with col_stat3:
-                avec_site = len([a for a in artisans_filtres if a.get('site_web')])
-                st.metric("Avec site web", avec_site)
     else:
         with col_map2:
             st.info("ℹ️ Aucune donnée de scraping pour ce métier. Lancez un scraping pour voir la carte se remplir.")
@@ -641,50 +522,51 @@ except Exception as e:
     import traceback
     st.code(traceback.format_exc())
 
-st.markdown("---")
+# ✅ SECTION : Historique des scrapings par département (masqué si vide)
+from whatsapp_database.queries import get_scraping_history
+historique = get_scraping_history()
 
-# ✅ SECTION : Ancienne carte de tracking des scrapings (basée sur l'historique)
-col_title, col_filter = st.columns([2, 1])
-with col_title:
-    st.markdown("### 📊 Historique des scrapings par département")
-with col_filter:
-    # Sélection du métier pour filtrer
-    from whatsapp_database.queries import get_scraping_history
-    metiers_disponibles = list(set([h['metier'] for h in get_scraping_history() if h.get('metier')]))
-    if metiers_disponibles:
-        metier_selectionne = st.selectbox("Métier", ["Tous"] + sorted(metiers_disponibles), key="tracking_metier", label_visibility="visible")
-    else:
-        metier_selectionne = "Tous"
-
-# Récupérer l'historique des scrapings
-if metier_selectionne == "Tous":
-    historique = get_scraping_history()
-else:
-    historique = get_scraping_history(metier=metier_selectionne)
-
-# Calculer les statistiques par département
+# ✅ Initialiser departements_stats pour éviter l'erreur
 departements_stats = {}
-for entry in historique:
-    dept = entry.get('departement', '')
-    metier = entry.get('metier', '')
-    results_count = entry.get('results_count', 0)
+
+if historique:
+    col_title, col_filter = st.columns([2, 1])
+    with col_title:
+        st.markdown("### 📊 Historique des scrapings par département")
+    with col_filter:
+        # Sélection du métier pour filtrer
+        metiers_disponibles = list(set([h['metier'] for h in historique if h.get('metier')]))
+        if metiers_disponibles:
+            metier_selectionne = st.selectbox("Métier", ["Tous"] + sorted(metiers_disponibles), key="tracking_metier", label_visibility="visible")
+        else:
+            metier_selectionne = "Tous"
     
-    if not dept:
-        continue
+    # Filtrer par métier si spécifié
+    if metier_selectionne != "Tous":
+        historique = [h for h in historique if h.get('metier') == metier_selectionne]
     
-    key = f"{metier}_{dept}"
-    if key not in departements_stats:
-        departements_stats[key] = {
-            'departement': dept,
-            'metier': metier,
-            'total_results': 0,
-            'villes_scrapees': 0,
-            'max_results': 0
-        }
-    
-    departements_stats[key]['total_results'] += results_count
-    departements_stats[key]['villes_scrapees'] += 1
-    departements_stats[key]['max_results'] = max(departements_stats[key]['max_results'], results_count)
+    # Calculer les statistiques par département
+    for entry in historique:
+        dept = entry.get('departement', '')
+        metier = entry.get('metier', '')
+        results_count = entry.get('results_count', 0)
+        
+        if not dept:
+            continue
+        
+        key = f"{metier}_{dept}"
+        if key not in departements_stats:
+            departements_stats[key] = {
+                'departement': dept,
+                'metier': metier,
+                'total_results': 0,
+                'villes_scrapees': 0,
+                'max_results': 0
+            }
+        
+        departements_stats[key]['total_results'] += results_count
+        departements_stats[key]['villes_scrapees'] += 1
+        departements_stats[key]['max_results'] = max(departements_stats[key]['max_results'], results_count)
 
 # Coordonnées approximatives des départements français (centres)
 dept_coords = {
@@ -841,8 +723,6 @@ if departements_stats:
         st.metric("Villes scrapées", total_villes)
 else:
     st.empty()  # Pas de message si aucun scraping - affichage plus compact
-
-st.markdown("---")
 
 # ✅ Initialiser les variables GitHub Actions dans session_state AVANT de les utiliser
 if 'github_workflow_id' not in st.session_state:
@@ -1474,7 +1354,6 @@ with col_btn2:
                 else:
                     st.error(f"❌ {message}")
 
-st.markdown("---")
 # ✅ NOTE : Le dashboard GitHub Actions a été supprimé car les workflows sont maintenant gérés en haut de la page
 # avec le bouton "Rafraîchir les workflows" qui affiche les statistiques pour chaque workflow
 
@@ -1610,42 +1489,18 @@ if st.session_state.scraped_results:
         height=600
     )
     
-    # ✅ Boutons d'export (gardés car utiles)
-    col_exp1, col_exp2, col_exp3 = st.columns(3)
-    
-    with col_exp1:
-        csv_all = df.to_csv(index=False, encoding='utf-8-sig')
-        dept = st.session_state.get('departements_selected', departements)[0] if st.session_state.get('departements_selected') else (departements[0] if departements else '77')
-        metier_export = st.session_state.get('metiers_selected', metiers)[0] if st.session_state.get('metiers_selected') else (metiers[0] if metiers else 'plombier')
-        st.download_button(
-            "📥 Télécharger CSV complet",
-            csv_all,
-            f"{metier_export}_{dept}_complet_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-            "text/csv"
-        )
-    
-    with col_exp2:
-        df_avec_site = df[df['site_web'].notna()]
-        if len(df_avec_site) > 0:
-            csv_avec = df_avec_site.to_csv(index=False, encoding='utf-8-sig')
-            dept = st.session_state.get('departements_selected', departements)[0] if st.session_state.get('departements_selected') else (departements[0] if departements else '77')
-            metier_export = st.session_state.get('metiers_selected', metiers)[0] if st.session_state.get('metiers_selected') else (metiers[0] if metiers else 'plombier')
-            st.download_button(
-                "📥 CSV avec site web",
-                csv_avec,
-                f"{metier_export}_{dept}_AVEC_site_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                "text/csv"
-            )
-    
-    with col_exp3:
-        df_sans_site = df[df['site_web'].isna()]
-        if len(df_sans_site) > 0:
-            csv_sans = df_sans_site.to_csv(index=False, encoding='utf-8-sig')
-            dept = st.session_state.get('departements_selected', departements)[0] if st.session_state.get('departements_selected') else (departements[0] if departements else '77')
-            metier_export = st.session_state.get('metiers_selected', metiers)[0] if st.session_state.get('metiers_selected') else (metiers[0] if metiers else 'plombier')
-            st.download_button(
-                "⭐ CSV SANS site web (PROSPECTS)",
-                csv_sans,
-                f"{metier_export}_{dept}_SANS_site_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                "text/csv"
-            )
+    # ✅ Bouton d'export CSV complet
+    csv_all = df.to_csv(index=False, encoding='utf-8-sig')
+    dept = st.session_state.get('departements_selected', departements)[0] if st.session_state.get('departements_selected') else (departements[0] if departements else '77')
+    metier_export = st.session_state.get('metiers_selected', metiers)[0] if st.session_state.get('metiers_selected') else (metiers[0] if metiers else 'plombier')
+    st.download_button(
+        "📥 Télécharger CSV complet",
+        csv_all,
+        f"{metier_export}_{dept}_complet_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+        "text/csv"
+    )
+
+# ✅ Expander "Mode d'exécution" tout en bas de la page
+with st.expander("ℹ️ Mode d'exécution", expanded=False):
+    st.info("☁️ **Mode GitHub Actions activé** - Le scraping s'exécutera sur GitHub Actions (gratuit jusqu'à 2000 min/mois)")
+    st.info("ℹ️ Le scraping s'exécutera sur GitHub Actions. Les résultats sont sauvegardés directement dans la BDD en temps réel.")

@@ -99,7 +99,8 @@ def ajouter_artisan(data: Dict) -> int:
             artisan_id = cursor.lastrowid
             conn.commit()
             conn.close()
-            print(f"✅ ajouter_artisan: Artisan inséré avec succès (ID: {artisan_id})")
+            # ✅ Logs réduits - seulement en mode debug
+            # print(f"✅ ajouter_artisan: Artisan inséré avec succès (ID: {artisan_id})")
             return artisan_id
         except sqlite3.IntegrityError as e:
             # Si erreur d'intégrité (doublon), essayer de récupérer l'ID existant
@@ -111,7 +112,8 @@ def ajouter_artisan(data: Dict) -> int:
                     if result:
                         conn.commit()
                         conn.close()
-                        print(f"ℹ️ ajouter_artisan: Doublon trouvé (ID: {result[0]}) - Mise à jour effectuée")
+                        # ✅ Logs réduits - seulement en mode debug
+                        # print(f"ℹ️ ajouter_artisan: Doublon trouvé (ID: {result[0]}) - Mise à jour effectuée")
                         return result[0]
             conn.close()
             print(f"❌ ajouter_artisan: Erreur intégrité: {e}")

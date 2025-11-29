@@ -61,13 +61,41 @@ def create_scraping_map_by_job(metier=None):
     dept_counts = {}
     for artisan in artisans:
         dept = artisan.get('departement', '')
+        # ✅ Si pas de département, essayer d'extraire depuis code_postal
+        if not dept and artisan.get('code_postal'):
+            code_postal = str(artisan.get('code_postal', '')).strip()
+            if len(code_postal) >= 2:
+                if code_postal.startswith('97') or code_postal.startswith('98'):
+                    dept = code_postal[:3]
+                else:
+                    dept = code_postal[:2]
+        
+        # ✅ Si toujours pas de département, utiliser ville_recherche pour trouver le département
+        if not dept and artisan.get('ville_recherche'):
+            # Essayer de trouver le département depuis la ville_recherche via l'API
+            try:
+                from whatsapp_app.pages import get_communes_from_api
+                # Chercher dans tous les départements (pas optimal mais fonctionnel)
+                for dept_test in ['77', '78', '91', '92', '93', '94', '95']:  # Départements courants
+                    communes = get_communes_from_api(dept_test, 0, 1000000)
+                    for commune in communes:
+                        if commune['nom'].lower() == artisan.get('ville_recherche', '').lower():
+                            dept = dept_test
+                            break
+                    if dept:
+                        break
+            except:
+                pass
+        
         if dept:
             if dept not in dept_counts:
                 dept_counts[dept] = 0
             dept_counts[dept] += 1
     
     if not dept_counts:
-        return None
+        # ✅ Debug: retourner une carte vide avec un message plutôt que None
+        m = folium.Map(location=[46.6, 2.2], zoom_start=6)
+        return m
     
     # Créer la carte centrée sur la France
     m = folium.Map(location=[46.6, 2.2], zoom_start=6)

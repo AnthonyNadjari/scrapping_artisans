@@ -82,13 +82,26 @@ def save_callback(artisan_data):
                 else:
                     data['departement'] = code_postal[:2]
         
-        # ✅ Extraire la ville depuis l'adresse si manquante
+        # ✅ Extraire la ville depuis l'adresse si manquante (amélioré)
         if not data.get('ville') and data.get('adresse'):
             import re
-            # Chercher le pattern "code_postal ville" dans l'adresse
-            ville_match = re.search(r'\d{5}\s+([A-Za-zÀ-ÿ\s-]+)', data['adresse'])
+            adresse = str(data['adresse'])
+            # Pattern 1: "code_postal ville" (format français standard)
+            ville_match = re.search(r'\b\d{5}\s+([A-Za-zÀ-ÿ\s-]+?)(?:\s|$|,|;|France)', adresse, re.IGNORECASE)
             if ville_match:
-                data['ville'] = ville_match.group(1).strip()
+                ville = ville_match.group(1).strip()
+                # Nettoyer la ville (enlever "France", codes pays, etc.)
+                ville = re.sub(r'\s*(France|FR|FRANCE)\s*$', '', ville, flags=re.IGNORECASE).strip()
+                if ville:
+                    data['ville'] = ville
+            # Pattern 2: Si pas trouvé, chercher après le dernier chiffre
+            if not data.get('ville'):
+                ville_match2 = re.search(r'\d{5}\s+(.+?)(?:\s*$|,|;|France)', adresse)
+                if ville_match2:
+                    ville = ville_match2.group(1).strip()
+                    ville = re.sub(r'\s*(France|FR|FRANCE)\s*$', '', ville, flags=re.IGNORECASE).strip()
+                    if ville:
+                        data['ville'] = ville
         
         # ✅ Vérifier qu'on a au moins une donnée valide avant d'insérer
         has_valid_data = any([
