@@ -14,9 +14,8 @@ st.set_page_config(page_title="Base de Données", page_icon="📊", layout="wide
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from whatsapp_database.queries import get_artisans, get_statistiques, marquer_message_envoye, ajouter_artisan
+from whatsapp_database.queries import get_artisans, get_statistiques, ajouter_artisan
 from whatsapp_database.models import get_connection
-from whatsapp.link_generator import WhatsAppLinkGenerator
 import sqlite3
 
 st.title("📊 Base de Données - Artisans")
@@ -24,15 +23,13 @@ st.title("📊 Base de Données - Artisans")
 # Stats globales
 stats = get_statistiques()
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3 = st.columns(3)
 with col1:
     st.metric("Total artisans", f"{stats.get('total', 0):,}")
 with col2:
     st.metric("Avec téléphone", f"{stats.get('avec_telephone', 0):,}")
 with col3:
-    st.metric("Messages envoyés", f"{stats.get('messages_envoyes', 0):,}")
-with col4:
-    st.metric("Ont répondu", f"{stats.get('repondus', 0):,}")
+    st.metric("Avec site web", f"{stats.get('avec_site_web', 0):,}")
 
 st.markdown("---")
 
@@ -86,79 +83,25 @@ except Exception as e:
 
 st.markdown("---")
 
-# Template de message
-st.subheader("📝 Template de Message WhatsApp")
-
-template_defaut = """Bonjour {prenom},
-
-Je suis Anthony, développeur web.
-Je crée des sites professionnels pour artisans :
-
-• 200€ tout compris
-• Hébergement inclus 1 an
-• Sans abonnement
-
-Exemple : plomberie-fluide.vercel.app
-
-Intéressé ? 😊"""
-
-template = st.text_area(
-    "Votre message (utilisez {prenom}, {ville}, {metier}, {entreprise})",
-    value=template_defaut,
-    height=200,
-    help="Variables disponibles : {prenom}, {nom}, {entreprise}, {ville}, {metier}"
-)
-
-# Preview avec exemple
-with st.expander("👁️ Aperçu du message", expanded=False):
-    link_gen = WhatsAppLinkGenerator()
-    # Prendre un artisan exemple
-    artisans_exemple = get_artisans(limit=1)
-    if artisans_exemple:
-        exemple_artisan = artisans_exemple[0]
-        # S'assurer que toutes les valeurs sont des strings
-        exemple_artisan = {k: (v if v is not None else '') for k, v in exemple_artisan.items()}
-        try:
-            message_preview = link_gen.generer_message(exemple_artisan, template)
-            st.code(message_preview)
-            nb_chars = len(message_preview)
-            if nb_chars > 1000:
-                st.warning(f"⚠️ Message long ({nb_chars} caractères)")
-            else:
-                st.success(f"✅ {nb_chars} caractères")
-        except Exception as e:
-            st.error(f"❌ Erreur génération message: {e}")
-            st.info("💡 Vérifiez que le template utilise les bonnes variables")
-    else:
-        st.info("💡 Aucun artisan en base. Lancez d'abord l'acquisition SIRENE.")
-
-st.markdown("---")
-
 # Filtres
 st.subheader("🔍 Filtres de Recherche")
 
-col_f1, col_f2, col_f3, col_f4 = st.columns(4)
+col_f1, col_f2, col_f3 = st.columns(3)
 
 with col_f1:
-    filtre_statut = st.selectbox(
-        "Statut message",
-        ["Tous", "Non contactés", "Contactés", "Ont répondu"]
-    )
-
-with col_f2:
     filtre_metier = st.multiselect(
         "Métier",
         options=["plombier", "électricien", "menuisier", "peintre", "chauffagiste", "carreleur", "maçon", "charpentier"],
         default=[]
     )
 
-with col_f3:
+with col_f2:
     filtre_dept = st.text_input(
         "Département",
         placeholder="77, 78, 91..."
     )
 
-with col_f4:
+with col_f3:
     filtre_recherche = st.text_input(
         "Recherche",
         placeholder="Nom, ville, téléphone..."
@@ -166,12 +109,6 @@ with col_f4:
 
 # Construire filtres
 filtres = {}
-if filtre_statut == "Non contactés":
-    filtres['non_contactes'] = True
-elif filtre_statut == "Contactés":
-    filtres['message_envoye'] = True
-elif filtre_statut == "Ont répondu":
-    filtres['a_repondu'] = True
 
 if filtre_metier:
     filtres['metiers'] = filtre_metier
@@ -340,14 +277,11 @@ st.subheader(f"📋 Liste des Artisans ({len(artisans)} trouvés)")
 if not artisans:
     st.info("Aucun artisan trouvé avec ces filtres")
 else:
-    link_gen = WhatsAppLinkGenerator()
-    
     # ✅ Suppression de la vue détaillée - on garde seulement la liste compacte
     if True:  # Toujours afficher la liste compacte
         # Tableau compact avec TOUTES les informations scrapées
         data = []
         for artisan in artisans:
-            lien_whatsapp = link_gen.generer_lien(artisan, template)
             # ✅ Formater les valeurs pour éviter les <NA>
             def format_value(value, default=''):
                 """Formate une valeur pour l'affichage"""
@@ -367,10 +301,7 @@ else:
                 'Téléphone': format_value(artisan.get('telephone')),
                 'Site web': format_value(artisan.get('site_web')),
                 'Note': f"{artisan.get('note')}/5" if artisan.get('note') else 'N/A',
-                'Nombre avis': format_value(artisan.get('nombre_avis'), 'N/A'),
-                'Message envoyé': '✅' if artisan.get('message_envoye') else '❌',
-                'A répondu': '✅' if artisan.get('a_repondu') else '❌',
-                'Lien WhatsApp': lien_whatsapp
+                'Nombre avis': format_value(artisan.get('nombre_avis'), 'N/A')
             }
             data.append(row)
         
