@@ -60,43 +60,49 @@ def reset_all_databases():
     finally:
         conn.close()
     
-    # 2. Réinitialiser tous les fichiers JSON de données
+    # 2. Réinitialiser les fichiers JSON de données (seulement ceux utilisés)
     print("\n[2/2] Reinitialisation des fichiers JSON...")
     
     data_dir = Path(__file__).parent.parent / "data"
+    # ✅ Seulement 2 fichiers JSON nécessaires :
+    # - scraping_results_github_actions.json : pour l'artifact GitHub Actions
+    # - github_actions_status.json : pour le statut des workflows GitHub Actions
     json_files_to_reset = [
         "scraping_results_github_actions.json",
+        "github_actions_status.json"
+    ]
+    
+    # ✅ Supprimer les fichiers JSON inutiles (vestiges du mode local)
+    json_files_to_delete = [
         "scraping_results_temp.json",
         "scraping_status.json",
-        "github_actions_status.json",
         "scraping_checkpoint.json",
         "scraping_logs.json",
         "saved_count.json"
     ]
     
+    # Supprimer les fichiers inutiles
+    for json_file in json_files_to_delete:
+        file_path = data_dir / json_file
+        try:
+            if file_path.exists():
+                file_path.unlink()
+                print(f"  [OK] {json_file} supprime (inutile)")
+        except Exception as e:
+            print(f"  [WARN] Erreur suppression {json_file}: {e}")
+    
+    # Réinitialiser les fichiers nécessaires
     for json_file in json_files_to_reset:
         file_path = data_dir / json_file
         try:
-            if json_file in ["scraping_results_github_actions.json", "scraping_results_temp.json"]:
-                # Fichiers de résultats = liste vide
+            if json_file == "scraping_results_github_actions.json":
+                # Fichier de résultats = liste vide
                 with open(file_path, 'w', encoding='utf-8') as f:
                     json.dump([], f, indent=2, ensure_ascii=False)
-            elif json_file in ["scraping_status.json", "github_actions_status.json"]:
-                # Fichiers de statut = objet vide
+            elif json_file == "github_actions_status.json":
+                # Fichier de statut = objet vide
                 with open(file_path, 'w', encoding='utf-8') as f:
                     json.dump({}, f, indent=2, ensure_ascii=False)
-            elif json_file == "scraping_checkpoint.json":
-                # Checkpoint = objet vide
-                with open(file_path, 'w', encoding='utf-8') as f:
-                    json.dump({}, f, indent=2, ensure_ascii=False)
-            elif json_file == "scraping_logs.json":
-                # Logs = liste vide
-                with open(file_path, 'w', encoding='utf-8') as f:
-                    json.dump([], f, indent=2, ensure_ascii=False)
-            elif json_file == "saved_count.json":
-                # Compteur = 0
-                with open(file_path, 'w', encoding='utf-8') as f:
-                    json.dump({"count": 0}, f, indent=2, ensure_ascii=False)
             
             print(f"  [OK] {json_file} reinitialise")
         except Exception as e:

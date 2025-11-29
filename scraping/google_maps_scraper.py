@@ -453,6 +453,13 @@ class GoogleMapsScraper:
                     logger.info(f"📜 {scrolls} scrolls de page effectués")
                     return
             
+            # ✅ DEBUG : Afficher le HTML après scroll initial
+            try:
+                panneau_html_after_scroll = panneau.get_attribute('outerHTML')[:2000] if panneau else ''
+                logger.info(f"   📜 [DEBUG] HTML du panneau après détection (premiers 2000 chars): {panneau_html_after_scroll}")
+            except:
+                pass
+            
             # Le panneau est scrollable, utiliser la méthode normale
             last_height = 0
             scrolls = 0
@@ -483,6 +490,16 @@ class GoogleMapsScraper:
                 time.sleep(random.uniform(0.2, 0.4))  # Réduit à 0.2-0.4s (minimum)
             
             logger.info(f"📜 {scrolls} scrolls effectués")
+            
+            # ✅ DEBUG : Afficher le HTML après scroll complet
+            try:
+                panneau_html_final = panneau.get_attribute('outerHTML')[:3000] if panneau else ''
+                logger.info(f"   📜 [DEBUG] HTML du panneau après scroll complet (premiers 3000 chars): {panneau_html_final}")
+                # Afficher aussi le texte
+                panneau_text_final = panneau.text[:1000] if panneau.text else ''
+                logger.info(f"   📜 [DEBUG] Texte du panneau après scroll (premiers 1000 chars): {panneau_text_final}")
+            except:
+                pass
             
         except TimeoutException as e:
             logger.warning(f"⚠️ Panneau de résultats non trouvé: {e}")
@@ -2078,9 +2095,17 @@ class GoogleMapsScraper:
             # On attend juste un peu pour que le DOM se stabilise
             time.sleep(0.3 * self.delay_multiplier)
             
-            # Cliquer pour ouvrir le détail
-            try:
-                logger.info(f"  [{index}] 🖱️ Clic sur l'élément pour ouvrir le panneau de détail...")
+                # ✅ DEBUG : Afficher l'élément avant clic
+                try:
+                    elem_text = element.text[:200] if element.text else 'N/A'
+                    elem_aria = element.get_attribute('aria-label')[:200] if element.get_attribute('aria-label') else 'N/A'
+                    logger.info(f"  [{index}] 🔍 [DEBUG] Élément avant clic - text: {elem_text} | aria-label: {elem_aria}")
+                except:
+                    pass
+                
+                # Cliquer pour ouvrir le détail
+                try:
+                    logger.info(f"  [{index}] 🖱️ Clic sur l'élément pour ouvrir le panneau de détail...")
                 
                 # ✅ FIX CRITIQUE : Re-trouver l'élément après avoir fermé le panneau précédent
                 # L'élément peut devenir "stale" après la fermeture du panneau
@@ -2142,6 +2167,13 @@ class GoogleMapsScraper:
                     )
                     # Attendre un peu plus pour que le contenu se charge
                     time.sleep(1 * self.delay_multiplier)
+                    
+                    # ✅ DEBUG : Afficher le HTML de la page après chargement du panneau
+                    try:
+                        page_html_snippet = self.driver.page_source[:3000]
+                        logger.info(f"  [{index}] 🔷 [DEBUG] HTML de la page après clic (premiers 3000 chars): {page_html_snippet}")
+                    except:
+                        pass
                 except:
                     pass  # Si timeout, continuer quand même
                 
@@ -2566,7 +2598,7 @@ class GoogleMapsScraper:
                 except Exception as e:
                     logger.debug(f"  Erreur extraction site web (panneau): {e}")
                 
-                # ✅ DEBUG : Afficher le texte brut du panneau (premiers 1000 caractères)
+                # ✅ DEBUG : Afficher le texte brut du panneau (COMPLET)
                 try:
                     panneau_text_debug = search_context.text if hasattr(search_context, 'text') else ''
                     if not panneau_text_debug:
@@ -2575,9 +2607,23 @@ class GoogleMapsScraper:
                         except:
                             pass
                     if panneau_text_debug:
-                        logger.info(f"  [{index}] 📄 [DEBUG] Texte du panneau (premiers 1000 chars): {panneau_text_debug[:1000]}")
-                except:
-                    pass
+                        logger.info(f"  [{index}] 📄 [DEBUG] Texte COMPLET du panneau ({len(panneau_text_debug)} chars):")
+                        logger.info(f"  [{index}] 📄 [DEBUG] {panneau_text_debug}")
+                except Exception as e:
+                    logger.warning(f"  [{index}] 📄 [DEBUG] Erreur récupération texte panneau: {e}")
+                
+                # ✅ DEBUG : Afficher le HTML du panneau (premiers 2000 caractères)
+                try:
+                    panneau_html = search_context.get_attribute('outerHTML') if search_context != self.driver else ''
+                    if not panneau_html:
+                        try:
+                            panneau_html = self.driver.execute_script("return arguments[0].outerHTML;", search_context) if search_context != self.driver else ''
+                        except:
+                            pass
+                    if panneau_html:
+                        logger.info(f"  [{index}] 🔷 [DEBUG] HTML du panneau (premiers 2000 chars): {panneau_html[:2000]}")
+                except Exception as e:
+                    logger.warning(f"  [{index}] 🔷 [DEBUG] Erreur récupération HTML panneau: {e}")
                 
                 # Adresse
                 try:
@@ -2683,8 +2729,6 @@ class GoogleMapsScraper:
                                     if cp_match:
                                         info['code_postal'] = cp_match.group(1)
                                         logger.info(f"  [{index}] 📮 [DEBUG] Code postal extrait depuis adresse: {info['code_postal']}")
-                                    else:
-                                        logger.warning(f"  [{index}] 📮 [DEBUG] Code postal NON trouvé dans l'adresse: {info['adresse']}")
                                         # ✅ Extraire le département depuis le code postal (2 premiers chiffres)
                                         if len(cp_match.group(1)) >= 2:
                                             info['departement'] = cp_match.group(1)[:2]
@@ -2699,10 +2743,16 @@ class GoogleMapsScraper:
                                             if ville:
                                                 info['ville'] = ville
                                                 logger.info(f"  [{index}] 🏙️ [DEBUG] Ville extraite: {info['ville']}")
-                                    if not info.get('code_postal'):
-                                        # ✅ Si pas de code postal dans l'adresse, chercher dans TOUT le texte du panneau
-                                        # Pattern 1: Chercher "code_postal ville" dans le panneau
-                                        cp_ville_match = re.search(r'\b(\d{5})\s+([A-ZÀ-Ÿ][a-zà-ÿ]{2,}(?:\s+[A-ZÀ-Ÿ][a-zà-ÿ]+)*)\b', panneau_text)
+                                    else:
+                                        logger.warning(f"  [{index}] 📮 [DEBUG] Code postal NON trouvé dans l'adresse: {info['adresse']}")
+                                
+                                # ✅ Si pas de code postal dans l'adresse, chercher dans TOUT le texte du panneau
+                                # ✅ Si pas de code postal dans l'adresse, chercher dans TOUT le texte du panneau
+                                if not info.get('code_postal') and panneau_text:
+                                    logger.info(f"  [{index}] 📮 [DEBUG] Recherche code postal dans TOUT le panneau (pas dans adresse)")
+                                    logger.info(f"  [{index}] 📮 [DEBUG] Texte du panneau pour recherche CP: {panneau_text[:500]}")
+                                    # Pattern 1: Chercher "code_postal ville" dans le panneau
+                                    cp_ville_match = re.search(r'\b(\d{5})\s+([A-ZÀ-Ÿ][a-zà-ÿ]{2,}(?:\s+[A-ZÀ-Ÿ][a-zà-ÿ]+)*)\b', panneau_text)
                                         if cp_ville_match:
                                             info['code_postal'] = cp_ville_match.group(1)
                                             ville = cp_ville_match.group(2).strip()
@@ -2740,11 +2790,13 @@ class GoogleMapsScraper:
                                 
                                 # ✅ Si pas d'adresse trouvée, chercher quand même code postal et ville dans le panneau
                                 if not info['adresse']:
+                                    logger.info(f"  [{index}] 📍 [DEBUG] Pas d'adresse trouvée, recherche code postal dans panneau...")
                                     # Chercher "code_postal ville" dans le panneau
                                     cp_ville_match = re.search(r'\b(\d{5})\s+([A-ZÀ-Ÿ][a-zà-ÿ]{2,}(?:\s+[A-ZÀ-Ÿ][a-zà-ÿ]+)*)\b', panneau_text)
                                     if cp_ville_match:
                                         info['code_postal'] = cp_ville_match.group(1)
                                         ville = cp_ville_match.group(2).strip()
+                                        logger.info(f"  [{index}] 📮 [DEBUG] Code postal + ville trouvés dans panneau: {info['code_postal']} + {ville}")
                                         # Nettoyer la ville
                                         ville = re.sub(r'\s*(France|FR|FRANCE|Closed|Fermé|Fermée)\s*$', '', ville, flags=re.IGNORECASE).strip()
                                         # ✅ Vérifier que ce n'est pas un nom d'entreprise (liste étendue)
@@ -2759,15 +2811,24 @@ class GoogleMapsScraper:
                                                 logger.info(f"  [{index}] 🗺️ [DEBUG] Département extrait: {info['departement']}")
                                         else:
                                             logger.warning(f"  [{index}] ⚠️ [DEBUG] Ville '{ville}' semble être un nom d'entreprise, ignorée")
+                                            # Mais garder le code postal
+                                            if len(info['code_postal']) >= 2:
+                                                info['departement'] = info['code_postal'][:2]
+                                                logger.info(f"  [{index}] 🗺️ [DEBUG] Département extrait depuis code postal: {info['departement']}")
                                     elif not info.get('code_postal'):
-                                        # Chercher juste un code postal
-                                        cp_match = re.search(r'\b(\d{5})\b', panneau_text)
-                                        if cp_match:
-                                            info['code_postal'] = cp_match.group(1)
-                                            logger.info(f"  [{index}] 📮 [DEBUG] Code postal extrait (seul, sans adresse): {info['code_postal']}")
+                                        # Chercher juste un code postal dans TOUT le panneau
+                                        logger.info(f"  [{index}] 📮 [DEBUG] Recherche code postal seul dans panneau...")
+                                        # Chercher TOUS les codes postaux dans le panneau
+                                        all_cp_matches = re.findall(r'\b(\d{5})\b', panneau_text)
+                                        if all_cp_matches:
+                                            # Prendre le premier code postal trouvé (généralement le bon)
+                                            info['code_postal'] = all_cp_matches[0]
+                                            logger.info(f"  [{index}] 📮 [DEBUG] Code postal extrait (seul, sans adresse): {info['code_postal']} (trouvé parmi {len(all_cp_matches)} codes postaux)")
                                             if len(info['code_postal']) >= 2:
                                                 info['departement'] = info['code_postal'][:2]
                                                 logger.info(f"  [{index}] 🗺️ [DEBUG] Département extrait: {info['departement']}")
+                                        else:
+                                            logger.warning(f"  [{index}] 📮 [DEBUG] Aucun code postal trouvé dans le panneau (texte: {panneau_text[:500]})")
                                     
                                     # ✅ Utiliser ville_recherche si pas de ville trouvée (PRIORITÉ)
                                     if not info.get('ville'):

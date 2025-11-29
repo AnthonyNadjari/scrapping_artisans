@@ -266,13 +266,19 @@ with col_import1:
                         
                         if response.status_code == 200:
                             runs = response.json().get('workflow_runs', [])
+                            st.info(f"🔍 [DEBUG] {len(runs)} workflow(s) terminé(s) trouvé(s)")
                             for run in runs:
                                 run_id = run.get('id')
+                                run_name = run.get('name', 'N/A')
+                                st.info(f"🔍 [DEBUG] Traitement workflow: {run_name} (ID: {run_id})")
                                 if run_id:
                                     artifact_data = download_github_artifact(github_token, github_repo, run_id)
                                     if artifact_data:
                                         results_list = artifact_data.get('results', [])
+                                        st.info(f"🔍 [DEBUG] {len(results_list)} résultat(s) dans l'artifact")
                                         if isinstance(results_list, list) and len(results_list) > 0:
+                                            for i, info in enumerate(results_list[:10]):  # Limiter à 10 pour les logs
+                                                st.info(f"🔍 [DEBUG] Résultat #{i+1}: {info.get('nom', 'N/A')} - CP: {info.get('code_postal', 'N/A')} - Ville: {info.get('ville', 'N/A')}")
                                             for info in results_list:
                                                 try:
                                                     artisan_data = {
@@ -288,16 +294,23 @@ with col_import1:
                                                         'note': info.get('note'),
                                                         'nombre_avis': info.get('nb_avis') or info.get('nombre_avis')
                                                     }
-                                                    ajouter_artisan(artisan_data)
-                                                    imported_count += 1
+                                                    st.info(f"🔍 [DEBUG] Tentative import: {artisan_data.get('nom_entreprise')} - CP: {artisan_data.get('code_postal')} - Ville: {artisan_data.get('ville')}")
+                                                    artisan_id = ajouter_artisan(artisan_data)
+                                                    if artisan_id:
+                                                        imported_count += 1
+                                                        st.info(f"✅ [DEBUG] Artisan importé (ID: {artisan_id})")
+                                                    else:
+                                                        st.info(f"⚠️ [DEBUG] Artisan non importé (déjà existant ou erreur)")
                                                 except Exception as e:
-                                                    if "UNIQUE constraint" not in str(e) and "duplicate" not in str(e).lower():
+                                                    if "UNIQUE constraint" in str(e) or "duplicate" in str(e).lower():
+                                                        st.info(f"⚠️ [DEBUG] Doublon ignoré: {info.get('nom', 'N/A')}")
+                                                    else:
                                                         st.error(f"Erreur import: {e}")
                             if imported_count > 0:
                                 st.success(f"✅ {imported_count} résultat(s) importé(s) !")
                                 st.experimental_rerun()
                             else:
-                                st.info("ℹ️ Aucun nouveau résultat à importer")
+                                st.info("ℹ️ Aucun nouveau résultat à importer (tous déjà présents ou erreurs)")
                         else:
                             st.warning("⚠️ Impossible de récupérer les workflows")
                     else:
