@@ -2532,6 +2532,7 @@ class GoogleMapsScraper:
                 
                 # Adresse
                 try:
+                    logger.info(f"  [{index}] 🔍 Recherche de l'adresse dans le panneau de détail...")
                     # ✅ FIX : Chercher l'adresse avec plusieurs méthodes
                     # Priorité 1 : button avec aria-label contenant "Adresse" ou "Address"
                     adresse_buttons = search_context.find_elements(By.CSS_SELECTOR, 
@@ -2539,30 +2540,40 @@ class GoogleMapsScraper:
                         'button[aria-label*="Address"], '
                         'button[data-item-id*="address"]'
                     )
+                    logger.info(f"  [{index}] 📍 Adresse (boutons): {len(adresse_buttons)} boutons trouvés")
                     for adr_btn in adresse_buttons:
                         try:
                             aria_label = adr_btn.get_attribute('aria-label')
                             if aria_label and ('Adresse' in aria_label or 'Address' in aria_label):
                                 info['adresse'] = aria_label.replace('Adresse: ', '').replace('Address: ', '').strip()
+                                logger.info(f"  [{index}] 📍 [DEBUG] Adresse extraite: {info['adresse']}")
                                 # Vérifier que c'est une vraie adresse (contient un code postal)
                                 if re.search(r'\b\d{5}\b', info['adresse']):
                                     cp_match = re.search(r'\b(\d{5})\b', info['adresse'])
                                     if cp_match:
                                         info['code_postal'] = cp_match.group(1)
+                                        logger.info(f"  [{index}] 📮 [DEBUG] Code postal extrait: {info['code_postal']}")
                                         # ✅ Extraire le département depuis le code postal (2 premiers chiffres)
                                         if len(cp_match.group(1)) >= 2:
                                             info['departement'] = cp_match.group(1)[:2]
+                                            logger.info(f"  [{index}] 🗺️ [DEBUG] Département extrait: {info['departement']}")
                                     ville_match = re.search(r'\d{5}\s+(.+)', info['adresse'])
                                     if ville_match:
                                         info['ville'] = ville_match.group(1).strip()
-                                    logger.debug(f"  ✅ Adresse trouvée (panneau): {info['adresse']}")
+                                        logger.info(f"  [{index}] 🏙️ [DEBUG] Ville extraite: {info['ville']}")
+                                    else:
+                                        logger.warning(f"  [{index}] ⚠️ [DEBUG] Ville non trouvée dans l'adresse: {info['adresse']}")
                                     break
-                        except:
+                                else:
+                                    logger.warning(f"  [{index}] ⚠️ [DEBUG] Adresse trouvée mais pas de code postal: {info['adresse']}")
+                        except Exception as e:
+                            logger.debug(f"  [{index}] Erreur extraction adresse bouton: {e}")
                             continue
                     
                     # Priorité 2 : Chercher dans le texte visible du panneau de détail
                     if not info['adresse'] and info.get('nom'):
                         try:
+                            logger.info(f"  [{index}] 🔍 Tentative extraction adresse depuis texte du panneau...")
                             h1_with_nom = search_context.find_elements(By.XPATH, f'//h1[contains(text(), "{info["nom"][:20]}")]')
                             if h1_with_nom:
                                 panneau = h1_with_nom[0].find_element(By.XPATH, './ancestor::div[@role="complementary" or contains(@class, "m6QErb")]')
@@ -2571,42 +2582,57 @@ class GoogleMapsScraper:
                                 adresse_match = re.search(r'\d{1,3}[A-Za-z]?\s+(?:[Rr]ue|[Aa]v|[Aa]venue|[Bb]d|[Bb]oulevard|[Pp]lace|[Aa]ll|[Aa]llée)[^,]+,\s*\d{5}\s+[A-Za-zÀ-ÿ\s-]+', panneau_text)
                                 if adresse_match:
                                     info['adresse'] = adresse_match.group(0)
+                                    logger.info(f"  [{index}] 📍 [DEBUG] Adresse extraite via texte: {info['adresse']}")
                                     cp_match = re.search(r'\b(\d{5})\b', info['adresse'])
                                     if cp_match:
                                         info['code_postal'] = cp_match.group(1)
+                                        logger.info(f"  [{index}] 📮 [DEBUG] Code postal extrait: {info['code_postal']}")
                                         # ✅ Extraire le département depuis le code postal (2 premiers chiffres)
                                         if len(cp_match.group(1)) >= 2:
                                             info['departement'] = cp_match.group(1)[:2]
+                                            logger.info(f"  [{index}] 🗺️ [DEBUG] Département extrait: {info['departement']}")
                                     ville_match = re.search(r'\d{5}\s+(.+)', info['adresse'])
                                     if ville_match:
                                         info['ville'] = ville_match.group(1).strip()
-                                    logger.debug(f"  ✅ Adresse trouvée via texte (panneau): {info['adresse']}")
-                        except:
-                            pass
+                                        logger.info(f"  [{index}] 🏙️ [DEBUG] Ville extraite: {info['ville']}")
+                        except Exception as e:
+                            logger.debug(f"  [{index}] Erreur extraction adresse depuis texte: {e}")
+                    
+                    if not info['adresse']:
+                        logger.warning(f"  [{index}] ⚠️ [DEBUG] Aucune adresse trouvée")
                 except Exception as e:
-                    logger.debug(f"  Erreur extraction adresse (panneau): {e}")
+                    logger.warning(f"  [{index}] ⚠️ [DEBUG] Erreur extraction adresse: {e}")
                 
                 # Note
                 try:
+                    logger.info(f"  [{index}] 🔍 Recherche de la note...")
                     note_elems = self.driver.find_elements(By.CSS_SELECTOR, 'span[role="img"][aria-label*="étoile"], span[role="img"][aria-label*="star"]')
                     for note_elem in note_elems:
                         note = self._extraire_note(note_elem)
                         if note:
                             info['note'] = note
+                            logger.info(f"  [{index}] ⭐ [DEBUG] Note extraite: {info['note']}")
                             break
-                except:
-                    pass
+                    if not info.get('note'):
+                        logger.warning(f"  [{index}] ⚠️ [DEBUG] Note non trouvée")
+                except Exception as e:
+                    logger.warning(f"  [{index}] ⚠️ [DEBUG] Erreur extraction note: {e}")
                 
                 # Nombre d'avis
                 try:
+                    logger.info(f"  [{index}] 🔍 Recherche du nombre d'avis...")
                     avis_elems = self.driver.find_elements(By.XPATH, "//span[contains(text(), 'avis') or contains(text(), 'review')]")
+                    logger.info(f"  [{index}] 📊 [DEBUG] Nombre d'avis (éléments trouvés): {len(avis_elems)}")
                     for avis_elem in avis_elems:
                         nb = self._extraire_nb_avis(avis_elem)
                         if nb:
                             info['nb_avis'] = nb
+                            logger.info(f"  [{index}] 📊 [DEBUG] Nombre d'avis extrait: {info['nb_avis']}")
                             break
-                except:
-                    pass
+                    if not info.get('nb_avis'):
+                        logger.warning(f"  [{index}] ⚠️ [DEBUG] Nombre d'avis non trouvé")
+                except Exception as e:
+                    logger.warning(f"  [{index}] ⚠️ [DEBUG] Erreur extraction nombre d'avis: {e}")
                 
             except Exception as e:
                 logger.error(f"  [{index}] ❌ Erreur extraction détail: {e}")
@@ -2969,6 +2995,15 @@ class GoogleMapsScraper:
             except:
                 pass
         # Ne pas logger pour éviter de flooder le terminal
+    
+    def quit(self):
+        """Ferme le driver Chrome proprement"""
+        if self.driver:
+            try:
+                self.driver.quit()
+                self.driver = None
+            except Exception as e:
+                logger.debug(f"Erreur fermeture driver: {e}")
     
     def get_scraped_count(self) -> int:
         """Retourne le nombre d'établissements scrapés"""
