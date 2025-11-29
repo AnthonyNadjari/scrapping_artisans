@@ -2095,17 +2095,17 @@ class GoogleMapsScraper:
             # On attend juste un peu pour que le DOM se stabilise
             time.sleep(0.3 * self.delay_multiplier)
             
-                # ✅ DEBUG : Afficher l'élément avant clic
-                try:
-                    elem_text = element.text[:200] if element.text else 'N/A'
-                    elem_aria = element.get_attribute('aria-label')[:200] if element.get_attribute('aria-label') else 'N/A'
-                    logger.info(f"  [{index}] 🔍 [DEBUG] Élément avant clic - text: {elem_text} | aria-label: {elem_aria}")
-                except:
-                    pass
-                
-                # Cliquer pour ouvrir le détail
-                try:
-                    logger.info(f"  [{index}] 🖱️ Clic sur l'élément pour ouvrir le panneau de détail...")
+            # ✅ DEBUG : Afficher l'élément avant clic
+            try:
+                elem_text = element.text[:200] if element.text else 'N/A'
+                elem_aria = element.get_attribute('aria-label')[:200] if element.get_attribute('aria-label') else 'N/A'
+                logger.info(f"  [{index}] 🔍 [DEBUG] Élément avant clic - text: {elem_text} | aria-label: {elem_aria}")
+            except:
+                pass
+            
+            # Cliquer pour ouvrir le détail
+            try:
+                logger.info(f"  [{index}] 🖱️ Clic sur l'élément pour ouvrir le panneau de détail...")
                 
                 # ✅ FIX CRITIQUE : Re-trouver l'élément après avoir fermé le panneau précédent
                 # L'élément peut devenir "stale" après la fermeture du panneau
@@ -2753,40 +2753,40 @@ class GoogleMapsScraper:
                                     logger.info(f"  [{index}] 📮 [DEBUG] Texte du panneau pour recherche CP: {panneau_text[:500]}")
                                     # Pattern 1: Chercher "code_postal ville" dans le panneau
                                     cp_ville_match = re.search(r'\b(\d{5})\s+([A-ZÀ-Ÿ][a-zà-ÿ]{2,}(?:\s+[A-ZÀ-Ÿ][a-zà-ÿ]+)*)\b', panneau_text)
-                                        if cp_ville_match:
-                                            info['code_postal'] = cp_ville_match.group(1)
-                                            ville = cp_ville_match.group(2).strip()
-                                            # Nettoyer la ville
-                                            ville = re.sub(r'\s*(France|FR|FRANCE|Closed|Fermé|Fermée)\s*$', '', ville, flags=re.IGNORECASE).strip()
-                                            # ✅ Vérifier que ce n'est pas un nom d'entreprise (liste étendue)
-                                            mots_interdits = ['rue', 'avenue', 'boulevard', 'place', 'allée', 'chemin', 'route', 
-                                                             'plomberie', 'solution', 'eaux', 'cernoise', 'services', 'entreprise']
-                                            if ville.lower() not in mots_interdits and not any(mot in ville.lower() for mot in ['plombier', 'plomberie', 'solution']):
-                                                info['ville'] = ville
-                                                logger.info(f"  [{index}] 📮 [DEBUG] Code postal extrait depuis panneau: {info['code_postal']}")
-                                                logger.info(f"  [{index}] 🏙️ [DEBUG] Ville extraite depuis panneau: {info['ville']}")
-                                                if len(info['code_postal']) >= 2:
-                                                    info['departement'] = info['code_postal'][:2]
-                                                    logger.info(f"  [{index}] 🗺️ [DEBUG] Département extrait: {info['departement']}")
-                                            else:
-                                                logger.warning(f"  [{index}] ⚠️ [DEBUG] Ville '{ville}' semble être un nom d'entreprise, ignorée")
+                                    if cp_ville_match:
+                                        info['code_postal'] = cp_ville_match.group(1)
+                                        ville = cp_ville_match.group(2).strip()
+                                        # Nettoyer la ville
+                                        ville = re.sub(r'\s*(France|FR|FRANCE|Closed|Fermé|Fermée)\s*$', '', ville, flags=re.IGNORECASE).strip()
+                                        # ✅ Vérifier que ce n'est pas un nom d'entreprise (liste étendue)
+                                        mots_interdits = ['rue', 'avenue', 'boulevard', 'place', 'allée', 'chemin', 'route', 
+                                                         'plomberie', 'solution', 'eaux', 'cernoise', 'services', 'entreprise']
+                                        if ville.lower() not in mots_interdits and not any(mot in ville.lower() for mot in ['plombier', 'plomberie', 'solution']):
+                                            info['ville'] = ville
+                                            logger.info(f"  [{index}] 📮 [DEBUG] Code postal extrait depuis panneau: {info['code_postal']}")
+                                            logger.info(f"  [{index}] 🏙️ [DEBUG] Ville extraite depuis panneau: {info['ville']}")
+                                            if len(info['code_postal']) >= 2:
+                                                info['departement'] = info['code_postal'][:2]
+                                                logger.info(f"  [{index}] 🗺️ [DEBUG] Département extrait: {info['departement']}")
                                         else:
-                                            # Pattern 2: Chercher juste un code postal dans le panneau (sans ville)
-                                            cp_match = re.search(r'\b(\d{5})\b', panneau_text)
-                                            if cp_match:
-                                                info['code_postal'] = cp_match.group(1)
-                                                logger.info(f"  [{index}] 📮 [DEBUG] Code postal extrait (seul depuis panneau): {info['code_postal']}")
-                                                if len(info['code_postal']) >= 2:
-                                                    info['departement'] = info['code_postal'][:2]
-                                                    logger.info(f"  [{index}] 🗺️ [DEBUG] Département extrait: {info['departement']}")
-                                        
-                                        # Si toujours pas de ville, utiliser ville_recherche (PRIORITÉ)
-                                        if not info.get('ville'):
-                                            ville_recherche = info.get('ville_recherche') or self.current_ville
-                                            if ville_recherche:
-                                                info['ville'] = ville_recherche
-                                                info['ville_recherche'] = ville_recherche
-                                                logger.info(f"  [{index}] 🏙️ [DEBUG] Ville utilisée depuis ville_recherche: {info['ville']}")
+                                            logger.warning(f"  [{index}] ⚠️ [DEBUG] Ville '{ville}' semble être un nom d'entreprise, ignorée")
+                                    else:
+                                        # Pattern 2: Chercher juste un code postal dans le panneau (sans ville)
+                                        cp_match = re.search(r'\b(\d{5})\b', panneau_text)
+                                        if cp_match:
+                                            info['code_postal'] = cp_match.group(1)
+                                            logger.info(f"  [{index}] 📮 [DEBUG] Code postal extrait (seul depuis panneau): {info['code_postal']}")
+                                            if len(info['code_postal']) >= 2:
+                                                info['departement'] = info['code_postal'][:2]
+                                                logger.info(f"  [{index}] 🗺️ [DEBUG] Département extrait: {info['departement']}")
+                                    
+                                    # Si toujours pas de ville, utiliser ville_recherche (PRIORITÉ)
+                                    if not info.get('ville'):
+                                        ville_recherche = info.get('ville_recherche') or self.current_ville
+                                        if ville_recherche:
+                                            info['ville'] = ville_recherche
+                                            info['ville_recherche'] = ville_recherche
+                                            logger.info(f"  [{index}] 🏙️ [DEBUG] Ville utilisée depuis ville_recherche: {info['ville']}")
                                 
                                 # ✅ Si pas d'adresse trouvée, chercher quand même code postal et ville dans le panneau
                                 if not info['adresse']:
