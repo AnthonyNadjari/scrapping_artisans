@@ -272,14 +272,33 @@ class GoogleMapsScraper:
     def _extraire_nb_avis(self, element) -> Optional[int]:
         """Extrait le nombre d'avis depuis un élément"""
         try:
+            # ✅ PRIORITÉ 1 : Chercher dans aria-label (plus fiable)
+            # Exemple: aria-label="5,0 étoiles 107 avis" ou aria-label="36 avis"
+            aria_label = element.get_attribute('aria-label')
+            if aria_label:
+                # Pattern : "107 avis" ou "36 avis" ou "36 reviews"
+                match = re.search(r'(\d+)\s*avis?', aria_label, re.I)
+                if match:
+                    return int(match.group(1))
+                # Pattern alternatif : "(36)" dans aria-label
+                match = re.search(r'\((\d+)\)', aria_label)
+                if match:
+                    return int(match.group(1))
+            
+            # ✅ PRIORITÉ 2 : Chercher dans le texte de l'élément
+            # Exemple: "(107)" ou "107 avis"
             text = element.text
             if text:
-                # Chercher pattern : "156 avis" ou "(156)"
+                # Pattern 1 : "(107)" - format le plus courant dans Google Maps
+                match = re.search(r'\((\d+)\)', text)
+                if match:
+                    return int(match.group(1))
+                # Pattern 2 : "156 avis" ou "156 reviews"
                 match = re.search(r'(\d+)\s*avis?', text, re.I)
                 if match:
                     return int(match.group(1))
-        except:
-            pass
+        except Exception as e:
+            logger.debug(f"Erreur extraction nb_avis: {e}")
         return None
     
     def _scroller_panneau_lateral(self, max_scrolls: int = 50, selector: str = 'div[role="feed"]'):  # ✅ Augmenté de 15 à 50 par défaut
@@ -2571,18 +2590,45 @@ class GoogleMapsScraper:
                             continue
                     
                     # Priorité 2 : Chercher dans le texte visible du panneau de détail
-                    if not info['adresse'] and info.get('nom'):
+                    if not info['adresse']:
                         try:
                             logger.info(f"  [{index}] 🔍 Tentative extraction adresse depuis texte du panneau...")
-                            h1_with_nom = search_context.find_elements(By.XPATH, f'//h1[contains(text(), "{info["nom"][:20]}")]')
-                            if h1_with_nom:
-                                panneau = h1_with_nom[0].find_element(By.XPATH, './ancestor::div[@role="complementary" or contains(@class, "m6QErb")]')
-                                panneau_text = panneau.text
-                                # Chercher un pattern d'adresse française
+                            # ✅ Méthode 1 : Chercher directement dans le texte du search_context (panneau de détail)
+                            panneau_text = search_context.text if hasattr(search_context, 'text') else ''
+                            if not panneau_text and search_context != self.driver:
+                                try:
+                                    panneau_text = search_context.get_attribute('textContent') or search_context.get_attribute('innerText') or ''
+                                except:
+                                    pass
+                            
+                            if panneau_text:
+                                # ✅ Pattern 1 : Adresse complète avec rue + code postal + ville
                                 adresse_match = re.search(r'\d{1,3}[A-Za-z]?\s+(?:[Rr]ue|[Aa]v|[Aa]venue|[Bb]d|[Bb]oulevard|[Pp]lace|[Aa]ll|[Aa]llée)[^,]+,\s*\d{5}\s+[A-Za-zÀ-ÿ\s-]+', panneau_text)
                                 if adresse_match:
-                                    info['adresse'] = adresse_match.group(0)
-                                    logger.info(f"  [{index}] 📍 [DEBUG] Adresse extraite via texte: {info['adresse']}")
+                                    info['adresse'] = adresse_match.group(0).strip()
+                                    logger.info(f"  [{index}] 📍 [DEBUG] Adresse extraite via texte (pattern 1): {info['adresse']}")
+                                else:
+                                    # ✅ Pattern 2 : Adresse simple (ex: "1 Rue Marguerin" ou "124 Boulevard Voltaire")
+                                    # Chercher un pattern de rue sans code postal dans le même texte
+                                    adresse_match = re.search(r'\d{1,3}[A-Za-z]?\s+(?:[Rr]ue|[Aa]v|[Aa]venue|[Bb]d|[Bb]oulevard|[Pp]lace|[Aa]ll|[Aa]llée|[Cc]hemin|[Rr]oute)\s+[A-Za-zÀ-ÿ\s\'-]+', panneau_text)
+                                    if adresse_match:
+                                        info['adresse'] = adresse_match.group(0).strip()
+                                        logger.info(f"  [{index}] 📍 [DEBUG] Adresse extraite via texte (pattern 2 - simple): {info['adresse']}")
+                                    else:
+                                        # ✅ Pattern 3 : Juste code postal + ville (plus permissif)
+                                        adresse_match = re.search(r'(\d{5}\s+[A-Za-zÀ-ÿ\s-]{3,})', panneau_text)
+                                        if adresse_match:
+                                            # Chercher un peu de contexte avant (numéro de rue si présent)
+                                            context_start = max(0, adresse_match.start() - 50)
+                                            context_text = panneau_text[context_start:adresse_match.end()]
+                                            # Extraire l'adresse complète si possible
+                                            full_match = re.search(r'(\d{1,3}[A-Za-z]?\s+[^,]{0,50},\s*)?\d{5}\s+[A-Za-zÀ-ÿ\s-]{3,}', context_text)
+                                            if full_match:
+                                                info['adresse'] = full_match.group(0).strip()
+                                                logger.info(f"  [{index}] 📍 [DEBUG] Adresse extraite via texte (pattern 3): {info['adresse']}")
+                                
+                                # ✅ Extraire code postal et ville si adresse trouvée
+                                if info['adresse']:
                                     cp_match = re.search(r'\b(\d{5})\b', info['adresse'])
                                     if cp_match:
                                         info['code_postal'] = cp_match.group(1)
@@ -2591,10 +2637,32 @@ class GoogleMapsScraper:
                                         if len(cp_match.group(1)) >= 2:
                                             info['departement'] = cp_match.group(1)[:2]
                                             logger.info(f"  [{index}] 🗺️ [DEBUG] Département extrait: {info['departement']}")
+                                    else:
+                                        # Si pas de code postal dans l'adresse, chercher dans le texte du panneau autour
+                                        # Chercher un code postal proche de l'adresse dans le texte
+                                        adresse_pos = panneau_text.find(info['adresse'])
+                                        if adresse_pos != -1:
+                                            # Chercher dans les 100 caractères après l'adresse
+                                            context_after = panneau_text[adresse_pos + len(info['adresse']):adresse_pos + len(info['adresse']) + 100]
+                                            cp_match = re.search(r'\b(\d{5})\b', context_after)
+                                            if cp_match:
+                                                info['code_postal'] = cp_match.group(1)
+                                                logger.info(f"  [{index}] 📮 [DEBUG] Code postal extrait (après adresse): {info['code_postal']}")
+                                                if len(cp_match.group(1)) >= 2:
+                                                    info['departement'] = cp_match.group(1)[:2]
+                                                    logger.info(f"  [{index}] 🗺️ [DEBUG] Département extrait: {info['departement']}")
+                                    
                                     ville_match = re.search(r'\d{5}\s+(.+)', info['adresse'])
                                     if ville_match:
                                         info['ville'] = ville_match.group(1).strip()
                                         logger.info(f"  [{index}] 🏙️ [DEBUG] Ville extraite: {info['ville']}")
+                                    elif not info.get('code_postal'):
+                                        # Si pas de code postal, essayer d'extraire la ville depuis le texte du panneau
+                                        # Chercher un nom de ville français (commence par majuscule, 3+ lettres)
+                                        ville_match = re.search(r'\b([A-ZÀ-Ÿ][a-zà-ÿ]{2,}(?:\s+[A-ZÀ-Ÿ][a-zà-ÿ]+)*)\b', panneau_text)
+                                        if ville_match and ville_match.group(1).lower() not in ['rue', 'avenue', 'boulevard', 'place', 'allée', 'chemin', 'route']:
+                                            info['ville'] = ville_match.group(1).strip()
+                                            logger.info(f"  [{index}] 🏙️ [DEBUG] Ville extraite (sans code postal): {info['ville']}")
                         except Exception as e:
                             logger.debug(f"  [{index}] Erreur extraction adresse depuis texte: {e}")
                     
@@ -2621,16 +2689,48 @@ class GoogleMapsScraper:
                 # Nombre d'avis
                 try:
                     logger.info(f"  [{index}] 🔍 Recherche du nombre d'avis...")
-                    avis_elems = self.driver.find_elements(By.XPATH, "//span[contains(text(), 'avis') or contains(text(), 'review')]")
-                    logger.info(f"  [{index}] 📊 [DEBUG] Nombre d'avis (éléments trouvés): {len(avis_elems)}")
+                    # ✅ PRIORITÉ 1 : Chercher span[role="img"][aria-label*="avis"] (format Google Maps)
+                    # Exemple: <span role="img" aria-label="5,0 étoiles 107 avis">
+                    avis_elems = search_context.find_elements(By.CSS_SELECTOR, 
+                        'span[role="img"][aria-label*="avis"], '
+                        'span[role="img"][aria-label*="review"], '
+                        'span[aria-label*="avis"], '
+                        'span[aria-label*="review"]'
+                    )
+                    logger.info(f"  [{index}] 📊 [DEBUG] Nombre d'avis (span role=img): {len(avis_elems)}")
+                    
+                    # ✅ PRIORITÉ 2 : Chercher span.UY7F9 avec (X) dans le texte
+                    # Exemple: <span class="UY7F9" aria-hidden="true">(107)</span>
+                    if not avis_elems:
+                        avis_elems = search_context.find_elements(By.CSS_SELECTOR, 
+                            'span.UY7F9, '
+                            'span[class*="UY7F9"]'
+                        )
+                        logger.info(f"  [{index}] 📊 [DEBUG] Nombre d'avis (span.UY7F9): {len(avis_elems)}")
+                    
+                    # ✅ PRIORITÉ 3 : Chercher dans le texte avec pattern (X)
+                    if not avis_elems:
+                        avis_elems = search_context.find_elements(By.XPATH, 
+                            ".//span[contains(text(), '(') and contains(text(), ')')]"
+                        )
+                        logger.info(f"  [{index}] 📊 [DEBUG] Nombre d'avis (pattern parenthèses): {len(avis_elems)}")
+                    
+                    # ✅ PRIORITÉ 4 : Chercher dans le texte avec "avis"
+                    if not avis_elems:
+                        avis_elems = search_context.find_elements(By.XPATH, 
+                            ".//span[contains(text(), 'avis') or contains(text(), 'review')]"
+                        )
+                        logger.info(f"  [{index}] 📊 [DEBUG] Nombre d'avis (texte): {len(avis_elems)}")
+                    
                     for avis_elem in avis_elems:
                         nb = self._extraire_nb_avis(avis_elem)
                         if nb:
                             info['nb_avis'] = nb
                             logger.info(f"  [{index}] 📊 [DEBUG] Nombre d'avis extrait: {info['nb_avis']}")
                             break
+                    
                     if not info.get('nb_avis'):
-                        logger.warning(f"  [{index}] ⚠️ [DEBUG] Nombre d'avis non trouvé")
+                        logger.warning(f"  [{index}] ⚠️ [DEBUG] Nombre d'avis non trouvé (éléments trouvés: {len(avis_elems)})")
                 except Exception as e:
                     logger.warning(f"  [{index}] ⚠️ [DEBUG] Erreur extraction nombre d'avis: {e}")
                 
