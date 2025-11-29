@@ -132,15 +132,41 @@ def save_callback(artisan_data):
                 data['ville'] = ville_recherche
                 data['ville_recherche'] = ville_recherche
         
-        # ✅ DEBUG : Afficher les données extraites
-        print(f"🔍 [DEBUG] Données extraites pour {data.get('nom_entreprise', 'N/A')}:")
+        # ✅ VALIDATION : Note et nombre d'avis doivent être cohérents
+        # Si on a une note mais pas de nombre d'avis, mettre nombre_avis à 0
+        if data.get('note') is not None and (data.get('nombre_avis') is None or data.get('nombre_avis') == 0):
+            # Si on a une note, il doit y avoir au moins un avis
+            # Mais si nombre_avis est None, on met à 0 pour indiquer qu'on ne l'a pas trouvé
+            if data.get('nombre_avis') is None:
+                data['nombre_avis'] = 0
+                print(f"⚠️ Note trouvée ({data.get('note')}) mais pas de nombre d'avis - nombre_avis mis à 0")
+        # Si on a un nombre d'avis mais pas de note, c'est suspect mais on garde
+        elif data.get('nombre_avis') and data.get('nombre_avis') > 0 and data.get('note') is None:
+            print(f"⚠️ Nombre d'avis trouvé ({data.get('nombre_avis')}) mais pas de note")
+        
+        # ✅ DEBUG : Afficher les données extraites AVANT et APRÈS traitement
+        print(f"\n{'='*80}")
+        print(f"🔍 [DEBUG] DONNÉES BRUTES REÇUES pour {artisan_data.get('nom', 'N/A')}:")
+        print(f"   📍 Adresse brute: {artisan_data.get('adresse', 'N/A')}")
+        print(f"   🏙️ Ville brute: {artisan_data.get('ville', 'N/A')}")
+        print(f"   📮 Code postal brut: {artisan_data.get('code_postal', 'N/A')}")
+        print(f"   🗺️ Département brut: {artisan_data.get('departement', 'N/A')}")
+        print(f"   ⭐ Note brute: {artisan_data.get('note', 'N/A')}")
+        print(f"   📊 Nombre d'avis brut: {artisan_data.get('nb_avis', 'N/A')} ou {artisan_data.get('nombre_avis', 'N/A')}")
+        print(f"   📞 Téléphone brut: {artisan_data.get('telephone', 'N/A')}")
+        print(f"   🌐 Site web brut: {artisan_data.get('site_web', 'N/A')}")
+        print(f"   🔍 Ville recherche: {artisan_data.get('ville_recherche', 'N/A')}")
+        print(f"{'='*80}")
+        print(f"🔍 [DEBUG] DONNÉES TRAITÉES pour {data.get('nom_entreprise', 'N/A')}:")
         print(f"   📍 Adresse: {data.get('adresse', 'N/A')}")
         print(f"   🏙️ Ville: {data.get('ville', 'N/A')}")
         print(f"   📮 Code postal: {data.get('code_postal', 'N/A')}")
         print(f"   🗺️ Département: {data.get('departement', 'N/A')}")
-        print(f"   ⭐ Nombre d'avis: {data.get('nombre_avis', 'N/A')}")
+        print(f"   ⭐ Note: {data.get('note', 'N/A')}")
+        print(f"   📊 Nombre d'avis: {data.get('nombre_avis', 'N/A')}")
         print(f"   📞 Téléphone: {data.get('telephone', 'N/A')}")
         print(f"   🌐 Site web: {data.get('site_web', 'N/A')}")
+        print(f"{'='*80}\n")
         
         # ✅ Vérifier qu'on a au moins une donnée valide avant d'insérer
         has_valid_data = any([
