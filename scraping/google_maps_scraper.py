@@ -70,6 +70,9 @@ class GoogleMapsScraper:
         self.wait = None
         self.is_running = True  # Par défaut, on est prêt à scraper
         self.scraped_count = 0
+        # ✅ Stocker la recherche et la ville pour les utiliser dans les méthodes d'extraction
+        self.current_recherche = None
+        self.current_ville = None
         
         # ✅ Détecter l'environnement (GitHub Actions ou local)
         import os
@@ -2637,32 +2640,85 @@ class GoogleMapsScraper:
                                         if len(cp_match.group(1)) >= 2:
                                             info['departement'] = cp_match.group(1)[:2]
                                             logger.info(f"  [{index}] 🗺️ [DEBUG] Département extrait: {info['departement']}")
+                                        
+                                        # Extraire la ville après le code postal dans l'adresse
+                                        ville_match = re.search(r'\d{5}\s+(.+)', info['adresse'])
+                                        if ville_match:
+                                            ville = ville_match.group(1).strip()
+                                            # Nettoyer la ville (enlever "France", etc.)
+                                            ville = re.sub(r'\s*(France|FR|FRANCE)\s*$', '', ville, flags=re.IGNORECASE).strip()
+                                            if ville:
+                                                info['ville'] = ville
+                                                logger.info(f"  [{index}] 🏙️ [DEBUG] Ville extraite: {info['ville']}")
                                     else:
-                                        # Si pas de code postal dans l'adresse, chercher dans le texte du panneau autour
-                                        # Chercher un code postal proche de l'adresse dans le texte
-                                        adresse_pos = panneau_text.find(info['adresse'])
-                                        if adresse_pos != -1:
-                                            # Chercher dans les 100 caractères après l'adresse
-                                            context_after = panneau_text[adresse_pos + len(info['adresse']):adresse_pos + len(info['adresse']) + 100]
-                                            cp_match = re.search(r'\b(\d{5})\b', context_after)
+                                        # ✅ Si pas de code postal dans l'adresse, chercher dans TOUT le texte du panneau
+                                        # Pattern 1: Chercher "code_postal ville" dans le panneau
+                                        cp_ville_match = re.search(r'\b(\d{5})\s+([A-ZÀ-Ÿ][a-zà-ÿ]{2,}(?:\s+[A-ZÀ-Ÿ][a-zà-ÿ]+)*)\b', panneau_text)
+                                        if cp_ville_match:
+                                            info['code_postal'] = cp_ville_match.group(1)
+                                            ville = cp_ville_match.group(2).strip()
+                                            # Nettoyer la ville
+                                            ville = re.sub(r'\s*(France|FR|FRANCE)\s*$', '', ville, flags=re.IGNORECASE).strip()
+                                            # Vérifier que ce n'est pas un nom d'entreprise (éviter "Plomberie Solution", etc.)
+                                            if ville.lower() not in ['rue', 'avenue', 'boulevard', 'place', 'allée', 'chemin', 'route']:
+                                                info['ville'] = ville
+                                                logger.info(f"  [{index}] 📮 [DEBUG] Code postal extrait depuis panneau: {info['code_postal']}")
+                                                logger.info(f"  [{index}] 🏙️ [DEBUG] Ville extraite depuis panneau: {info['ville']}")
+                                                if len(info['code_postal']) >= 2:
+                                                    info['departement'] = info['code_postal'][:2]
+                                                    logger.info(f"  [{index}] 🗺️ [DEBUG] Département extrait: {info['departement']}")
+                                        else:
+                                            # Pattern 2: Chercher juste un code postal dans le panneau (sans ville)
+                                            cp_match = re.search(r'\b(\d{5})\b', panneau_text)
                                             if cp_match:
                                                 info['code_postal'] = cp_match.group(1)
-                                                logger.info(f"  [{index}] 📮 [DEBUG] Code postal extrait (après adresse): {info['code_postal']}")
-                                                if len(cp_match.group(1)) >= 2:
-                                                    info['departement'] = cp_match.group(1)[:2]
+                                                logger.info(f"  [{index}] 📮 [DEBUG] Code postal extrait (seul depuis panneau): {info['code_postal']}")
+                                                if len(info['code_postal']) >= 2:
+                                                    info['departement'] = info['code_postal'][:2]
                                                     logger.info(f"  [{index}] 🗺️ [DEBUG] Département extrait: {info['departement']}")
-                                    
-                                    ville_match = re.search(r'\d{5}\s+(.+)', info['adresse'])
-                                    if ville_match:
-                                        info['ville'] = ville_match.group(1).strip()
-                                        logger.info(f"  [{index}] 🏙️ [DEBUG] Ville extraite: {info['ville']}")
+                                        
+                                        # Si toujours pas de ville, utiliser ville_recherche
+                                        if not info.get('ville'):
+                                            ville_recherche = info.get('ville_recherche') or self.current_ville
+                                            if ville_recherche:
+                                                info['ville'] = ville_recherche
+                                                info['ville_recherche'] = ville_recherche
+                                                logger.info(f"  [{index}] 🏙️ [DEBUG] Ville utilisée depuis ville_recherche: {info['ville']}")
+                                
+                                # ✅ Si pas d'adresse trouvée, chercher quand même code postal et ville dans le panneau
+                                if not info['adresse']:
+                                    # Chercher "code_postal ville" dans le panneau
+                                    cp_ville_match = re.search(r'\b(\d{5})\s+([A-ZÀ-Ÿ][a-zà-ÿ]{2,}(?:\s+[A-ZÀ-Ÿ][a-zà-ÿ]+)*)\b', panneau_text)
+                                    if cp_ville_match:
+                                        info['code_postal'] = cp_ville_match.group(1)
+                                        ville = cp_ville_match.group(2).strip()
+                                        # Nettoyer la ville
+                                        ville = re.sub(r'\s*(France|FR|FRANCE)\s*$', '', ville, flags=re.IGNORECASE).strip()
+                                        # Vérifier que ce n'est pas un nom d'entreprise
+                                        if ville.lower() not in ['rue', 'avenue', 'boulevard', 'place', 'allée', 'chemin', 'route', 'plomberie', 'solution', 'eaux']:
+                                            info['ville'] = ville
+                                            logger.info(f"  [{index}] 📮 [DEBUG] Code postal extrait (sans adresse): {info['code_postal']}")
+                                            logger.info(f"  [{index}] 🏙️ [DEBUG] Ville extraite (sans adresse): {info['ville']}")
+                                            if len(info['code_postal']) >= 2:
+                                                info['departement'] = info['code_postal'][:2]
+                                                logger.info(f"  [{index}] 🗺️ [DEBUG] Département extrait: {info['departement']}")
                                     elif not info.get('code_postal'):
-                                        # Si pas de code postal, essayer d'extraire la ville depuis le texte du panneau
-                                        # Chercher un nom de ville français (commence par majuscule, 3+ lettres)
-                                        ville_match = re.search(r'\b([A-ZÀ-Ÿ][a-zà-ÿ]{2,}(?:\s+[A-ZÀ-Ÿ][a-zà-ÿ]+)*)\b', panneau_text)
-                                        if ville_match and ville_match.group(1).lower() not in ['rue', 'avenue', 'boulevard', 'place', 'allée', 'chemin', 'route']:
-                                            info['ville'] = ville_match.group(1).strip()
-                                            logger.info(f"  [{index}] 🏙️ [DEBUG] Ville extraite (sans code postal): {info['ville']}")
+                                        # Chercher juste un code postal
+                                        cp_match = re.search(r'\b(\d{5})\b', panneau_text)
+                                        if cp_match:
+                                            info['code_postal'] = cp_match.group(1)
+                                            logger.info(f"  [{index}] 📮 [DEBUG] Code postal extrait (seul, sans adresse): {info['code_postal']}")
+                                            if len(info['code_postal']) >= 2:
+                                                info['departement'] = info['code_postal'][:2]
+                                                logger.info(f"  [{index}] 🗺️ [DEBUG] Département extrait: {info['departement']}")
+                                    
+                                    # Utiliser ville_recherche si pas de ville trouvée
+                                    if not info.get('ville'):
+                                        ville_recherche = info.get('ville_recherche') or self.current_ville
+                                        if ville_recherche:
+                                            info['ville'] = ville_recherche
+                                            info['ville_recherche'] = ville_recherche
+                                            logger.info(f"  [{index}] 🏙️ [DEBUG] Ville utilisée depuis ville_recherche (pas d'adresse): {info['ville']}")
                         except Exception as e:
                             logger.debug(f"  [{index}] Erreur extraction adresse depuis texte: {e}")
                     
@@ -2846,6 +2902,10 @@ class GoogleMapsScraper:
         logger.info(f"🚀 Démarrage scraping: {recherche} à {ville} (max: {max_results})")
         logger.info(f"   🌍 Environnement: {'GitHub Actions' if self.is_github_actions else 'Local'}")
         logger.info(f"   ⏱️ Multiplicateurs: timeout={self.timeout_multiplier}x, delay={self.delay_multiplier}x")
+        
+        # ✅ Stocker la recherche et la ville pour les utiliser dans les méthodes d'extraction
+        self.current_recherche = recherche
+        self.current_ville = ville
         
         if not self._setup_driver():
             logger.error("❌ Échec initialisation driver")

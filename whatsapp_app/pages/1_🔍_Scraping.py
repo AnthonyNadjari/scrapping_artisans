@@ -379,8 +379,8 @@ if github_token and github_repo:
             if 'workflows_last_refresh' in st.session_state:
                 del st.session_state.workflows_last_refresh
             # Forcer le rerun immédiatement
-            st.experimental_rerun()
-    
+        st.experimental_rerun()
+
     # Lister les workflows en cours
     try:
         workflows_en_cours = list_github_workflows(github_token, github_repo)
@@ -675,7 +675,7 @@ if departements_stats:
                                 'dept': dept_art
                             }
                             break
-                except:
+                            except:
                     pass
     
     # Ajouter les villes sur la carte (petits points bleus)
@@ -721,7 +721,7 @@ if departements_stats:
     with col_stat3:
         total_villes = sum([s['villes_scrapees'] for s in departements_stats.values()])
         st.metric("Villes scrapées", total_villes)
-else:
+                        else:
     st.empty()  # Pas de message si aucun scraping - affichage plus compact
 
 # ✅ Initialiser les variables GitHub Actions dans session_state AVANT de les utiliser
@@ -804,8 +804,21 @@ if st.session_state.get('show_communes', False) and use_api_communes and departe
         with col_table:
             st.subheader("📋 Liste des communes")
             df_communes = pd.DataFrame(all_communes)
-            # ✅ Garder la population comme nombre pour permettre le tri numérique
-            # Le formatage avec virgules sera géré par Streamlit automatiquement pour l'affichage
+            # ✅ Convertir la colonne 'Population' en numérique pour le tri
+            if 'Population' in df_communes.columns:
+                df_communes['Population'] = pd.to_numeric(df_communes['Population'], errors='coerce').fillna(0).astype(int)
+                # Créer une colonne formatée pour l'affichage avec espaces (ex: 56 659)
+                # On garde la colonne numérique pour le tri, et on crée une colonne formatée pour l'affichage
+                df_communes['Population (formatée)'] = df_communes['Population'].apply(
+                    lambda x: f"{x:,}".replace(',', ' ') if x > 0 else "N/A"
+                )
+                # Pour le tri numérique, on garde la colonne Population comme nombre
+                # Pour l'affichage, on utilise la version formatée
+                df_communes_display = df_communes[['Département', 'Commune', 'Code postal', 'Population']].copy()
+                # On remplace la colonne Population par la version formatée pour l'affichage
+                df_communes_display['Population'] = df_communes['Population (formatée)']
+            else:
+                df_communes_display = df_communes
             
             # CSS pour autofit toutes les colonnes et éviter la colonne vide
             st.markdown("""
@@ -843,8 +856,8 @@ if st.session_state.get('show_communes', False) and use_api_communes and departe
             </style>
             """, unsafe_allow_html=True)
             
-            # Utiliser dataframe sans hide_index (non supporté dans cette version)
-            st.dataframe(df_communes, height=600)
+            # Utiliser dataframe avec formatage de la population (espaces pour séparer les milliers)
+            st.dataframe(df_communes_display, height=600)
             
             # JavaScript pour masquer la colonne vide après le rendu
             st.markdown("""
@@ -926,7 +939,7 @@ if st.session_state.get('show_communes', False) and use_api_communes and departe
                         min_pop_displayed = min(populations)
                         max_pop_displayed = max(populations)
                         pop_range_displayed = max_pop_displayed - min_pop_displayed if max_pop_displayed > min_pop_displayed else 1
-                    else:
+                        else:
                         min_pop_displayed = 0
                         max_pop_displayed = 1
                         pop_range_displayed = 1
@@ -998,7 +1011,7 @@ if st.session_state.get('show_communes', False) and use_api_communes and departe
                     st.warning("⚠️ Aucune commune avec coordonnées GPS trouvée")
             except ImportError:
                 st.info("💡 Pour afficher une carte interactive, installez: `pip install folium streamlit-folium`")
-            except Exception as e:
+                    except Exception as e:
                 st.error(f"Erreur lors de la création de la carte: {e}")
     else:
         st.warning("Aucune commune trouvée avec les critères sélectionnés")
@@ -1104,7 +1117,7 @@ def trigger_github_workflow(token, repo, metiers, departements, max_results, num
             if response.status_code == 404:
                 error_msg += f"\n💡 Vérifiez que le workflow existe dans .github/workflows/scraping.yml et qu'il est commité sur GitHub"
             return False, f"Erreur: {response.status_code} - {error_msg}", None
-    except Exception as e:
+            except Exception as e:
         return False, f"Erreur: {str(e)}"
 
 def get_github_workflow_status(token, repo, workflow_id=None):
@@ -1261,10 +1274,10 @@ col_btn1, col_btn2 = st.columns(2)
 
 with col_btn1:
     # ✅ GitHub Actions uniquement - pas de mode local
-    button_disabled = st.session_state.scraping_running or (st.session_state.github_workflow_status == 'in_progress')
+    # ✅ Le bouton LANCER est toujours activé - on peut lancer plusieurs workflows en parallèle
     button_text = "☁️ LANCER"
     
-    if st.button(button_text, disabled=button_disabled):
+    if st.button(button_text, disabled=False):
         if not metiers or not departements:
             st.error("⚠️ Veuillez sélectionner au moins un métier et un département")
         elif not github_token or not github_repo:
@@ -1336,7 +1349,7 @@ with col_btn1:
                         st.session_state.github_workflow_id = run_id
                     # ✅ Marquer qu'on vient de lancer un workflow pour ne pas l'annuler
                     st.session_state.workflow_just_launched = True
-                    st.experimental_rerun()
+        st.experimental_rerun()
                 else:
                     st.error(f"❌ {message}")
 
@@ -1518,16 +1531,16 @@ if st.session_state.scraped_results:
     )
     
     # ✅ Bouton d'export CSV complet
-    csv_all = df.to_csv(index=False, encoding='utf-8-sig')
+        csv_all = df.to_csv(index=False, encoding='utf-8-sig')
     dept = st.session_state.get('departements_selected', departements)[0] if st.session_state.get('departements_selected') else (departements[0] if departements else '77')
     metier_export = st.session_state.get('metiers_selected', metiers)[0] if st.session_state.get('metiers_selected') else (metiers[0] if metiers else 'plombier')
-    st.download_button(
-        "📥 Télécharger CSV complet",
-        csv_all,
-        f"{metier_export}_{dept}_complet_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-        "text/csv"
-    )
-
+        st.download_button(
+            "📥 Télécharger CSV complet",
+            csv_all,
+            f"{metier_export}_{dept}_complet_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+            "text/csv"
+        )
+    
 # ✅ Expander "Mode d'exécution" tout en bas de la page
 with st.expander("ℹ️ Mode d'exécution", expanded=False):
     st.info("☁️ **Mode GitHub Actions activé** - Le scraping s'exécutera sur GitHub Actions (gratuit jusqu'à 2000 min/mois)")
