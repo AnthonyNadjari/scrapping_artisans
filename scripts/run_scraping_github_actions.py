@@ -56,11 +56,22 @@ def save_callback(artisan_data):
         
         # Préparer les données pour la BDD
         # ✅ FIX : Utiliser 'nom_entreprise' au lieu de 'nom' pour correspondre au schéma de la BDD
+        import re
+        
+        # ✅ NETTOYER l'adresse : enlever "Closed", "Fermé", sauts de ligne, etc.
+        adresse_brute = artisan_data.get('adresse', '')
+        if adresse_brute:
+            adresse_clean = re.sub(r'\s*(Closed|Fermé|Fermée|Ouvert|Open)\s*', '', str(adresse_brute), flags=re.IGNORECASE)
+            adresse_clean = re.sub(r'\s*\n\s*', ' ', adresse_clean)  # Remplacer sauts de ligne par espaces
+            adresse_clean = re.sub(r'\s+', ' ', adresse_clean).strip()  # Normaliser les espaces
+        else:
+            adresse_clean = ''
+        
         data = {
             'nom_entreprise': artisan_data.get('nom'),  # ✅ FIX : nom_entreprise au lieu de nom
             'telephone': artisan_data.get('telephone'),
             'site_web': artisan_data.get('site_web'),
-            'adresse': artisan_data.get('adresse'),
+            'adresse': adresse_clean,  # ✅ Adresse nettoyée
             'code_postal': artisan_data.get('code_postal'),
             'ville': artisan_data.get('ville'),
             'departement': artisan_data.get('departement'),
@@ -71,6 +82,12 @@ def save_callback(artisan_data):
             'source_telephone': 'google_maps',
             'type_artisan': artisan_data.get('recherche') or artisan_data.get('type_artisan')  # ✅ Support des deux formats
         }
+        
+        # ✅ Extraire le code postal depuis l'adresse si manquant
+        if not data.get('code_postal') and data.get('adresse'):
+            cp_match = re.search(r'\b(\d{5})\b', data['adresse'])
+            if cp_match:
+                data['code_postal'] = cp_match.group(1)
         
         # ✅ Extraire le département depuis le code postal si manquant
         if not data.get('departement') and data.get('code_postal'):
@@ -84,24 +101,36 @@ def save_callback(artisan_data):
         
         # ✅ Extraire la ville depuis l'adresse si manquante (amélioré)
         if not data.get('ville') and data.get('adresse'):
-            import re
             adresse = str(data['adresse'])
             # Pattern 1: "code_postal ville" (format français standard)
-            ville_match = re.search(r'\b\d{5}\s+([A-Za-zÀ-ÿ\s-]+?)(?:\s|$|,|;|France)', adresse, re.IGNORECASE)
+            ville_match = re.search(r'\b\d{5}\s+([A-Za-zÀ-ÿ\s-]+?)(?:\s|$|,|;|France|Closed|Fermé)', adresse, re.IGNORECASE)
             if ville_match:
                 ville = ville_match.group(1).strip()
-                # Nettoyer la ville (enlever "France", codes pays, etc.)
-                ville = re.sub(r'\s*(France|FR|FRANCE)\s*$', '', ville, flags=re.IGNORECASE).strip()
-                if ville:
+                # Nettoyer la ville (enlever "France", "Closed", etc.)
+                ville = re.sub(r'\s*(France|FR|FRANCE|Closed|Fermé|Fermée)\s*$', '', ville, flags=re.IGNORECASE).strip()
+                # ✅ Vérifier que ce n'est pas un nom d'entreprise
+                mots_interdits = ['rue', 'avenue', 'boulevard', 'place', 'allée', 'chemin', 'route', 
+                                 'plomberie', 'solution', 'eaux', 'cernoise', 'services', 'entreprise']
+                if ville and ville.lower() not in mots_interdits and not any(mot in ville.lower() for mot in ['plombier', 'plomberie', 'solution']):
                     data['ville'] = ville
             # Pattern 2: Si pas trouvé, chercher après le dernier chiffre
             if not data.get('ville'):
-                ville_match2 = re.search(r'\d{5}\s+(.+?)(?:\s*$|,|;|France)', adresse)
+                ville_match2 = re.search(r'\d{5}\s+(.+?)(?:\s*$|,|;|France|Closed|Fermé)', adresse)
                 if ville_match2:
                     ville = ville_match2.group(1).strip()
-                    ville = re.sub(r'\s*(France|FR|FRANCE)\s*$', '', ville, flags=re.IGNORECASE).strip()
-                    if ville:
+                    ville = re.sub(r'\s*(France|FR|FRANCE|Closed|Fermé|Fermée)\s*$', '', ville, flags=re.IGNORECASE).strip()
+                    # ✅ Vérifier que ce n'est pas un nom d'entreprise
+                    mots_interdits = ['rue', 'avenue', 'boulevard', 'place', 'allée', 'chemin', 'route', 
+                                     'plomberie', 'solution', 'eaux', 'cernoise', 'services', 'entreprise']
+                    if ville and ville.lower() not in mots_interdits and not any(mot in ville.lower() for mot in ['plombier', 'plomberie', 'solution']):
                         data['ville'] = ville
+        
+        # ✅ Si toujours pas de ville, utiliser ville_recherche (PRIORITÉ)
+        if not data.get('ville'):
+            ville_recherche = artisan_data.get('ville_recherche') or artisan_data.get('ville')
+            if ville_recherche:
+                data['ville'] = ville_recherche
+                data['ville_recherche'] = ville_recherche
         
         # ✅ DEBUG : Afficher les données extraites
         print(f"🔍 [DEBUG] Données extraites pour {data.get('nom_entreprise', 'N/A')}:")

@@ -2567,7 +2567,12 @@ class GoogleMapsScraper:
                         try:
                             aria_label = adr_btn.get_attribute('aria-label')
                             if aria_label and ('Adresse' in aria_label or 'Address' in aria_label):
-                                info['adresse'] = aria_label.replace('Adresse: ', '').replace('Address: ', '').strip()
+                                adresse_brute = aria_label.replace('Adresse: ', '').replace('Address: ', '').strip()
+                                # ✅ NETTOYER l'adresse : enlever "Closed", "Fermé", sauts de ligne, etc.
+                                adresse_clean = re.sub(r'\s*(Closed|Fermé|Fermée|Ouvert|Open)\s*', '', adresse_brute, flags=re.IGNORECASE)
+                                adresse_clean = re.sub(r'\s*\n\s*', ' ', adresse_clean)  # Remplacer sauts de ligne par espaces
+                                adresse_clean = re.sub(r'\s+', ' ', adresse_clean).strip()  # Normaliser les espaces
+                                info['adresse'] = adresse_clean
                                 logger.info(f"  [{index}] 📍 [DEBUG] Adresse extraite: {info['adresse']}")
                                 # Vérifier que c'est une vraie adresse (contient un code postal)
                                 if re.search(r'\b\d{5}\b', info['adresse']):
@@ -2615,7 +2620,12 @@ class GoogleMapsScraper:
                                     # Chercher un pattern de rue sans code postal dans le même texte
                                     adresse_match = re.search(r'\d{1,3}[A-Za-z]?\s+(?:[Rr]ue|[Aa]v|[Aa]venue|[Bb]d|[Bb]oulevard|[Pp]lace|[Aa]ll|[Aa]llée|[Cc]hemin|[Rr]oute)\s+[A-Za-zÀ-ÿ\s\'-]+', panneau_text)
                                     if adresse_match:
-                                        info['adresse'] = adresse_match.group(0).strip()
+                                        adresse_brute = adresse_match.group(0).strip()
+                                        # ✅ NETTOYER l'adresse : enlever "Closed", "Fermé", sauts de ligne, etc.
+                                        adresse_clean = re.sub(r'\s*(Closed|Fermé|Fermée|Ouvert|Open)\s*', '', adresse_brute, flags=re.IGNORECASE)
+                                        adresse_clean = re.sub(r'\s*\n\s*', ' ', adresse_clean)  # Remplacer sauts de ligne par espaces
+                                        adresse_clean = re.sub(r'\s+', ' ', adresse_clean).strip()  # Normaliser les espaces
+                                        info['adresse'] = adresse_clean
                                         logger.info(f"  [{index}] 📍 [DEBUG] Adresse extraite via texte (pattern 2 - simple): {info['adresse']}")
                                     else:
                                         # ✅ Pattern 3 : Juste code postal + ville (plus permissif)
@@ -2645,8 +2655,8 @@ class GoogleMapsScraper:
                                         ville_match = re.search(r'\d{5}\s+(.+)', info['adresse'])
                                         if ville_match:
                                             ville = ville_match.group(1).strip()
-                                            # Nettoyer la ville (enlever "France", etc.)
-                                            ville = re.sub(r'\s*(France|FR|FRANCE)\s*$', '', ville, flags=re.IGNORECASE).strip()
+                                            # Nettoyer la ville (enlever "France", "Closed", etc.)
+                                            ville = re.sub(r'\s*(France|FR|FRANCE|Closed|Fermé|Fermée)\s*$', '', ville, flags=re.IGNORECASE).strip()
                                             if ville:
                                                 info['ville'] = ville
                                                 logger.info(f"  [{index}] 🏙️ [DEBUG] Ville extraite: {info['ville']}")
@@ -2658,15 +2668,19 @@ class GoogleMapsScraper:
                                             info['code_postal'] = cp_ville_match.group(1)
                                             ville = cp_ville_match.group(2).strip()
                                             # Nettoyer la ville
-                                            ville = re.sub(r'\s*(France|FR|FRANCE)\s*$', '', ville, flags=re.IGNORECASE).strip()
-                                            # Vérifier que ce n'est pas un nom d'entreprise (éviter "Plomberie Solution", etc.)
-                                            if ville.lower() not in ['rue', 'avenue', 'boulevard', 'place', 'allée', 'chemin', 'route']:
+                                            ville = re.sub(r'\s*(France|FR|FRANCE|Closed|Fermé|Fermée)\s*$', '', ville, flags=re.IGNORECASE).strip()
+                                            # ✅ Vérifier que ce n'est pas un nom d'entreprise (liste étendue)
+                                            mots_interdits = ['rue', 'avenue', 'boulevard', 'place', 'allée', 'chemin', 'route', 
+                                                             'plomberie', 'solution', 'eaux', 'cernoise', 'services', 'entreprise']
+                                            if ville.lower() not in mots_interdits and not any(mot in ville.lower() for mot in ['plombier', 'plomberie', 'solution']):
                                                 info['ville'] = ville
                                                 logger.info(f"  [{index}] 📮 [DEBUG] Code postal extrait depuis panneau: {info['code_postal']}")
                                                 logger.info(f"  [{index}] 🏙️ [DEBUG] Ville extraite depuis panneau: {info['ville']}")
                                                 if len(info['code_postal']) >= 2:
                                                     info['departement'] = info['code_postal'][:2]
                                                     logger.info(f"  [{index}] 🗺️ [DEBUG] Département extrait: {info['departement']}")
+                                            else:
+                                                logger.warning(f"  [{index}] ⚠️ [DEBUG] Ville '{ville}' semble être un nom d'entreprise, ignorée")
                                         else:
                                             # Pattern 2: Chercher juste un code postal dans le panneau (sans ville)
                                             cp_match = re.search(r'\b(\d{5})\b', panneau_text)
@@ -2677,7 +2691,7 @@ class GoogleMapsScraper:
                                                     info['departement'] = info['code_postal'][:2]
                                                     logger.info(f"  [{index}] 🗺️ [DEBUG] Département extrait: {info['departement']}")
                                         
-                                        # Si toujours pas de ville, utiliser ville_recherche
+                                        # Si toujours pas de ville, utiliser ville_recherche (PRIORITÉ)
                                         if not info.get('ville'):
                                             ville_recherche = info.get('ville_recherche') or self.current_ville
                                             if ville_recherche:
@@ -2693,15 +2707,19 @@ class GoogleMapsScraper:
                                         info['code_postal'] = cp_ville_match.group(1)
                                         ville = cp_ville_match.group(2).strip()
                                         # Nettoyer la ville
-                                        ville = re.sub(r'\s*(France|FR|FRANCE)\s*$', '', ville, flags=re.IGNORECASE).strip()
-                                        # Vérifier que ce n'est pas un nom d'entreprise
-                                        if ville.lower() not in ['rue', 'avenue', 'boulevard', 'place', 'allée', 'chemin', 'route', 'plomberie', 'solution', 'eaux']:
+                                        ville = re.sub(r'\s*(France|FR|FRANCE|Closed|Fermé|Fermée)\s*$', '', ville, flags=re.IGNORECASE).strip()
+                                        # ✅ Vérifier que ce n'est pas un nom d'entreprise (liste étendue)
+                                        mots_interdits = ['rue', 'avenue', 'boulevard', 'place', 'allée', 'chemin', 'route', 
+                                                         'plomberie', 'solution', 'eaux', 'cernoise', 'services', 'entreprise']
+                                        if ville.lower() not in mots_interdits and not any(mot in ville.lower() for mot in ['plombier', 'plomberie', 'solution']):
                                             info['ville'] = ville
                                             logger.info(f"  [{index}] 📮 [DEBUG] Code postal extrait (sans adresse): {info['code_postal']}")
                                             logger.info(f"  [{index}] 🏙️ [DEBUG] Ville extraite (sans adresse): {info['ville']}")
                                             if len(info['code_postal']) >= 2:
                                                 info['departement'] = info['code_postal'][:2]
                                                 logger.info(f"  [{index}] 🗺️ [DEBUG] Département extrait: {info['departement']}")
+                                        else:
+                                            logger.warning(f"  [{index}] ⚠️ [DEBUG] Ville '{ville}' semble être un nom d'entreprise, ignorée")
                                     elif not info.get('code_postal'):
                                         # Chercher juste un code postal
                                         cp_match = re.search(r'\b(\d{5})\b', panneau_text)
@@ -2712,7 +2730,7 @@ class GoogleMapsScraper:
                                                 info['departement'] = info['code_postal'][:2]
                                                 logger.info(f"  [{index}] 🗺️ [DEBUG] Département extrait: {info['departement']}")
                                     
-                                    # Utiliser ville_recherche si pas de ville trouvée
+                                    # ✅ Utiliser ville_recherche si pas de ville trouvée (PRIORITÉ)
                                     if not info.get('ville'):
                                         ville_recherche = info.get('ville_recherche') or self.current_ville
                                         if ville_recherche:
