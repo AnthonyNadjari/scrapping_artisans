@@ -8,6 +8,7 @@ from datetime import datetime
 import pandas as pd
 import json
 import requests
+from io import BytesIO
 
 # Configuration de la page
 st.set_page_config(page_title="Base de Données", page_icon="📊", layout="wide")
@@ -104,21 +105,24 @@ with col_f2:
 with col_f3:
     filtre_recherche = st.text_input(
         "Recherche",
-        placeholder="Nom, ville, téléphone..."
+        placeholder="Nom, ville, téléphone...",
+        value=""
     )
 
-# Construire filtres
+# Construire filtres avec validation stricte
 filtres = {}
 
-if filtre_metier:
+if filtre_metier and isinstance(filtre_metier, list) and len(filtre_metier) > 0:
     filtres['metiers'] = filtre_metier
 
-if filtre_dept:
-    depts = [d.strip() for d in filtre_dept.split(',')]
-    filtres['departements'] = depts
+if filtre_dept and isinstance(filtre_dept, str) and filtre_dept.strip():
+    depts = [d.strip() for d in filtre_dept.split(',') if d.strip()]
+    if depts:
+        filtres['departements'] = depts
 
-if filtre_recherche:
-    filtres['recherche'] = filtre_recherche
+# Ne pas ajouter recherche si vide ou None
+if filtre_recherche and isinstance(filtre_recherche, str) and filtre_recherche.strip():
+    filtres['recherche'] = str(filtre_recherche).strip()
 
 # ✅ Bouton pour importer les résultats depuis GitHub Actions
 col_import1, col_import2 = st.columns([1, 4])
@@ -172,8 +176,41 @@ with col_import1:
                                                     
                                                     result_data = None
                                                     if results_file.exists():
-                                                        with open(results_file, 'r', encoding='utf-8') as f:
-                                                            result_data = json.load(f)
+                                                        try:
+                                                            with open(results_file, 'r', encoding='utf-8') as f:
+                                                                content = f.read().strip()
+                                                                # Gérer le cas où le fichier contient plusieurs objets JSON
+                                                                if content.startswith('['):
+                                                                    # Si c'est un tableau JSON, le parser directement
+                                                                    result_data = json.loads(content)
+                                                                elif content.startswith('{'):
+                                                                    # Si c'est un objet JSON, essayer de parser
+                                                                    # Si "Extra data", prendre seulement le premier objet
+                                                                    try:
+                                                                        result_data = json.loads(content)
+                                                                    except json.JSONDecodeError:
+                                                                        # Extraire le premier objet JSON valide
+                                                                        first_brace = content.find('{')
+                                                                        if first_brace != -1:
+                                                                            # Trouver la fin du premier objet JSON
+                                                                            brace_count = 0
+                                                                            end_pos = first_brace
+                                                                            for i, char in enumerate(content[first_brace:], first_brace):
+                                                                                if char == '{':
+                                                                                    brace_count += 1
+                                                                                elif char == '}':
+                                                                                    brace_count -= 1
+                                                                                    if brace_count == 0:
+                                                                                        end_pos = i + 1
+                                                                                        break
+                                                                            if end_pos > first_brace:
+                                                                                result_data = json.loads(content[first_brace:end_pos])
+                                                        except json.JSONDecodeError as json_err:
+                                                            st.warning(f"Erreur parsing JSON (ignoré): {json_err}")
+                                                            result_data = None
+                                                        except Exception as e:
+                                                            st.warning(f"Erreur lecture fichier: {e}")
+                                                            result_data = None
                                                     
                                                     # Nettoyer
                                                     zip_path.unlink()
@@ -188,7 +225,7 @@ with col_import1:
                                     return None
                                 return None
                             except Exception as e:
-                                logger.error(f"Erreur téléchargement artifact: {e}")
+                                st.error(f"Erreur téléchargement artifact: {e}")
                                 return None
                         
                         # Récupérer les workflows terminés
@@ -203,19 +240,13 @@ with col_import1:
                         
                         if response.status_code == 200:
                             runs = response.json().get('workflow_runs', [])
-                            st.info(f"🔍 [DEBUG] {len(runs)} workflow(s) terminé(s) trouvé(s)")
                             for run in runs:
                                 run_id = run.get('id')
-                                run_name = run.get('name', 'N/A')
-                                st.info(f"🔍 [DEBUG] Traitement workflow: {run_name} (ID: {run_id})")
                                 if run_id:
                                     artifact_data = download_github_artifact(github_token, github_repo, run_id)
                                     if artifact_data:
                                         results_list = artifact_data.get('results', [])
-                                        st.info(f"🔍 [DEBUG] {len(results_list)} résultat(s) dans l'artifact")
                                         if isinstance(results_list, list) and len(results_list) > 0:
-                                            for i, info in enumerate(results_list[:10]):  # Limiter à 10 pour les logs
-                                                st.info(f"🔍 [DEBUG] Résultat #{i+1}: {info.get('nom', 'N/A')} - CP: {info.get('code_postal', 'N/A')} - Ville: {info.get('ville', 'N/A')}")
                                             for info in results_list:
                                                 try:
                                                     artisan_data = {
@@ -231,17 +262,12 @@ with col_import1:
                                                         'note': info.get('note'),
                                                         'nombre_avis': info.get('nb_avis') or info.get('nombre_avis')
                                                     }
-                                                    st.info(f"🔍 [DEBUG] Tentative import: {artisan_data.get('nom_entreprise')} - CP: {artisan_data.get('code_postal')} - Ville: {artisan_data.get('ville')}")
                                                     artisan_id = ajouter_artisan(artisan_data)
                                                     if artisan_id:
                                                         imported_count += 1
-                                                        st.info(f"✅ [DEBUG] Artisan importé (ID: {artisan_id})")
-                                                    else:
-                                                        st.info(f"⚠️ [DEBUG] Artisan non importé (déjà existant ou erreur)")
                                                 except Exception as e:
-                                                    if "UNIQUE constraint" in str(e) or "duplicate" in str(e).lower():
-                                                        st.info(f"⚠️ [DEBUG] Doublon ignoré: {info.get('nom', 'N/A')}")
-                                                    else:
+                                                    # Ignorer silencieusement les doublons
+                                                    if "UNIQUE constraint" not in str(e) and "duplicate" not in str(e).lower():
                                                         st.error(f"Erreur import: {e}")
                             if imported_count > 0:
                                 st.success(f"✅ {imported_count} résultat(s) importé(s) !")
@@ -261,7 +287,8 @@ with col_import1:
 
 # Récupérer artisans (toujours recharger depuis la BDD)
 # ✅ Toujours recharger depuis la BDD pour avoir les dernières données
-artisans = get_artisans(filtres=filtres, limit=500)
+# ✅ Pas de limite pour afficher tous les artisans
+artisans = get_artisans(filtres=filtres, limit=None)
 
 # ✅ Afficher un message si des données sont trouvées
 if artisans:
@@ -334,15 +361,21 @@ else:
     col_act1, col_act2, col_act3 = st.columns(3)
     
     with col_act1:
-        if st.button("📥 Exporter en CSV"):
-            df_export = pd.DataFrame(artisans)
-            csv = df_export.to_csv(index=False)
-            st.download_button(
-                "Télécharger CSV",
-                csv,
-                f"artisans_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                "text/csv"
-            )
+        # Préparer le DataFrame pour l'export (utiliser le même format que l'affichage)
+        df_export = pd.DataFrame(data)  # Utiliser 'data' qui est déjà formaté pour l'affichage
+        
+        # Créer un fichier Excel en mémoire
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df_export.to_excel(writer, index=False, sheet_name='Artisans')
+        output.seek(0)
+        
+        st.download_button(
+            "📥 Télécharger en XLSX",
+            output.getvalue(),
+            f"artisans_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
     
     with col_act2:
         if st.button("📋 Copier tous les numéros"):

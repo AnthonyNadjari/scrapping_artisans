@@ -456,7 +456,7 @@ class GoogleMapsScraper:
             # ✅ DEBUG : Afficher le HTML après scroll initial
             try:
                 panneau_html_after_scroll = panneau.get_attribute('outerHTML')[:2000] if panneau else ''
-                logger.info(f"   📜 [DEBUG] HTML du panneau après détection (premiers 2000 chars): {panneau_html_after_scroll}")
+                # ✅ Logs de debug supprimés pour améliorer les performances
             except:
                 pass
             
@@ -494,10 +494,7 @@ class GoogleMapsScraper:
             # ✅ DEBUG : Afficher le HTML après scroll complet
             try:
                 panneau_html_final = panneau.get_attribute('outerHTML')[:3000] if panneau else ''
-                logger.info(f"   📜 [DEBUG] HTML du panneau après scroll complet (premiers 3000 chars): {panneau_html_final}")
-                # Afficher aussi le texte
-                panneau_text_final = panneau.text[:1000] if panneau.text else ''
-                logger.info(f"   📜 [DEBUG] Texte du panneau après scroll (premiers 1000 chars): {panneau_text_final}")
+                # ✅ Logs de debug supprimés pour améliorer les performances
             except:
                 pass
             
@@ -534,7 +531,7 @@ class GoogleMapsScraper:
             
             # 3. CRITIQUE: Attendre que le JavaScript de Google Maps charge le contenu
             # On attend que des éléments spécifiques créés par JS apparaissent
-            logger.info("   ⏳ Attente du chargement JavaScript de Google Maps...")
+            # ✅ Logs de debug supprimés pour améliorer les performances
             
             # Attendre que jQuery ou les scripts Google Maps soient chargés
             try:
@@ -575,8 +572,8 @@ class GoogleMapsScraper:
                 logger.warning("   ⚠️ Aucun élément JS détecté, mais continuation...")
             
             # 5. Attendre que le DOM se stabilise (plus de changements)
-            logger.info("   ⏳ Attente stabilisation DOM...")
-            time.sleep(1)  # ✅ OPTIMISATION MAX : Réduit de 3s à 1s
+            # ✅ Optimisation : Réduire le délai de stabilisation
+            time.sleep(0.5)  # Réduit de 1s à 0.5s
             
             # 6. Vérifier que la page n'est plus en train de charger
             try:
@@ -737,7 +734,7 @@ class GoogleMapsScraper:
         
         # CRITIQUE: Attendre d'abord que le JavaScript crée la barre de recherche
         # On attend qu'un input avec certains attributs apparaisse
-        logger.info("   ⏳ Attente création de la barre de recherche par JavaScript...")
+        # ✅ Logs de debug supprimés pour améliorer les performances
         
         # Attendre jusqu'à 15 secondes que la barre apparaisse
         try:
@@ -978,7 +975,7 @@ class GoogleMapsScraper:
                         return False, None
                     
                     # Attendre que Google Maps charge COMPLÈTEMENT
-                    logger.info("   ⏳ Attente chargement complet Google Maps...")
+                    # ✅ Logs de debug supprimés pour améliorer les performances
                     # ✅ Utiliser le multiplicateur pour GitHub Actions (sans changer la logique locale)
                     timeout_chargement = int(30 * self.timeout_multiplier)
                     self._attendre_chargement_complet(timeout=timeout_chargement)
@@ -989,7 +986,7 @@ class GoogleMapsScraper:
                 time.sleep(1)
                 
                 # ÉTAPE 3 : Attendre que le panneau de résultats soit chargé
-                logger.info("   ⏳ Attente du panneau de résultats...")
+                # ✅ Logs de debug supprimés pour améliorer les performances
                 
                 # Essayer plusieurs sélecteurs avec timeouts progressifs
                 # ✅ Utiliser le multiplicateur pour GitHub Actions (sans changer la logique locale)
@@ -1062,7 +1059,7 @@ class GoogleMapsScraper:
                     
                     # Attendre explicitement que les RÉSULTATS apparaissent
                     if panneau_trouve:
-                        logger.info("   ⏳ Attente des résultats de recherche...")
+                        # ✅ Logs de debug supprimés pour améliorer les performances
                         # ✅ Utiliser le multiplicateur pour GitHub Actions (sans changer la logique locale)
                         timeout_results = int(30 * self.timeout_multiplier)
                         try:
@@ -2152,10 +2149,8 @@ class GoogleMapsScraper:
                         else:
                             raise
                 
-                # ✅ FIX CRITIQUE : Augmenter le délai pour éviter la contamination du panneau
-                # Sur GitHub Actions, attendre plus longtemps
-                delay_after_click = 3.0 * self.delay_multiplier  # 3.0s local, 9.0s sur GitHub Actions
-                logger.info(f"  [{index}] ⏳ Attente {delay_after_click:.1f}s après clic pour chargement panneau...")
+                # ✅ Optimisation : Réduire le délai après clic pour gagner du temps
+                delay_after_click = 2.0 * self.delay_multiplier  # 2.0s local, 6.0s sur GitHub Actions (réduit de 3.0s)
                 time.sleep(delay_after_click)
                 
                 # ✅ Attendre que le panneau de détail soit complètement chargé
@@ -2165,15 +2160,10 @@ class GoogleMapsScraper:
                         lambda d: len(d.find_elements(By.CSS_SELECTOR, 'div[role="complementary"]')) > 0 or
                                   len(d.find_elements(By.CSS_SELECTOR, 'div[jsaction*="pane"]')) > 0
                     )
-                    # Attendre un peu plus pour que le contenu se charge
-                    time.sleep(1 * self.delay_multiplier)
+                    # Attendre un peu plus pour que le contenu se charge (réduit)
+                    time.sleep(0.5 * self.delay_multiplier)
                     
-                    # ✅ DEBUG : Afficher le HTML de la page après chargement du panneau
-                    try:
-                        page_html_snippet = self.driver.page_source[:3000]
-                        logger.info(f"  [{index}] 🔷 [DEBUG] HTML de la page après clic (premiers 3000 chars): {page_html_snippet}")
-                    except:
-                        pass
+                    # ✅ Logs de debug supprimés pour améliorer les performances
                 except:
                     pass  # Si timeout, continuer quand même
                 
@@ -2598,32 +2588,7 @@ class GoogleMapsScraper:
                 except Exception as e:
                     logger.debug(f"  Erreur extraction site web (panneau): {e}")
                 
-                # ✅ DEBUG : Afficher le texte brut du panneau (COMPLET)
-                try:
-                    panneau_text_debug = search_context.text if hasattr(search_context, 'text') else ''
-                    if not panneau_text_debug:
-                        try:
-                            panneau_text_debug = search_context.get_attribute('textContent') or search_context.get_attribute('innerText') or ''
-                        except:
-                            pass
-                    if panneau_text_debug:
-                        logger.info(f"  [{index}] 📄 [DEBUG] Texte COMPLET du panneau ({len(panneau_text_debug)} chars):")
-                        logger.info(f"  [{index}] 📄 [DEBUG] {panneau_text_debug}")
-                except Exception as e:
-                    logger.warning(f"  [{index}] 📄 [DEBUG] Erreur récupération texte panneau: {e}")
-                
-                # ✅ DEBUG : Afficher le HTML du panneau (premiers 2000 caractères)
-                try:
-                    panneau_html = search_context.get_attribute('outerHTML') if search_context != self.driver else ''
-                    if not panneau_html:
-                        try:
-                            panneau_html = self.driver.execute_script("return arguments[0].outerHTML;", search_context) if search_context != self.driver else ''
-                        except:
-                            pass
-                    if panneau_html:
-                        logger.info(f"  [{index}] 🔷 [DEBUG] HTML du panneau (premiers 2000 chars): {panneau_html[:2000]}")
-                except Exception as e:
-                    logger.warning(f"  [{index}] 🔷 [DEBUG] Erreur récupération HTML panneau: {e}")
+                # ✅ Logs de debug supprimés pour améliorer les performances
                 
                 # Adresse
                 try:
@@ -2649,7 +2614,7 @@ class GoogleMapsScraper:
                             if aria_label and ('Adresse' in aria_label or 'Address' in aria_label):
                                 adresse_brute = aria_label.replace('Adresse: ', '').replace('Address: ', '').strip()
                                 # ✅ NETTOYER l'adresse : enlever "Closed", "Fermé", sauts de ligne, etc.
-                                adresse_clean = re.sub(r'\s*(Closed|Fermé|Fermée|Ouvert|Open)\s*', '', adresse_brute, flags=re.IGNORECASE)
+                                adresse_clean = re.sub(r'\s*(Closed|Closes|Closes soon|Fermé|Fermée|Ouvert|Open|Opens|Opening|Soon)\s*', '', adresse_brute, flags=re.IGNORECASE)
                                 adresse_clean = re.sub(r'\s*\n\s*', ' ', adresse_clean)  # Remplacer sauts de ligne par espaces
                                 adresse_clean = re.sub(r'\s+', ' ', adresse_clean).strip()  # Normaliser les espaces
                                 info['adresse'] = adresse_clean
@@ -2704,7 +2669,7 @@ class GoogleMapsScraper:
                                     if adresse_match:
                                         adresse_brute = adresse_match.group(0).strip()
                                         # ✅ NETTOYER l'adresse : enlever "Closed", "Fermé", sauts de ligne, etc.
-                                        adresse_clean = re.sub(r'\s*(Closed|Fermé|Fermée|Ouvert|Open)\s*', '', adresse_brute, flags=re.IGNORECASE)
+                                        adresse_clean = re.sub(r'\s*(Closed|Closes|Closes soon|Fermé|Fermée|Ouvert|Open|Opens|Opening|Soon)\s*', '', adresse_brute, flags=re.IGNORECASE)
                                         adresse_clean = re.sub(r'\s*\n\s*', ' ', adresse_clean)  # Remplacer sauts de ligne par espaces
                                         adresse_clean = re.sub(r'\s+', ' ', adresse_clean).strip()  # Normaliser les espaces
                                         info['adresse'] = adresse_clean
@@ -2848,7 +2813,7 @@ class GoogleMapsScraper:
                                                 info['departement'] = info['code_postal'][:2]
                                                 logger.info(f"  [{index}] 🗺️ [DEBUG] Département extrait: {info['departement']}")
                                         else:
-                                            logger.warning(f"  [{index}] 📮 [DEBUG] Aucun code postal trouvé dans le panneau (texte: {panneau_text[:500]})")
+                                            pass
                                     
                                     # ✅ Utiliser ville_recherche si pas de ville trouvée (PRIORITÉ)
                                     if not info.get('ville'):
@@ -2856,18 +2821,16 @@ class GoogleMapsScraper:
                                         if ville_recherche:
                                             info['ville'] = ville_recherche
                                             info['ville_recherche'] = ville_recherche
-                                            logger.info(f"  [{index}] 🏙️ [DEBUG] Ville utilisée depuis ville_recherche (pas d'adresse): {info['ville']}")
                         except Exception as e:
                             logger.debug(f"  [{index}] Erreur extraction adresse depuis texte: {e}")
                     
                     if not info['adresse']:
-                        logger.warning(f"  [{index}] ⚠️ [DEBUG] Aucune adresse trouvée")
+                        pass
                 except Exception as e:
-                    logger.warning(f"  [{index}] ⚠️ [DEBUG] Erreur extraction adresse: {e}")
+                    logger.warning(f"  [{index}] ⚠️ Erreur extraction adresse: {e}")
                 
                 # ✅ Note et Nombre d'avis - Chercher ENSEMBLE car ils sont souvent dans le même élément
                 try:
-                    logger.info(f"  [{index}] 🔍 Recherche de la note et du nombre d'avis...")
                     
                     # ✅ PRIORITÉ 1 : Chercher span[role="img"] avec aria-label contenant note ET avis
                     # Exemple: <span role="img" aria-label="4,8 étoiles 107 avis">
@@ -2877,16 +2840,7 @@ class GoogleMapsScraper:
                         'span[role="img"][aria-label*="avis"], '
                         'span[role="img"][aria-label*="review"]'
                     )
-                    logger.info(f"  [{index}] ⭐📊 [DEBUG] Éléments span[role='img'] trouvés: {len(note_avis_elems)}")
-                    
-                    # ✅ DEBUG : Afficher tous les aria-label de ces éléments
-                    for i, elem in enumerate(note_avis_elems[:10]):  # Limiter à 10
-                        try:
-                            aria = elem.get_attribute('aria-label') or 'N/A'
-                            text = elem.text or 'N/A'
-                            logger.info(f"  [{index}] ⭐📊 [DEBUG] Élément #{i+1} - aria-label: {aria[:200]} | text: {text[:100]}")
-                        except:
-                            pass
+                    # ✅ Logs de debug supprimés pour améliorer les performances
                     
                     # ✅ FIX CRITIQUE : Prendre le PREMIER élément qui correspond au nom de l'établissement
                     # Éviter de prendre la note d'un autre établissement dans le panneau
@@ -2909,7 +2863,7 @@ class GoogleMapsScraper:
                                     elem_text = elem.text or ''
                                     if nom_etablissement[:10] not in elem_text.lower():
                                         # Cet élément n'appartient probablement pas au bon établissement
-                                        logger.debug(f"  [{index}] ⚠️ [DEBUG] Élément note ignoré (nom non trouvé dans contexte)")
+                                        # ✅ Logs de debug supprimés pour améliorer les performances
                                         continue
                             except:
                                 # Si erreur, prendre quand même mais seulement si c'est le premier élément
@@ -2928,8 +2882,6 @@ class GoogleMapsScraper:
                                 
                                 info['note'] = note_val
                                 info['nb_avis'] = avis_val
-                                logger.info(f"  [{index}] ⭐ [DEBUG] Note extraite: {info['note']}")
-                                logger.info(f"  [{index}] 📊 [DEBUG] Nombre d'avis extrait: {info['nb_avis']}")
                                 note_trouvee = True
                                 break
                             elif note_match:
@@ -2937,7 +2889,6 @@ class GoogleMapsScraper:
                                 note_str = note_match.group(1).replace(',', '.')
                                 note_val = float(note_str)
                                 info['note'] = note_val
-                                logger.info(f"  [{index}] ⭐ [DEBUG] Note extraite: {info['note']}")
                                 note_trouvee = True
                                 # Continuer à chercher l'avis
                     
@@ -2954,7 +2905,6 @@ class GoogleMapsScraper:
                             note = self._extraire_note(note_elem)
                             if note:
                                 info['note'] = note
-                                logger.info(f"  [{index}] ⭐ [DEBUG] Note extraite (premier élément): {info['note']}")
                     
                     # ✅ PRIORITÉ 3 : Chercher le nombre d'avis dans span.UY7F9 (format Google Maps)
                     # ✅ FIX : Prendre le PREMIER élément seulement (éviter contamination)
@@ -2963,22 +2913,12 @@ class GoogleMapsScraper:
                             'span.UY7F9, '
                             'span[class*="UY7F9"]'
                         )
-                        logger.info(f"  [{index}] 📊 [DEBUG] Nombre d'avis (span.UY7F9): {len(avis_elems)}")
-                        # ✅ DEBUG : Afficher le texte de tous les span.UY7F9
-                        for i, avis_elem in enumerate(avis_elems[:10]):  # Limiter à 10
-                            try:
-                                text = avis_elem.text or 'N/A'
-                                aria = avis_elem.get_attribute('aria-label') or 'N/A'
-                                logger.info(f"  [{index}] 📊 [DEBUG] span.UY7F9 #{i+1} - text: {text[:100]} | aria-label: {aria[:200]}")
-                            except:
-                                pass
                         # ✅ Prendre seulement le PREMIER élément pour éviter la contamination
                         if avis_elems:
                             avis_elem = avis_elems[0]  # Premier élément seulement
                             nb = self._extraire_nb_avis(avis_elem)
                             if nb:
                                 info['nb_avis'] = nb
-                                logger.info(f"  [{index}] 📊 [DEBUG] Nombre d'avis extrait (premier élément): {info['nb_avis']}")
                     
                     # ✅ PRIORITÉ 4 : Chercher dans le texte avec pattern (X)
                     if not info.get('nb_avis'):
@@ -3342,7 +3282,7 @@ class GoogleMapsScraper:
                         logger.warning(f"  ⚠️ [{i}/{len(etablissements_elems)}] Aucune donnée extraite (toutes les données sont None)")
                     
                     # ✅ OPTIMISATION MAX : Pause minimale entre établissements
-                    time.sleep(random.uniform(0.1, 0.3))  # Réduit à 0.1-0.3s (minimum)
+                    time.sleep(random.uniform(0.05, 0.15))  # Réduit à 0.05-0.15s pour gagner du temps
                     
                 except StaleElementReferenceException:
                     logger.warning(f"  ⚠️ Élément stale [{i}/{len(etablissements_elems)}], skip")
