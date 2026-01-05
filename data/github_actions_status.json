@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-05T19:59:55.289580",
   "total_tasks": 15432,
-  "completed_tasks": 292,
+  "completed_tasks": 309,
   "failed_tasks": 0,
-  "total_results": 1786,
+  "total_results": 1915,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -1756,7 +1756,109 @@
       "results_count": 18,
       "completed_at": "2026-01-05T22:19:48.480823",
       "error": null
+    },
+    "plombier_77_Mary-sur-Marne": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-05T22:20:36.816478",
+      "error": null
+    },
+    "plombier_77_Villemaréchal": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T22:20:52.979193",
+      "error": null
+    },
+    "plombier_77_Saint-Sauveur-sur-École": {
+      "status": "completed",
+      "results_count": 14,
+      "completed_at": "2026-01-05T22:21:21.216126",
+      "error": null
+    },
+    "plombier_77_Sivry-Courtry": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T22:21:39.969489",
+      "error": null
+    },
+    "plombier_77_Isles-lès-Villenoy": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-05T22:21:57.458283",
+      "error": null
+    },
+    "plombier_77_Villeneuve-sur-Bellot": {
+      "status": "completed",
+      "results_count": 14,
+      "completed_at": "2026-01-05T22:23:11.694872",
+      "error": null
+    },
+    "plombier_77_Guermantes": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T22:25:10.147143",
+      "error": null
+    },
+    "plombier_77_Sammeron": {
+      "status": "completed",
+      "results_count": 16,
+      "completed_at": "2026-01-05T22:25:14.120232",
+      "error": null
+    },
+    "plombier_77_Villiers-Saint-Georges": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T22:25:25.552090",
+      "error": null
+    },
+    "plombier_77_Beaumont-du-Gâtinais": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-05T22:26:14.717109",
+      "error": null
+    },
+    "plombier_77_Gouvernes": {
+      "status": "completed",
+      "results_count": 15,
+      "completed_at": "2026-01-05T22:26:37.348107",
+      "error": null
+    },
+    "plombier_77_Voisenon": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T22:27:11.332124",
+      "error": null
+    },
+    "plombier_77_Salins": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T22:27:27.626998",
+      "error": null
+    },
+    "plombier_77_Armentières-en-Brie": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-05T22:28:06.532484",
+      "error": null
+    },
+    "plombier_77_Boissise-la-Bertrand": {
+      "status": "completed",
+      "results_count": 17,
+      "completed_at": "2026-01-05T22:28:49.155572",
+      "error": null
+    },
+    "plombier_77_Lorrez-le-Bocage-Préaux": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-05T22:29:19.919140",
+      "error": null
+    },
+    "plombier_77_La Celle-sur-Morin": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-05T22:30:22.276389",
+      "error": null
     }
   },
-  "last_updated": "2026-01-05T22:19:48.481021"
+  "last_updated": "2026-01-05T22:30:22.276518"
 }
