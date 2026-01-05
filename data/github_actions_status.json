@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-05T19:59:55.289580",
   "total_tasks": 15432,
-  "completed_tasks": 167,
+  "completed_tasks": 189,
   "failed_tasks": 0,
-  "total_results": 1000,
+  "total_results": 1110,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -1006,7 +1006,139 @@
       "results_count": 4,
       "completed_at": "2026-01-05T21:20:06.342801",
       "error": null
+    },
+    "plombier_77_Coulombs-en-Valois": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-05T21:21:48.662176",
+      "error": null
+    },
+    "plombier_77_Léchelle": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-05T21:22:25.725432",
+      "error": null
+    },
+    "plombier_77_Fontaine-Fourches": {
+      "status": "completed",
+      "results_count": 9,
+      "completed_at": "2026-01-05T21:22:47.061691",
+      "error": null
+    },
+    "plombier_77_Noisy-Rudignon": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-05T21:22:51.241676",
+      "error": null
+    },
+    "plombier_77_Saint-Germain-sous-Doue": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-05T21:23:14.606987",
+      "error": null
+    },
+    "plombier_77_Crisenoy": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-05T21:23:30.223696",
+      "error": null
+    },
+    "plombier_77_Everly": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T21:23:39.176810",
+      "error": null
+    },
+    "plombier_77_Bussières": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T21:23:42.536620",
+      "error": null
+    },
+    "plombier_77_Voinsles": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T21:24:07.774848",
+      "error": null
+    },
+    "plombier_77_Sept-Sorts": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-05T21:26:01.099112",
+      "error": null
+    },
+    "plombier_77_Flagy": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T21:26:21.362065",
+      "error": null
+    },
+    "plombier_77_Iverny": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-05T21:26:35.017491",
+      "error": null
+    },
+    "plombier_77_Nonville": {
+      "status": "completed",
+      "results_count": 14,
+      "completed_at": "2026-01-05T21:26:47.742232",
+      "error": null
+    },
+    "plombier_77_Féricy": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-05T21:27:02.667262",
+      "error": null
+    },
+    "plombier_77_Le Plessis-Feu-Aussoux": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-05T21:27:05.484038",
+      "error": null
+    },
+    "plombier_77_Villeneuve-sous-Dammartin": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-05T21:27:07.790406",
+      "error": null
+    },
+    "plombier_77_Saint-Mesmes": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T21:29:00.215792",
+      "error": null
+    },
+    "plombier_77_Limoges-Fourches": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T21:29:25.954269",
+      "error": null
+    },
+    "plombier_77_Savins": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T21:29:49.449550",
+      "error": null
+    },
+    "plombier_77_Marchémoret": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-05T21:29:54.971859",
+      "error": null
+    },
+    "plombier_77_Cocherel": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-05T21:29:59.191303",
+      "error": null
+    },
+    "plombier_77_Verdelot": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-05T21:30:03.108650",
+      "error": null
     }
   },
-  "last_updated": "2026-01-05T21:20:06.342856"
+  "last_updated": "2026-01-05T21:30:03.108734"
 }
