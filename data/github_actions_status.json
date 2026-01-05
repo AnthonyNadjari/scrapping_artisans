@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-05T19:59:55.289580",
   "total_tasks": 15432,
-  "completed_tasks": 231,
+  "completed_tasks": 253,
   "failed_tasks": 0,
-  "total_results": 1396,
+  "total_results": 1510,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -1390,7 +1390,139 @@
       "results_count": 2,
       "completed_at": "2026-01-05T21:50:26.960289",
       "error": null
+    },
+    "plombier_77_Buthiers": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-05T21:50:29.469281",
+      "error": null
+    },
+    "plombier_77_Poincy": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-05T21:51:02.087013",
+      "error": null
+    },
+    "plombier_77_Machault": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-05T21:51:08.705644",
+      "error": null
+    },
+    "plombier_77_Poligny": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-05T21:51:40.288202",
+      "error": null
+    },
+    "plombier_77_Sablonnières": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T21:51:53.403721",
+      "error": null
+    },
+    "plombier_77_Blandy": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T21:52:23.132485",
+      "error": null
+    },
+    "plombier_77_Bellot": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T21:53:41.699729",
+      "error": null
+    },
+    "plombier_77_Ville-Saint-Jacques": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-05T21:54:03.888106",
+      "error": null
+    },
+    "plombier_77_Étrépilly": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-05T21:54:04.189435",
+      "error": null
+    },
+    "plombier_77_Reuil-en-Brie": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-05T21:54:11.527367",
+      "error": null
+    },
+    "plombier_77_Amillis": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-05T21:54:48.891853",
+      "error": null
+    },
+    "plombier_77_Dormelles": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T21:55:50.913556",
+      "error": null
+    },
+    "plombier_77_Gressy": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T21:56:01.756218",
+      "error": null
+    },
+    "plombier_77_Champeaux": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T21:57:08.448587",
+      "error": null
+    },
+    "plombier_77_Chaintreaux": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-05T21:57:40.351414",
+      "error": null
+    },
+    "plombier_77_La Genevraye": {
+      "status": "completed",
+      "results_count": 9,
+      "completed_at": "2026-01-05T21:57:50.184006",
+      "error": null
+    },
+    "plombier_77_Pécy": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-05T21:58:23.226988",
+      "error": null
+    },
+    "plombier_77_Saint-Ouen-en-Brie": {
+      "status": "completed",
+      "results_count": 10,
+      "completed_at": "2026-01-05T21:58:29.457296",
+      "error": null
+    },
+    "plombier_77_Compans": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T21:58:58.295785",
+      "error": null
+    },
+    "plombier_77_Saint-Brice": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-05T21:59:33.048786",
+      "error": null
+    },
+    "plombier_77_Boutigny": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-05T21:59:47.691684",
+      "error": null
+    },
+    "plombier_77_Soisy-Bouy": {
+      "status": "completed",
+      "results_count": 12,
+      "completed_at": "2026-01-05T22:00:29.496349",
+      "error": null
     }
   },
-  "last_updated": "2026-01-05T21:50:26.960351"
+  "last_updated": "2026-01-05T22:00:29.496414"
 }
