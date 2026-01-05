@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-05T19:59:55.289580",
   "total_tasks": 15432,
-  "completed_tasks": 55,
+  "completed_tasks": 76,
   "failed_tasks": 0,
-  "total_results": 348,
+  "total_results": 505,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -334,7 +334,133 @@
       "results_count": 7,
       "completed_at": "2026-01-05T20:29:44.385432",
       "error": null
+    },
+    "plombier_77_La Chapelle-Saint-Sulpice": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-05T20:30:31.725751",
+      "error": null
+    },
+    "plombier_77_Le Plessis-aux-Bois": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-05T20:31:07.785738",
+      "error": null
+    },
+    "plombier_77_Hondevilliers": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-05T20:31:19.144255",
+      "error": null
+    },
+    "plombier_77_Chevrainvilliers": {
+      "status": "completed",
+      "results_count": 9,
+      "completed_at": "2026-01-05T20:31:58.455352",
+      "error": null
+    },
+    "plombier_77_Forfry": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-05T20:32:06.998056",
+      "error": null
+    },
+    "plombier_77_Hautefeuille": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:32:58.104486",
+      "error": null
+    },
+    "plombier_77_Saint-Martin-du-Boschet": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-05T20:33:39.203814",
+      "error": null
+    },
+    "plombier_77_Saint-Just-en-Brie": {
+      "status": "completed",
+      "results_count": 15,
+      "completed_at": "2026-01-05T20:34:11.736485",
+      "error": null
+    },
+    "plombier_77_Fontains": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:35:05.600269",
+      "error": null
+    },
+    "plombier_77_Villuis": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:35:16.452999",
+      "error": null
+    },
+    "plombier_77_Vincy-Manœuvre": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-05T20:35:33.006385",
+      "error": null
+    },
+    "plombier_77_Boissy-aux-Cailles": {
+      "status": "completed",
+      "results_count": 12,
+      "completed_at": "2026-01-05T20:35:56.778141",
+      "error": null
+    },
+    "plombier_77_Augers-en-Brie": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-05T20:36:52.832362",
+      "error": null
+    },
+    "plombier_77_Vaucourtois": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-05T20:37:03.731599",
+      "error": null
+    },
+    "plombier_77_Coutençon": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:37:06.254495",
+      "error": null
+    },
+    "plombier_77_Guercheville": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:37:42.924438",
+      "error": null
+    },
+    "plombier_77_Villiers-sur-Seine": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-05T20:37:55.172319",
+      "error": null
+    },
+    "plombier_77_Le Plessis-l'Évêque": {
+      "status": "completed",
+      "results_count": 9,
+      "completed_at": "2026-01-05T20:39:11.097187",
+      "error": null
+    },
+    "plombier_77_Cerneux": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:39:32.361170",
+      "error": null
+    },
+    "plombier_77_Voulton": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-05T20:39:59.727182",
+      "error": null
+    },
+    "plombier_77_Chartronges": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-05T20:40:12.093861",
+      "error": null
     }
   },
-  "last_updated": "2026-01-05T20:29:44.385474"
+  "last_updated": "2026-01-05T20:40:12.093909"
 }
