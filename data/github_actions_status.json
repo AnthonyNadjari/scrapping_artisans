@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-05T19:59:55.289580",
   "total_tasks": 15432,
-  "completed_tasks": 98,
+  "completed_tasks": 122,
   "failed_tasks": 0,
-  "total_results": 618,
+  "total_results": 752,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -592,7 +592,151 @@
       "results_count": 0,
       "completed_at": "2026-01-05T20:50:12.478726",
       "error": null
+    },
+    "plombier_77_Tousson": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:50:40.166566",
+      "error": null
+    },
+    "plombier_77_Boulancourt": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:50:44.310098",
+      "error": null
+    },
+    "plombier_77_La Madeleine-sur-Loing": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-05T20:52:08.211767",
+      "error": null
+    },
+    "plombier_77_Mauregard": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-05T20:52:25.841236",
+      "error": null
+    },
+    "plombier_77_Amponville": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:53:08.851722",
+      "error": null
+    },
+    "plombier_77_Saint-Sauveur-lès-Bray": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-05T20:53:17.574885",
+      "error": null
+    },
+    "plombier_77_La Haute-Maison": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-05T20:53:24.058659",
+      "error": null
+    },
+    "plombier_77_Argentières": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-05T20:53:34.468591",
+      "error": null
+    },
+    "plombier_77_Balloy": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:53:42.901658",
+      "error": null
+    },
+    "plombier_77_Mouy-sur-Seine": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-05T20:53:45.563674",
+      "error": null
+    },
+    "plombier_77_Melz-sur-Seine": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-05T20:54:33.418281",
+      "error": null
+    },
+    "plombier_77_Châteaubleau": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-05T20:56:02.433149",
+      "error": null
+    },
+    "plombier_77_Bréau": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-05T20:56:13.212639",
+      "error": null
+    },
+    "plombier_77_Beauchery-Saint-Martin": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-05T20:56:19.406496",
+      "error": null
+    },
+    "plombier_77_Saint-Germain-sur-École": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-05T20:56:23.194147",
+      "error": null
+    },
+    "plombier_77_Noyen-sur-Seine": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-05T20:56:38.151968",
+      "error": null
+    },
+    "plombier_77_Aulnoy": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:57:19.067942",
+      "error": null
+    },
+    "plombier_77_Vinantes": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-05T20:57:28.725608",
+      "error": null
+    },
+    "plombier_77_Ocquerre": {
+      "status": "completed",
+      "results_count": 10,
+      "completed_at": "2026-01-05T20:58:00.606985",
+      "error": null
+    },
+    "plombier_77_Sognolles-en-Montois": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:59:00.324066",
+      "error": null
+    },
+    "plombier_77_Bassevelle": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-05T20:59:28.272180",
+      "error": null
+    },
+    "plombier_77_Barcy": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T21:00:08.841318",
+      "error": null
+    },
+    "plombier_77_Douy-la-Ramée": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-05T21:00:13.466534",
+      "error": null
+    },
+    "plombier_77_Tigeaux": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-05T21:00:24.393708",
+      "error": null
     }
   },
-  "last_updated": "2026-01-05T20:50:12.478777"
+  "last_updated": "2026-01-05T21:00:24.393761"
 }
