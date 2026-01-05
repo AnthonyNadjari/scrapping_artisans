@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-05T19:59:55.289580",
   "total_tasks": 15432,
-  "completed_tasks": 17,
+  "completed_tasks": 35,
   "failed_tasks": 0,
-  "total_results": 85,
+  "total_results": 179,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -106,7 +106,115 @@
       "results_count": 6,
       "completed_at": "2026-01-05T20:09:54.848679",
       "error": null
+    },
+    "plombier_77_Les Marêts": {
+      "status": "completed",
+      "results_count": 10,
+      "completed_at": "2026-01-05T20:10:50.614032",
+      "error": null
+    },
+    "plombier_77_Gironville": {
+      "status": "completed",
+      "results_count": 11,
+      "completed_at": "2026-01-05T20:12:37.374635",
+      "error": null
+    },
+    "plombier_77_Frétoy": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-05T20:12:43.158070",
+      "error": null
+    },
+    "plombier_77_Châtenoy": {
+      "status": "completed",
+      "results_count": 20,
+      "completed_at": "2026-01-05T20:12:45.098539",
+      "error": null
+    },
+    "plombier_77_Barbey": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:12:53.421078",
+      "error": null
+    },
+    "plombier_77_Lizines": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-05T20:13:10.543581",
+      "error": null
+    },
+    "plombier_77_Gravon": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:13:14.436742",
+      "error": null
+    },
+    "plombier_77_Ichy": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:13:15.667910",
+      "error": null
+    },
+    "plombier_77_Beauvoir": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-05T20:13:55.603622",
+      "error": null
+    },
+    "plombier_77_Leudon-en-Brie": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:15:46.329446",
+      "error": null
+    },
+    "plombier_77_Vanvillé": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-05T20:16:19.245424",
+      "error": null
+    },
+    "plombier_77_Paroy": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:16:29.097630",
+      "error": null
+    },
+    "plombier_77_Champcenest": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-05T20:16:52.650692",
+      "error": null
+    },
+    "plombier_77_Vieux-Champagne": {
+      "status": "completed",
+      "results_count": 9,
+      "completed_at": "2026-01-05T20:17:01.743785",
+      "error": null
+    },
+    "plombier_77_Courquetaine": {
+      "status": "completed",
+      "results_count": 16,
+      "completed_at": "2026-01-05T20:18:11.307765",
+      "error": null
+    },
+    "plombier_77_Cessoy-en-Montois": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-05T20:19:24.520389",
+      "error": null
+    },
+    "plombier_77_Courcelles-en-Bassée": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-05T20:19:25.456218",
+      "error": null
+    },
+    "plombier_77_Diant": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:19:49.178630",
+      "error": null
     }
   },
-  "last_updated": "2026-01-05T20:09:54.848709"
+  "last_updated": "2026-01-05T20:19:49.178666"
 }
