@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-05T19:59:55.289580",
   "total_tasks": 15432,
-  "completed_tasks": 35,
+  "completed_tasks": 55,
   "failed_tasks": 0,
-  "total_results": 179,
+  "total_results": 348,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -214,7 +214,127 @@
       "results_count": 0,
       "completed_at": "2026-01-05T20:19:49.178630",
       "error": null
+    },
+    "plombier_77_Châtillon-la-Borde": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-05T20:20:28.155101",
+      "error": null
+    },
+    "plombier_77_La Tombe": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:20:31.042959",
+      "error": null
+    },
+    "plombier_77_Bezalles": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-05T20:20:40.036446",
+      "error": null
+    },
+    "plombier_77_Giremoutiers": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-05T20:21:17.543172",
+      "error": null
+    },
+    "plombier_77_La Chapelle-Iger": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-05T20:22:05.143607",
+      "error": null
+    },
+    "plombier_77_Meigneux": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-05T20:23:37.219304",
+      "error": null
+    },
+    "plombier_77_Trocy-en-Multien": {
+      "status": "completed",
+      "results_count": 12,
+      "completed_at": "2026-01-05T20:24:03.708091",
+      "error": null
+    },
+    "plombier_77_Germigny-sous-Coulombs": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-05T20:24:26.172276",
+      "error": null
+    },
+    "plombier_77_Montmachoux": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:24:46.406478",
+      "error": null
+    },
+    "plombier_77_Vaux-sur-Lunain": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-05T20:25:15.762474",
+      "error": null
+    },
+    "plombier_77_Fromont": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:25:59.257570",
+      "error": null
+    },
+    "plombier_77_Clos-Fontaine": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:26:08.321422",
+      "error": null
+    },
+    "plombier_77_Luisetaines": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:26:24.272412",
+      "error": null
+    },
+    "plombier_77_Courtacon": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-05T20:27:51.447213",
+      "error": null
+    },
+    "plombier_77_Montdauphin": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:27:52.263781",
+      "error": null
+    },
+    "plombier_77_Ormesson": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-05T20:28:22.994588",
+      "error": null
+    },
+    "plombier_77_Villiers-en-Bière": {
+      "status": "completed",
+      "results_count": 11,
+      "completed_at": "2026-01-05T20:28:30.523210",
+      "error": null
+    },
+    "plombier_77_Saint-Léger": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-05T20:28:41.199867",
+      "error": null
+    },
+    "plombier_77_Montolivet": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-05T20:29:03.760632",
+      "error": null
+    },
+    "plombier_77_Saint-Mars-Vieux-Maisons": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-05T20:29:44.385432",
+      "error": null
     }
   },
-  "last_updated": "2026-01-05T20:19:49.178666"
+  "last_updated": "2026-01-05T20:29:44.385474"
 }
