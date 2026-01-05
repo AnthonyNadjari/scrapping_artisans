@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-05T19:59:55.289580",
   "total_tasks": 15432,
-  "completed_tasks": 189,
+  "completed_tasks": 211,
   "failed_tasks": 0,
-  "total_results": 1110,
+  "total_results": 1265,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -1138,7 +1138,139 @@
       "results_count": 2,
       "completed_at": "2026-01-05T21:30:03.108650",
       "error": null
+    },
+    "plombier_77_Recloses": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-05T21:30:40.362310",
+      "error": null
+    },
+    "plombier_77_Fouju": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-05T21:32:04.463289",
+      "error": null
+    },
+    "plombier_77_Hermé": {
+      "status": "completed",
+      "results_count": 1,
+      "completed_at": "2026-01-05T21:32:10.278151",
+      "error": null
+    },
+    "plombier_77_Les Écrennes": {
+      "status": "completed",
+      "results_count": 19,
+      "completed_at": "2026-01-05T21:32:39.385677",
+      "error": null
+    },
+    "plombier_77_Villeneuve-les-Bordes": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T21:32:55.992571",
+      "error": null
+    },
+    "plombier_77_Jossigny": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-05T21:33:22.819836",
+      "error": null
+    },
+    "plombier_77_Signy-Signets": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T21:33:37.295040",
+      "error": null
+    },
+    "plombier_77_Montceaux-lès-Meaux": {
+      "status": "completed",
+      "results_count": 10,
+      "completed_at": "2026-01-05T21:34:10.311431",
+      "error": null
+    },
+    "plombier_77_Thoury-Férottes": {
+      "status": "completed",
+      "results_count": 11,
+      "completed_at": "2026-01-05T21:34:28.325244",
+      "error": null
+    },
+    "plombier_77_Chalautre-la-Grande": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-05T21:35:27.164583",
+      "error": null
+    },
+    "plombier_77_Quiers": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T21:36:33.786353",
+      "error": null
+    },
+    "plombier_77_Mousseaux-lès-Bray": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-05T21:36:51.435952",
+      "error": null
+    },
+    "plombier_77_Vendrest": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-05T21:37:06.052096",
+      "error": null
+    },
+    "plombier_77_Saint-Martin-des-Champs": {
+      "status": "completed",
+      "results_count": 16,
+      "completed_at": "2026-01-05T21:38:01.114320",
+      "error": null
+    },
+    "plombier_77_Fleury-en-Bière": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-05T21:38:02.896007",
+      "error": null
+    },
+    "plombier_77_Bannost-Villegagnon": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T21:38:38.112400",
+      "error": null
+    },
+    "plombier_77_Orly-sur-Morin": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T21:38:44.003125",
+      "error": null
+    },
+    "plombier_77_Jablines": {
+      "status": "completed",
+      "results_count": 19,
+      "completed_at": "2026-01-05T21:38:50.590529",
+      "error": null
+    },
+    "plombier_77_La Croix-en-Brie": {
+      "status": "completed",
+      "results_count": 19,
+      "completed_at": "2026-01-05T21:39:18.762089",
+      "error": null
+    },
+    "plombier_77_Méry-sur-Marne": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-05T21:39:22.223757",
+      "error": null
+    },
+    "plombier_77_Sainte-Aulde": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-05T21:40:16.228121",
+      "error": null
+    },
+    "plombier_77_Villiers-sous-Grez": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-05T21:40:19.106763",
+      "error": null
     }
   },
-  "last_updated": "2026-01-05T21:30:03.108734"
+  "last_updated": "2026-01-05T21:40:19.106859"
 }
