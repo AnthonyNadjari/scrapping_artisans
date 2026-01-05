@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-05T19:59:55.289580",
   "total_tasks": 15432,
-  "completed_tasks": 76,
+  "completed_tasks": 98,
   "failed_tasks": 0,
-  "total_results": 505,
+  "total_results": 618,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -460,7 +460,139 @@
       "results_count": 3,
       "completed_at": "2026-01-05T20:40:12.093861",
       "error": null
+    },
+    "plombier_77_Chenou": {
+      "status": "completed",
+      "results_count": 11,
+      "completed_at": "2026-01-05T20:40:24.513027",
+      "error": null
+    },
+    "plombier_77_Charmentray": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-05T20:40:24.994869",
+      "error": null
+    },
+    "plombier_77_Nantouillet": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-05T20:40:50.639397",
+      "error": null
+    },
+    "plombier_77_Montigny-le-Guesdier": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-05T20:40:56.880559",
+      "error": null
+    },
+    "plombier_77_Le Plessis-Placy": {
+      "status": "completed",
+      "results_count": 10,
+      "completed_at": "2026-01-05T20:41:10.304093",
+      "error": null
+    },
+    "plombier_77_Dagny": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:41:51.600551",
+      "error": null
+    },
+    "plombier_77_Vignely": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-05T20:43:30.110024",
+      "error": null
+    },
+    "plombier_77_Jaignes": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-05T20:43:37.487361",
+      "error": null
+    },
+    "plombier_77_Puisieux": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-05T20:43:54.423176",
+      "error": null
+    },
+    "plombier_77_Andrezel": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-05T20:44:05.682550",
+      "error": null
+    },
+    "plombier_77_Dhuisy": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-05T20:44:05.922196",
+      "error": null
+    },
+    "plombier_77_Montceaux-lès-Provins": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-05T20:44:09.009406",
+      "error": null
+    },
+    "plombier_77_Mondreville": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-05T20:44:55.766473",
+      "error": null
+    },
+    "plombier_77_Boitron": {
+      "status": "completed",
+      "results_count": 11,
+      "completed_at": "2026-01-05T20:45:22.114867",
+      "error": null
+    },
+    "plombier_77_Thénisy": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:45:45.583082",
+      "error": null
+    },
+    "plombier_77_Égligny": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:46:07.161517",
+      "error": null
+    },
+    "plombier_77_Tancrou": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-05T20:46:34.588670",
+      "error": null
+    },
+    "plombier_77_Sancy-lès-Provins": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-05T20:47:08.546713",
+      "error": null
+    },
+    "plombier_77_Saint-Barthélemy": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-05T20:47:20.479085",
+      "error": null
+    },
+    "plombier_77_Jaulnes": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-05T20:49:30.158226",
+      "error": null
+    },
+    "plombier_77_Lissy": {
+      "status": "completed",
+      "results_count": 12,
+      "completed_at": "2026-01-05T20:49:59.914398",
+      "error": null
+    },
+    "plombier_77_Saint-Méry": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:50:12.478726",
+      "error": null
     }
   },
-  "last_updated": "2026-01-05T20:40:12.093909"
+  "last_updated": "2026-01-05T20:50:12.478777"
 }
