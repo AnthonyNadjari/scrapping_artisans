@@ -1,1 +1,112 @@
-{}
+{
+  "started_at": "2026-01-05T19:59:55.289580",
+  "total_tasks": 15432,
+  "completed_tasks": 17,
+  "failed_tasks": 0,
+  "total_results": 85,
+  "tasks": {
+    "plombier_77_Obsonville": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-05T20:02:58.155012",
+      "error": null
+    },
+    "plombier_77_Grisy-sur-Seine": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-05T20:03:10.317710",
+      "error": null
+    },
+    "plombier_77_Rupéreux": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-05T20:03:10.414319",
+      "error": null
+    },
+    "plombier_77_Vulaines-lès-Provins": {
+      "status": "completed",
+      "results_count": 16,
+      "completed_at": "2026-01-05T20:05:27.253058",
+      "error": null
+    },
+    "plombier_77_Boisdon": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-05T20:06:03.619612",
+      "error": null
+    },
+    "plombier_77_Maisoncelles-en-Gâtinais": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-05T20:06:15.949801",
+      "error": null
+    },
+    "plombier_77_Montenils": {
+      "status": "completed",
+      "results_count": 20,
+      "completed_at": "2026-01-05T20:06:19.344597",
+      "error": null
+    },
+    "plombier_77_Passy-sur-Seine": {
+      "status": "completed",
+      "results_count": 20,
+      "completed_at": "2026-01-05T20:06:20.270173",
+      "error": null
+    },
+    "plombier_77_Sigy": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:06:35.759214",
+      "error": null
+    },
+    "plombier_77_Rumont": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:06:37.023445",
+      "error": null
+    },
+    "plombier_77_Baby": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:06:39.374185",
+      "error": null
+    },
+    "plombier_77_Garentreville": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:06:40.514951",
+      "error": null
+    },
+    "plombier_77_Arville": {
+      "status": "completed",
+      "results_count": 1,
+      "completed_at": "2026-01-05T20:08:11.348702",
+      "error": null
+    },
+    "plombier_77_Burcy": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-05T20:09:11.388979",
+      "error": null
+    },
+    "plombier_77_Gesvres-le-Chapitre": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-05T20:09:37.964325",
+      "error": null
+    },
+    "plombier_77_Mortery": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T20:09:46.057687",
+      "error": null
+    },
+    "plombier_77_Courchamp": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-05T20:09:54.848679",
+      "error": null
+    }
+  },
+  "last_updated": "2026-01-05T20:09:54.848709"
+}
