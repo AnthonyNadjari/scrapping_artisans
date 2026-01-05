@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-05T19:59:55.289580",
   "total_tasks": 15432,
-  "completed_tasks": 144,
+  "completed_tasks": 167,
   "failed_tasks": 0,
-  "total_results": 874,
+  "total_results": 1000,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -868,7 +868,145 @@
       "results_count": 5,
       "completed_at": "2026-01-05T21:09:38.408138",
       "error": null
+    },
+    "plombier_77_Villebéon": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T21:10:34.654877",
+      "error": null
+    },
+    "plombier_77_Aufferville": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-05T21:10:58.968528",
+      "error": null
+    },
+    "plombier_77_Louan-Villegruis-Fontaine": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-05T21:11:33.091389",
+      "error": null
+    },
+    "plombier_77_Rouilly": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-05T21:12:01.791949",
+      "error": null
+    },
+    "plombier_77_Saint-Fiacre": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-05T21:12:15.185823",
+      "error": null
+    },
+    "plombier_77_Saint-Hilliers": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T21:13:01.674495",
+      "error": null
+    },
+    "plombier_77_Paley": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T21:13:15.603482",
+      "error": null
+    },
+    "plombier_77_Montereau-sur-le-Jard": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-05T21:13:32.354416",
+      "error": null
+    },
+    "plombier_77_Chevry-en-Sereine": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-05T21:13:39.133456",
+      "error": null
+    },
+    "plombier_77_Faÿ-lès-Nemours": {
+      "status": "completed",
+      "results_count": 10,
+      "completed_at": "2026-01-05T21:13:41.228130",
+      "error": null
+    },
+    "plombier_77_Mauperthuis": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T21:14:38.141036",
+      "error": null
+    },
+    "plombier_77_Poigny": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-05T21:15:08.745469",
+      "error": null
+    },
+    "plombier_77_Vimpelles": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-05T21:15:57.547096",
+      "error": null
+    },
+    "plombier_77_Saint-Ouen-sur-Morin": {
+      "status": "completed",
+      "results_count": 12,
+      "completed_at": "2026-01-05T21:16:51.447441",
+      "error": null
+    },
+    "plombier_77_Chalautre-la-Petite": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-05T21:17:04.855300",
+      "error": null
+    },
+    "plombier_77_Jutigny": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-05T21:17:07.990821",
+      "error": null
+    },
+    "plombier_77_Meilleray": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T21:17:33.193478",
+      "error": null
+    },
+    "plombier_77_Blennes": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-05T21:18:30.326366",
+      "error": null
+    },
+    "plombier_77_Coulommes": {
+      "status": "completed",
+      "results_count": 16,
+      "completed_at": "2026-01-05T21:18:40.937399",
+      "error": null
+    },
+    "plombier_77_Gurcy-le-Châtel": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-05T21:19:02.509114",
+      "error": null
+    },
+    "plombier_77_Bransles": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T21:19:37.220462",
+      "error": null
+    },
+    "plombier_77_Échouboulains": {
+      "status": "completed",
+      "results_count": 12,
+      "completed_at": "2026-01-05T21:19:47.390027",
+      "error": null
+    },
+    "plombier_77_Courtomer": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-05T21:20:06.342801",
+      "error": null
     }
   },
-  "last_updated": "2026-01-05T21:09:38.408218"
+  "last_updated": "2026-01-05T21:20:06.342856"
 }
