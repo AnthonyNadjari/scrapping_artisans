@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 """
 Script pour exécuter le scraping depuis GitHub Actions
+Avec commits périodiques pour sauvegarder les résultats même en cas de timeout
 """
 import json
 import sys
 import os
+import subprocess
+import threading
+import time
 from pathlib import Path
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -16,6 +20,100 @@ from scraping.google_maps_scraper import GoogleMapsScraper
 import requests
 from whatsapp_database.queries import ajouter_artisan, mark_scraping_done
 from whatsapp_database.models import init_database
+
+# Variable globale pour contrôler le thread de commit périodique
+stop_periodic_commit = threading.Event()
+last_commit_count = 0
+
+
+def git_commit_and_push(message: str) -> bool:
+    """Commit et push les résultats vers GitHub"""
+    try:
+        # Vérifier si on est dans un environnement GitHub Actions
+        if not os.environ.get('GITHUB_TOKEN'):
+            print("⚠️ Pas de GITHUB_TOKEN, commit ignoré")
+            return False
+
+        results_file = Path('data/scraping_results_github_actions.json')
+        status_file = Path('data/github_actions_status.json')
+
+        if not results_file.exists():
+            print("⚠️ Pas de fichier de résultats à commiter")
+            return False
+
+        # Ajouter les fichiers
+        subprocess.run(['git', 'add', str(results_file), str(status_file)],
+                      capture_output=True, text=True, check=False)
+
+        # Vérifier s'il y a des changements à commiter
+        result = subprocess.run(['git', 'status', '--porcelain'],
+                               capture_output=True, text=True, check=False)
+        if not result.stdout.strip():
+            print("ℹ️ Aucun changement à commiter")
+            return True
+
+        # Commit
+        commit_result = subprocess.run(
+            ['git', 'commit', '-m', message],
+            capture_output=True, text=True, check=False
+        )
+
+        if commit_result.returncode != 0:
+            print(f"⚠️ Erreur commit: {commit_result.stderr}")
+            return False
+
+        # Push
+        push_result = subprocess.run(
+            ['git', 'push'],
+            capture_output=True, text=True, check=False
+        )
+
+        if push_result.returncode != 0:
+            print(f"⚠️ Erreur push: {push_result.stderr}")
+            return False
+
+        print(f"✅ Commit et push réussis: {message}")
+        return True
+
+    except Exception as e:
+        print(f"❌ Erreur git: {e}")
+        return False
+
+
+def periodic_commit_thread(interval_minutes: int = 10):
+    """Thread qui fait des commits périodiques des résultats"""
+    global last_commit_count
+
+    interval_seconds = interval_minutes * 60
+    print(f"🔄 Thread de commit périodique démarré (intervalle: {interval_minutes} min)")
+
+    while not stop_periodic_commit.wait(interval_seconds):
+        try:
+            # Lire le nombre actuel de résultats
+            results_file = Path('data/scraping_results_github_actions.json')
+            if results_file.exists():
+                with open(results_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    current_count = data.get('total_results', 0)
+
+                # Ne commiter que s'il y a de nouveaux résultats
+                if current_count > last_commit_count:
+                    new_results = current_count - last_commit_count
+                    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    message = f"🤖 Auto-save: {current_count} résultats (+{new_results}) - {timestamp}"
+
+                    if git_commit_and_push(message):
+                        last_commit_count = current_count
+                        print(f"💾 Commit périodique: {current_count} résultats sauvegardés")
+                    else:
+                        print(f"⚠️ Échec du commit périodique")
+                else:
+                    print(f"ℹ️ Pas de nouveaux résultats depuis le dernier commit ({current_count} total)")
+        except Exception as e:
+            print(f"❌ Erreur dans le thread de commit: {e}")
+
+    print("🔄 Thread de commit périodique arrêté")
+
 
 def get_communes_from_api(dept, min_pop, max_pop):
     """Récupère les communes d'un département depuis l'API data.gouv.fr"""
@@ -320,7 +418,7 @@ def save_progress(results_file, new_results):
 if __name__ == "__main__":
     # ✅ Initialiser la base de données
     init_database()
-    
+
     # Récupérer les paramètres depuis les variables d'environnement
     metiers = json.loads(os.environ.get('METIERS', '[]'))
     departements = json.loads(os.environ.get('DEPARTEMENTS', '[]'))
@@ -329,13 +427,29 @@ if __name__ == "__main__":
     use_api_communes = os.environ.get('USE_API_COMMUNES', 'false').lower() == 'true'
     min_pop = int(os.environ.get('MIN_POP', '0'))
     max_pop = int(os.environ.get('MAX_POP', '50000'))
-    
+
+    # Paramètres de commit périodique
+    enable_periodic_commits = os.environ.get('ENABLE_PERIODIC_COMMITS', 'false').lower() == 'true'
+    commit_interval = int(os.environ.get('COMMIT_INTERVAL_MINUTES', '10'))
+
     print(f'🚀 Démarrage scraping GitHub Actions')
     print(f'📋 Métiers: {metiers}')
     print(f'📍 Départements: {departements}')
     print(f'🔢 Max résultats: {max_results}')
     print(f'🧵 Threads: {num_threads}')
     print(f'💾 Sauvegarde directe dans la BDD activée')
+    if enable_periodic_commits:
+        print(f'🔄 Commits périodiques activés (intervalle: {commit_interval} min)')
+
+    # Démarrer le thread de commit périodique si activé
+    commit_thread = None
+    if enable_periodic_commits:
+        commit_thread = threading.Thread(
+            target=periodic_commit_thread,
+            args=(commit_interval,),
+            daemon=True
+        )
+        commit_thread.start()
     
     # Charger les villes par département
     try:
@@ -420,7 +534,14 @@ if __name__ == "__main__":
                 print(f'✅ {len(resultats)} résultats (total: {len(tous_resultats)})')
     
     print(f'✅ Scraping terminé: {len(tous_resultats)} résultats au total')
-    
+
+    # Arrêter le thread de commit périodique
+    if enable_periodic_commits:
+        print("🔄 Arrêt du thread de commit périodique...")
+        stop_periodic_commit.set()
+        if commit_thread:
+            commit_thread.join(timeout=5)
+
     # ✅ Mettre à jour le statut final
     final_status = {
         'started_at': initial_status['started_at'],
@@ -433,7 +554,12 @@ if __name__ == "__main__":
     }
     with open(status_file, 'w', encoding='utf-8') as f:
         json.dump(final_status, f, ensure_ascii=False, indent=2)
-    
+
     print(f'💾 Résultats sauvegardés: {results_file}')
     print(f'💾 Statut sauvegardé: {status_file}')
+
+    # Commit final des résultats
+    if enable_periodic_commits:
+        final_message = f"🤖 Scraping terminé: {len(tous_resultats)} résultats - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        git_commit_and_push(final_message)
 

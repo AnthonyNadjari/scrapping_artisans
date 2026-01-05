@@ -125,9 +125,56 @@ if filtre_recherche and isinstance(filtre_recherche, str) and filtre_recherche.s
     filtres['recherche'] = str(filtre_recherche).strip()
 
 # ✅ Bouton pour importer les résultats depuis GitHub Actions
-col_import1, col_import2 = st.columns([1, 4])
+col_import1, col_import2, col_import3 = st.columns([1, 1, 3])
 with col_import1:
-    if st.button("📥 Importer depuis GitHub Actions", key="import_from_github", help="Télécharger et importer les résultats depuis GitHub Actions dans la base locale"):
+    if st.button("🔄 Git Pull", key="git_pull", help="Récupérer les derniers résultats committés par GitHub Actions"):
+        import subprocess
+        try:
+            result = subprocess.run(['git', 'pull'], capture_output=True, text=True, cwd=str(Path(__file__).parent.parent.parent))
+            if result.returncode == 0:
+                st.success(f"✅ Git pull réussi: {result.stdout.strip() if result.stdout.strip() else 'Déjà à jour'}")
+                # Lire le fichier JSON après le pull
+                results_file = Path(__file__).parent.parent.parent / "data" / "scraping_results_github_actions.json"
+                if results_file.exists():
+                    with open(results_file, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                        if isinstance(data, dict) and 'results' in data:
+                            results_list = data.get('results', [])
+                            imported_count = 0
+                            for info in results_list:
+                                try:
+                                    artisan_data = {
+                                        'nom_entreprise': info.get('nom', 'N/A'),
+                                        'telephone': info.get('telephone', '').replace(' ', '') if info.get('telephone') else None,
+                                        'site_web': info.get('site_web'),
+                                        'adresse': info.get('adresse', ''),
+                                        'code_postal': info.get('code_postal', ''),
+                                        'ville': info.get('ville', ''),
+                                        'ville_recherche': info.get('ville_recherche', ''),
+                                        'departement': info.get('departement', ''),
+                                        'type_artisan': info.get('recherche', 'plombier'),
+                                        'source': 'google_maps_github_actions',
+                                        'note': info.get('note'),
+                                        'nombre_avis': info.get('nb_avis') or info.get('nombre_avis')
+                                    }
+                                    artisan_id = ajouter_artisan(artisan_data)
+                                    if artisan_id:
+                                        imported_count += 1
+                                except Exception as e:
+                                    if "UNIQUE constraint" not in str(e) and "duplicate" not in str(e).lower():
+                                        pass
+                            if imported_count > 0:
+                                st.success(f"✅ {imported_count} nouveau(x) artisan(s) importé(s) depuis le repo!")
+                                st.rerun()
+                            else:
+                                st.info(f"ℹ️ {len(results_list)} résultats dans le fichier, tous déjà importés")
+            else:
+                st.error(f"❌ Erreur git pull: {result.stderr}")
+        except Exception as e:
+            st.error(f"❌ Erreur: {e}")
+
+with col_import2:
+    if st.button("📥 Importer Artifacts", key="import_from_github", help="Télécharger et importer les résultats depuis les artifacts GitHub Actions"):
         try:
             # Vérifier si on a la config GitHub
             config_file = Path(__file__).parent.parent.parent / "config" / "github_config.json"

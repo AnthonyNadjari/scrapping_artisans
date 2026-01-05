@@ -41,16 +41,23 @@ jobs:
   scrape:
     runs-on: ubuntu-latest
     timeout-minutes: 360  # 6 heures max
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git for commits
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
-      
+
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -60,36 +67,31 @@ jobs:
           sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
           sudo apt-get update
           sudo apt-get install -y google-chrome-stable
-          
-          # ✅ Install ChromeDriver (méthode moderne)
-          # Récupérer la version de Chrome installée
+
+          # Install ChromeDriver (méthode moderne)
           CHROME_VERSION=$(google-chrome --version | grep -oP '\d+\.\d+\.\d+\.\d+' | head -1)
           CHROME_MAJOR_VERSION=$(echo $CHROME_VERSION | cut -d. -f1)
-          
-          # Télécharger ChromeDriver correspondant depuis Chrome for Testing
+
           CHROMEDRIVER_URL="https://storage.googleapis.com/chrome-for-testing-public/${CHROME_VERSION}/linux64/chromedriver-linux64.zip"
-          
-          # Si l'URL n'existe pas, utiliser la dernière version compatible
+
           if ! curl -f -s -o /dev/null "$CHROMEDRIVER_URL"; then
-            # Utiliser la dernière version disponible pour cette version majeure
             CHROMEDRIVER_URL="https://storage.googleapis.com/chrome-for-testing-public/LATEST_RELEASE_${CHROME_MAJOR_VERSION}/linux64/chromedriver-linux64.zip"
           fi
-          
+
           wget -O /tmp/chromedriver.zip "$CHROMEDRIVER_URL"
           sudo unzip -o /tmp/chromedriver.zip -d /tmp/
           sudo mv /tmp/chromedriver-linux64/chromedriver /usr/local/bin/chromedriver
           sudo chmod +x /usr/local/bin/chromedriver
           sudo rm -rf /tmp/chromedriver.zip /tmp/chromedriver-linux64
-          
-          # Vérifier l'installation
+
           chromedriver --version
-      
+
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-      
-      - name: Run scraping
+
+      - name: Run scraping with periodic commits
         id: scraping
         env:
           METIERS: ${{ github.event.inputs.metiers }}
@@ -99,12 +101,25 @@ jobs:
           USE_API_COMMUNES: ${{ github.event.inputs.use_api_communes || false }}
           MIN_POP: ${{ github.event.inputs.min_pop || 0 }}
           MAX_POP: ${{ github.event.inputs.max_pop || 50000 }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ENABLE_PERIODIC_COMMITS: "true"
+          COMMIT_INTERVAL_MINUTES: "10"
         run: |
           python scripts/run_scraping_github_actions.py
-      
+
+      - name: Final commit of results
+        if: always()
+        run: |
+          # Commit final des résultats (même si le scraping a été annulé)
+          if [ -f "data/scraping_results_github_actions.json" ]; then
+            git add data/scraping_results_github_actions.json data/github_actions_status.json || true
+            git commit -m "🤖 Scraping results - $(date '+%Y-%m-%d %H:%M:%S')" || echo "No changes to commit"
+            git push || echo "Push failed - results saved locally"
+          fi
+
       - name: Upload results as artifact
         uses: actions/upload-artifact@v4
-        if: always()  # Upload même en cas d'échec
+        if: always()
         with:
           name: scraping-results
           path: |
@@ -112,10 +127,16 @@ jobs:
             data/github_actions_status.json
           retention-days: 7
           if-no-files-found: warn
-      
+
       - name: Summary
+        if: always()
         run: |
           echo "## ✅ Scraping terminé" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📊 Résultats: $(cat data/scraping_results_github_actions.json | grep -o '"total_results": [0-9]*' | grep -o '[0-9]*') établissements scrapés" >> $GITHUB_STEP_SUMMARY
+          if [ -f "data/scraping_results_github_actions.json" ]; then
+            TOTAL=$(cat data/scraping_results_github_actions.json | grep -o '"total_results": [0-9]*' | grep -o '[0-9]*' || echo "0")
+            echo "📊 Résultats: ${TOTAL} établissements scrapés" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Aucun fichier de résultats trouvé" >> $GITHUB_STEP_SUMMARY
+          fi
 
