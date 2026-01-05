@@ -3056,7 +3056,7 @@ class GoogleMapsScraper:
         Scrape Google Maps pour une recherche donnée
         
         Args:
-            recherche: Type d'artisan (ex: "plombier", "electricien")
+            recherche: Type d'artisan (ex: "plombier", "électricien")
             ville: Ville de recherche (ex: "Paris", "Lyon")
             max_results: Nombre max de résultats à extraire
             progress_callback: Fonction appelée à chaque établissement (index, total, info)

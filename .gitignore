@@ -38,6 +38,7 @@ data/whatsapp_session/
 # Configuration sensible
 config/gmail_config.json
 config/github_config.json
+config/sms_config.json
 .env
 *.key
 *.pem

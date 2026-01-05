@@ -1,6 +1,7 @@
 """
 Templates de messages WhatsApp personnalisés
 """
+import re
 from typing import Optional
 from whatsapp.name_detector import get_salutation
 
@@ -16,15 +17,17 @@ TEMPLATES = [
                               a.get('nombre_avis') and int(a.get('nombre_avis', 0)) >= 5,
         "body": """Bonjour,
 
-J'ai consulté votre fiche Google Maps en recherchant un {metier} à {ville} : {note}/5 avec {nombre_avis} avis, vous avez clairement une clientèle satisfaite.
+Je suis tombé sur votre fiche Google en cherchant un {metier} sur {ville}. J'ai vu que vous avez {note}/5 avec {nombre_avis} avis, mais malgré ça, vous n'êtes pas apparu en haut des résultats !
 
-Pourtant, sans site web, les personnes qui recherchent "{metier} {ville}" sur Google ne voient que votre fiche Maps. Un site professionnel permettrait de présenter vos prestations et de recevoir des demandes directement par mail grâce à un formulaire de contact.
+Un site web pourrait vous aider à être mieux positionné ! Je crée des sites simples pour les artisans :
+- Présentation claire de vos services.
+- Formulaire de contact pour recevoir des demandes directement.
 
-Je réalise des sites vitrines pour artisans à des tarifs accessibles. Vous ne payez rien tant que le site n'est pas en ligne.
+Vous payez une seule fois, quand le site est prêt.
 
-Voici un exemple : https://plomberie-fluide.vercel.app/
+Exemple : [https://plomberie-fluide.vercel.app/](https://plomberie-fluide.vercel.app/)
 
-N'hésitez pas à revenir vers moi si ça vous intéresse.
+Si ça vous intéresse, je suis dispo pour en discuter !
 
 Anthony"""
     },
@@ -40,15 +43,15 @@ Anthony"""
                               a.get('nombre_avis') and int(a.get('nombre_avis', 0)) >= 5,
         "body": """Bonjour,
 
-J'ai trouvé votre entreprise en recherchant un {metier} à {ville} : {note}/5 avec {nombre_avis} avis sur Google, vous avez clairement une bonne réputation.
+Je suis tombé sur votre page Facebook en cherchant un {metier} sur {ville}. J'ai vu que vous avez {note}/5 avec {nombre_avis} avis, mais malgré ça, vous n'êtes pas apparu en haut des résultats !
 
-Je remarque que votre présence en ligne passe principalement par Facebook/Instagram. Ces pages sont utiles, mais elles ressortent moins bien qu'un vrai site web quand un client recherche "{metier} {ville}" sur Google.
+Un site web pourrait vous aider à être plus visible ! Je peux vous créer un site simple qui présente vos services et permet aux clients de vous contacter directement.
 
-Je réalise des sites vitrines pour artisans, optimisés pour le référencement local, avec formulaire de contact intégré. Tarifs accessibles, et vous ne payez rien tant que le site n'est pas livré.
+Vous payez uniquement une fois, à la fin.
 
-Voici un exemple : https://plomberie-fluide.vercel.app/
+Exemple : [https://plomberie-fluide.vercel.app/](https://plomberie-fluide.vercel.app/)
 
-N'hésitez pas à revenir vers moi si ça vous intéresse.
+Dites-moi si ça vous parle !
 
 Anthony"""
     },
@@ -60,15 +63,19 @@ Anthony"""
                               a.get('nombre_avis') and int(a.get('nombre_avis', 0)) >= 3,
         "body": """Bonjour,
 
-J'ai trouvé votre entreprise sur Google Maps en recherchant un {metier} à {ville}. Vos {nombre_avis} avis montrent que vous avez une clientèle régulière.
+Je suis tombé sur votre entreprise en cherchant un {metier} vers {ville}. J'ai vu que vous avez {note}/5 avec {nombre_avis} avis, mais malgré ça, vous n'êtes pas apparu en haut des résultats !
 
-Un site web professionnel vous permettrait d'aller plus loin : présenter vos prestations, montrer des photos de réalisations, et recevoir des demandes de devis directement par mail grâce à un formulaire de contact.
+Un site web pourrait vous aider à être plus visible et à recevoir plus de demandes !
 
-Je crée des sites vitrines pour artisans à des tarifs accessibles. Vous ne payez rien tant que le site n'est pas en ligne.
+Je fais des sites simples pour les artisans :
+- Présentation de vos services.
+- Formulaire pour recevoir des demandes directement.
 
-Voici un exemple : https://plomberie-fluide.vercel.app/
+Vous payez uniquement quand le site est en ligne.
 
-N'hésitez pas à revenir vers moi si ça vous intéresse.
+Exemple : [https://plomberie-fluide.vercel.app/](https://plomberie-fluide.vercel.app/)
+
+Si vous voulez en savoir plus, je suis là !
 
 Anthony"""
     },
@@ -84,15 +91,98 @@ Anthony"""
                               a.get('nombre_avis') and int(a.get('nombre_avis', 0)) >= 3,
         "body": """Bonjour,
 
-J'ai consulté votre page en recherchant un {metier} vers {ville}. Avec {note}/5 et {nombre_avis} avis sur Google, vous avez une bonne réputation.
+Je suis tombé sur votre page Facebook en cherchant un {metier} vers {ville}. J'ai vu que vous avez {note}/5 avec {nombre_avis} avis, mais malgré ça, vous n'êtes pas apparu en haut des résultats !
 
-Une page Facebook est utile, mais elle ne remonte pas aussi bien qu'un site web dans les recherches Google locales. Un site dédié vous donnerait plus de visibilité et un formulaire de contact pour recevoir les demandes par mail.
+Un site web pourrait vous aider à être plus visible et à attirer plus de clients !
 
-Je réalise des sites pour artisans à des tarifs accessibles, et vous ne payez rien tant que le site n'est pas livré.
+Je peux vous créer un site simple :
+- Présentation de vos services.
+- Formulaire de contact pour les clients.
 
-Voici un exemple : https://plomberie-fluide.vercel.app/
+Vous payez une seule fois, à la fin.
 
-N'hésitez pas à revenir vers moi si ça vous intéresse.
+Exemple : [https://plomberie-fluide.vercel.app/](https://plomberie-fluide.vercel.app/)
+
+Dites-moi si ça vous intéresse !
+
+Anthony"""
+    },
+    {
+        "id": "credibilite_website",
+        "name": "CREDIBILITE × Site web classique",
+        "priority": 88,
+        "condition": lambda a: a.get('site_web') and str(a.get('site_web', '')).strip() != '' and
+                              not ('facebook.com' in str(a.get('site_web', '')).lower() or
+                                   'instagram.com' in str(a.get('site_web', '')).lower() or
+                                   'fb.me' in str(a.get('site_web', '')).lower()) and
+                              a.get('note') and float(a.get('note', 0)) >= 0 and
+                              a.get('nombre_avis') and int(a.get('nombre_avis', 0)) >= 3,
+        "body": """Bonjour,
+
+Je suis tombé sur votre entreprise en cherchant un {metier} vers {ville}. J'ai vu que vous avez {note}/5 avec {nombre_avis} avis, mais malgré ça, vous n'êtes pas apparu en haut des résultats !
+
+Un site web pourrait vous aider à être plus visible et à recevoir plus de demandes !
+
+Je fais des sites simples pour les artisans :
+- Présentation de vos services.
+- Formulaire de contact pour les clients.
+
+Vous payez uniquement quand le site est en ligne.
+
+Exemple : [https://plomberie-fluide.vercel.app/](https://plomberie-fluide.vercel.app/)
+
+Si vous voulez en savoir plus, je suis là !
+
+Anthony"""
+    },
+    {
+        "id": "visibilite_no_site",
+        "name": "VISIBILITE × Pas de site",
+        "priority": 82,
+        "condition": lambda a: (not a.get('site_web') or str(a.get('site_web', '')).strip() == '') and
+                              (a.get('note') or a.get('nombre_avis')) and
+                              (not a.get('note') or float(a.get('note', 0)) < 4.0 or
+                               not a.get('nombre_avis') or int(a.get('nombre_avis', 0)) < 3),
+        "body": """Bonjour,
+
+Je suis tombé sur votre fiche Google en cherchant un {metier} sur {ville}. J'ai vu que vous avez {note}/5 avec {nombre_avis} avis, mais malgré ça, vous n'êtes pas apparu en haut des résultats !
+
+Un site web pourrait vous aider à être mieux positionné et à recevoir plus de demandes !
+
+Je fais des sites simples pour les artisans :
+- Présentation de vos services.
+- Formulaire de contact pour les clients.
+
+Vous payez uniquement quand le site est prêt.
+
+Exemple : [https://plomberie-fluide.vercel.app/](https://plomberie-fluide.vercel.app/)
+
+Si ça vous parle, je suis dispo !
+
+Anthony"""
+    },
+    {
+        "id": "visibilite_no_site_sans_avis",
+        "name": "VISIBILITE × Pas de site (sans avis)",
+        "priority": 81,
+        "condition": lambda a: (not a.get('site_web') or str(a.get('site_web', '')).strip() == '') and
+                              (not a.get('note') or float(a.get('note', 0)) == 0) and
+                              (not a.get('nombre_avis') or int(a.get('nombre_avis', 0)) == 0),
+        "body": """Bonjour,
+
+Je suis tombé sur votre fiche Google en cherchant un {metier} sur {ville}. Vous n'êtes pas apparu en haut des résultats !
+
+Un site web pourrait vous aider à être mieux positionné et à recevoir plus de demandes !
+
+Je fais des sites simples pour les artisans :
+- Présentation de vos services.
+- Formulaire de contact pour les clients.
+
+Vous payez uniquement quand le site est prêt.
+
+Exemple : [https://plomberie-fluide.vercel.app/](https://plomberie-fluide.vercel.app/)
+
+Si ça vous parle, je suis dispo !
 
 Anthony"""
     },
@@ -104,18 +194,45 @@ Anthony"""
             'facebook.com' in str(a.get('site_web', '')).lower() or
             'instagram.com' in str(a.get('site_web', '')).lower() or
             'fb.me' in str(a.get('site_web', '')).lower()
+        ) and (a.get('note') or a.get('nombre_avis')) and not (
+            a.get('note') and float(a.get('note', 0)) >= 4.0 and
+            a.get('nombre_avis') and int(a.get('nombre_avis', 0)) >= 5
         ),
         "body": """Bonjour,
 
-J'ai trouvé votre page en recherchant un {metier} vers {ville}.
+Je suis tombé sur votre page Facebook en cherchant un {metier} vers {ville}. J'ai vu que vous avez {note}/5 avec {nombre_avis} avis, mais malgré ça, vous n'êtes pas apparu en haut des résultats !
 
-Avoir une page Facebook c'est un bon début, mais un site web dédié sera toujours mieux positionné sur Google. Ça vous permettrait aussi d'avoir un formulaire de contact qui vous envoie les demandes directement par mail.
+Un site web pourrait vous aider à être mieux référencé sur Google ! Je peux vous en créer un simple pour présenter vos services et recevoir des demandes directement.
 
-Je crée des sites vitrines pour artisans à des tarifs accessibles. Vous ne payez rien tant que le site n'est pas livré.
+Vous payez une seule fois, à la fin.
 
-Voici un exemple : https://plomberie-fluide.vercel.app/
+Exemple : [https://plomberie-fluide.vercel.app/](https://plomberie-fluide.vercel.app/)
 
-N'hésitez pas à revenir vers moi si ça vous intéresse.
+Dites-moi si ça vous intéresse !
+
+Anthony"""
+    },
+    {
+        "id": "visibilite_social_sans_avis",
+        "name": "VISIBILITE × Facebook/Instagram (sans avis)",
+        "priority": 79,
+        "condition": lambda a: a.get('site_web') and (
+            'facebook.com' in str(a.get('site_web', '')).lower() or
+            'instagram.com' in str(a.get('site_web', '')).lower() or
+            'fb.me' in str(a.get('site_web', '')).lower()
+        ) and (not a.get('note') or float(a.get('note', 0)) == 0) and
+                              (not a.get('nombre_avis') or int(a.get('nombre_avis', 0)) == 0),
+        "body": """Bonjour,
+
+Je suis tombé sur votre page Facebook en cherchant un {metier} vers {ville}. Vous n'êtes pas apparu en haut des résultats !
+
+Un site web pourrait vous aider à être mieux référencé sur Google ! Je peux vous en créer un simple pour présenter vos services et recevoir des demandes directement.
+
+Vous payez une seule fois, à la fin.
+
+Exemple : [https://plomberie-fluide.vercel.app/](https://plomberie-fluide.vercel.app/)
+
+Dites-moi si ça vous intéresse !
 
 Anthony"""
     },
@@ -126,15 +243,19 @@ Anthony"""
         "condition": lambda a: True,  # Toujours True (fallback)
         "body": """Bonjour,
 
-Je me permets de vous contacter car je réalise des sites web pour les artisans.
+Je suis tombé sur votre entreprise en cherchant un {metier} vers {ville}. J'ai vu que vous avez {note}/5 avec {nombre_avis} avis, mais malgré ça, vous n'êtes pas apparu en haut des résultats !
 
-L'idée : un site simple qui vous permet d'apparaître sur Google quand quelqu'un cherche un professionnel dans votre zone, avec un formulaire de contact qui vous envoie les demandes par mail.
+Un site web pourrait vous aider à être plus visible et à recevoir plus de demandes !
 
-Tarifs accessibles et vous ne payez rien tant que le site n'est pas en ligne.
+Je fais des sites simples pour les artisans :
+- Présentation de vos services.
+- Formulaire de contact pour les clients.
 
-Voici un exemple : https://plomberie-fluide.vercel.app/
+Vous payez uniquement quand le site est en ligne.
 
-N'hésitez pas à revenir vers moi si ça vous intéresse.
+Exemple : [https://plomberie-fluide.vercel.app/](https://plomberie-fluide.vercel.app/)
+
+Si ça vous parle, je suis là !
 
 Anthony"""
     }
@@ -168,13 +289,14 @@ def select_template(artisan: dict) -> dict:
     return max(matching_templates, key=lambda t: t["priority"])
 
 
-def build_message(artisan: dict, template: dict) -> str:
+def build_message(artisan: dict, template: dict, prenom: Optional[str] = None) -> str:
     """
     Construit le message final en remplaçant les placeholders
     
     Args:
         artisan: Dictionnaire avec les données de l'artisan
         template: Template sélectionné
+        prenom: Prénom détecté (optionnel)
     
     Returns:
         Message final avec placeholders remplacés
@@ -182,6 +304,9 @@ def build_message(artisan: dict, template: dict) -> str:
     # Préparer les variables
     ville = artisan.get('ville') or artisan.get('ville_recherche') or ''
     metier = artisan.get('type_artisan', 'artisan') or 'artisan'
+    
+    # Utiliser le prénom si disponible, sinon utiliser "Bonjour"
+    salutation = f"Bonjour {prenom}" if prenom else "Bonjour"
     
     # Note et nombre d'avis - gérer les cas où ils sont None ou vides
     # Note: le template contient déjà "/5" donc on ne met que la valeur numérique
@@ -200,39 +325,71 @@ def build_message(artisan: dict, template: dict) -> str:
         except:
             nombre_avis = ''
     
-    # Si note ou nombre_avis sont vides mais requis par le template, utiliser des valeurs par défaut
-    if not note and '{note}' in template["body"]:
-        note = 'N/A'
-    if not nombre_avis and '{nombre_avis}' in template["body"]:
-        nombre_avis = 'N/A'
-    
     # Remplacer les placeholders
     message = template["body"]
+    
+    # Remplacer la salutation si un prénom est fourni
+    if prenom:
+        # Remplacer "Bonjour," par "Bonjour {prenom}," (première occurrence seulement)
+        if message.startswith("Bonjour,"):
+            message = "Bonjour " + prenom + "," + message[8:]  # Remplacer "Bonjour," par "Bonjour {prenom},"
+        elif message.startswith("Bonjour\n"):
+            message = "Bonjour " + prenom + ",\n" + message[9:]  # Remplacer "Bonjour\n" par "Bonjour {prenom},\n"
+    
+    # Remplacer les autres placeholders
     message = message.replace('{ville}', ville)
     message = message.replace('{metier}', metier)
-    message = message.replace('{note}', note)
-    message = message.replace('{nombre_avis}', nombre_avis)
     
-    # Nettoyer les lignes vides en trop mais garder la structure
-    lines = []
-    prev_empty = False
-    for line in message.split('\n'):
-        stripped = line.strip()
-        if stripped:
-            lines.append(line)
-            prev_empty = False
-        elif not prev_empty:
-            # Garder une seule ligne vide entre les paragraphes
-            lines.append('')
-            prev_empty = True
+    # Gérer note et nombre_avis : si vides, enlever les références dans le message
+    if note and nombre_avis:
+        message = message.replace('{note}/5 avec {nombre_avis} avis', f'{note}/5 avec {nombre_avis} avis')
+        message = message.replace('{note}', note)
+        message = message.replace('{nombre_avis}', nombre_avis)
+    elif note:
+        message = message.replace('{note}/5 avec {nombre_avis} avis', f'{note}/5')
+        message = message.replace('{note}', note)
+        message = message.replace('{nombre_avis}', '')
+        message = message.replace('avec  avis', '')
+    elif nombre_avis:
+        message = message.replace('{note}/5 avec {nombre_avis} avis', f'{nombre_avis} avis')
+        message = message.replace('{note}', '')
+        message = message.replace('{nombre_avis}', nombre_avis)
+        message = message.replace('/5 avec', 'avec')
+    else:
+        # Les deux sont vides, enlever toute la référence
+        message = message.replace('J\'ai vu que vous avez {note}/5 avec {nombre_avis} avis, mais malgré ça, ', '')
+        message = message.replace('{note}/5 avec {nombre_avis} avis', '')
+        message = message.replace('{note}', '')
+        message = message.replace('{nombre_avis}', '')
+    
+    # Nettoyer les lignes vides en trop - être plus agressif
+    # Remplacer toutes les séquences de lignes vides (2+) par une seule ligne vide
+    message = re.sub(r'\n{3,}', '\n\n', message)
     
     # Enlever les lignes vides en début et fin
-    while lines and not lines[0].strip():
-        lines.pop(0)
-    while lines and not lines[-1].strip():
-        lines.pop()
+    message = message.strip()
     
-    message = '\n'.join(lines)
+    # Nettoyer les lignes vides autour des puces - pas de ligne vide avant une puce
+    lines = message.split('\n')
+    cleaned_lines = []
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        # Si c'est une ligne vide
+        if not stripped:
+            # Ne garder la ligne vide que si la ligne suivante n'est pas une puce
+            if i + 1 < len(lines) and lines[i + 1].strip().startswith('-'):
+                continue  # Ignorer cette ligne vide avant une puce
+            # Ne garder qu'une seule ligne vide consécutive
+            if cleaned_lines and cleaned_lines[-1].strip() == '':
+                continue  # Ignorer les lignes vides consécutives
+            cleaned_lines.append('')
+        else:
+            cleaned_lines.append(line)
+    
+    message = '\n'.join(cleaned_lines)
+    
+    # Final cleanup - enlever les lignes vides en début et fin
+    message = message.strip()
     
     return message
 

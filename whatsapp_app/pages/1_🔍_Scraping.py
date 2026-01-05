@@ -100,7 +100,7 @@ col_config1, col_config2 = st.columns(2)
 
 with col_config1:
     # ✅ Multi-select pour les métiers
-    metiers_options = ["plombier", "electricien", "chauffagiste", "menuisier", "peintre", "macon", "couvreur", "carreleur"]
+    metiers_options = ["plombier", "électricien", "chauffagiste", "menuisier", "peintre", "maçon", "couvreur", "carreleur"]
     metiers = st.multiselect(
         "Type(s) d'artisan(s)",
         options=metiers_options,

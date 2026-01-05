@@ -41,42 +41,77 @@ def git_commit_and_push(message: str) -> bool:
             print("⚠️ Pas de fichier de résultats à commiter")
             return False
 
+        # ✅ Vérifier que le fichier contient des données
+        try:
+            with open(results_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                total = data.get('total_results', 0)
+                print(f"📄 Fichier de résultats: {total} résultats")
+        except Exception as e:
+            print(f"⚠️ Erreur lecture fichier: {e}")
+
+        # ✅ Pull avant push pour éviter les conflits
+        print("🔄 git pull --rebase...")
+        pull_result = subprocess.run(
+            ['git', 'pull', '--rebase', 'origin', 'main'],
+            capture_output=True, text=True, check=False
+        )
+        if pull_result.returncode != 0:
+            print(f"⚠️ git pull: {pull_result.stderr}")
+            # Continuer quand même
+
         # Ajouter les fichiers
-        subprocess.run(['git', 'add', str(results_file), str(status_file)],
+        print("📁 git add...")
+        add_result = subprocess.run(['git', 'add', str(results_file), str(status_file)],
                       capture_output=True, text=True, check=False)
+        if add_result.returncode != 0:
+            print(f"⚠️ git add stderr: {add_result.stderr}")
 
         # Vérifier s'il y a des changements à commiter
         result = subprocess.run(['git', 'status', '--porcelain'],
                                capture_output=True, text=True, check=False)
+        print(f"📋 git status: '{result.stdout.strip()}'")
         if not result.stdout.strip():
             print("ℹ️ Aucun changement à commiter")
             return True
 
         # Commit
+        print(f"💾 git commit -m '{message[:50]}...'")
         commit_result = subprocess.run(
             ['git', 'commit', '-m', message],
             capture_output=True, text=True, check=False
         )
 
         if commit_result.returncode != 0:
-            print(f"⚠️ Erreur commit: {commit_result.stderr}")
+            print(f"⚠️ Erreur commit (code {commit_result.returncode})")
+            print(f"   stdout: {commit_result.stdout}")
+            print(f"   stderr: {commit_result.stderr}")
             return False
+        else:
+            print(f"✅ Commit OK: {commit_result.stdout.strip()}")
 
         # Push
+        print("🚀 git push...")
         push_result = subprocess.run(
-            ['git', 'push'],
+            ['git', 'push', 'origin', 'main'],
             capture_output=True, text=True, check=False
         )
 
         if push_result.returncode != 0:
-            print(f"⚠️ Erreur push: {push_result.stderr}")
+            print(f"⚠️ Erreur push (code {push_result.returncode})")
+            print(f"   stdout: {push_result.stdout}")
+            print(f"   stderr: {push_result.stderr}")
             return False
+        else:
+            print(f"✅ Push OK: {push_result.stdout.strip()}")
 
         print(f"✅ Commit et push réussis: {message}")
         return True
 
     except Exception as e:
         print(f"❌ Erreur git: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 
@@ -87,7 +122,16 @@ def periodic_commit_thread(interval_minutes: int = 10):
     interval_seconds = interval_minutes * 60
     print(f"🔄 Thread de commit périodique démarré (intervalle: {interval_minutes} min)")
 
-    while not stop_periodic_commit.wait(interval_seconds):
+    # ✅ FIX: Attendre un peu avant le premier check (30 secondes) pour laisser le scraping démarrer
+    # puis vérifier régulièrement
+    first_check_delay = 30  # Première vérification après 30 secondes
+
+    # Premier délai court
+    if stop_periodic_commit.wait(first_check_delay):
+        print("🔄 Thread de commit périodique arrêté (avant premier check)")
+        return
+
+    while True:
         try:
             # Lire le nombre actuel de résultats
             results_file = Path('data/scraping_results_github_actions.json')
@@ -102,15 +146,24 @@ def periodic_commit_thread(interval_minutes: int = 10):
                     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     message = f"🤖 Auto-save: {current_count} résultats (+{new_results}) - {timestamp}"
 
+                    print(f"🔄 Tentative de commit: {current_count} résultats...")
                     if git_commit_and_push(message):
                         last_commit_count = current_count
-                        print(f"💾 Commit périodique: {current_count} résultats sauvegardés")
+                        print(f"💾 Commit périodique réussi: {current_count} résultats sauvegardés")
                     else:
-                        print(f"⚠️ Échec du commit périodique")
+                        print(f"⚠️ Échec du commit périodique (voir logs ci-dessus)")
                 else:
                     print(f"ℹ️ Pas de nouveaux résultats depuis le dernier commit ({current_count} total)")
+            else:
+                print(f"⏳ Fichier de résultats pas encore créé...")
         except Exception as e:
             print(f"❌ Erreur dans le thread de commit: {e}")
+            import traceback
+            traceback.print_exc()
+
+        # Attendre l'intervalle ou arrêt
+        if stop_periodic_commit.wait(interval_seconds):
+            break
 
     print("🔄 Thread de commit périodique arrêté")
 

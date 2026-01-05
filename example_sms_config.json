@@ -1,0 +1,20 @@
+{
+    "_comment": "Exemple de configuration SMS - Copiez ce fichier vers config/sms_config.json et remplissez avec vos identifiants",
+    
+    "provider": "ovh",
+    
+    "ovh_service_name": "sms-xxxxx-1",
+    "ovh_app_key": "votre_app_key_ovh",
+    "ovh_app_secret": "votre_app_secret_ovh",
+    "ovh_consumer_key": "votre_consumer_key_ovh",
+    "ovh_sender": "VotreNom",
+    
+    "twilio_account_sid": "ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "twilio_auth_token": "votre_auth_token_twilio",
+    "twilio_from_number": "+33612345678",
+    
+    "messagebird_api_key": "votre_api_key_messagebird",
+    "messagebird_originator": "SMS"
+}
+
+

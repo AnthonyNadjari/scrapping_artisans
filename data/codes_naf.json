@@ -1,6 +1,6 @@
 {
     "plombier": "43.22A",
-    "electricien": "43.21A",
+    "électricien": "43.21A",
     "menuisier": "16.23Z",
     "peintre": "43.34Z",
     "macon": "43.99A",
@@ -20,5 +20,6 @@
     "chauffage": "43.22B",
     "renovation": "43.99A"
 }
+
 
 

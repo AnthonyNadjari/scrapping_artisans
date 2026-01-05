@@ -138,6 +138,20 @@ def get_artisans(filtres: Optional[Dict] = None, limit: Optional[int] = None) ->
     
     # Valider et nettoyer filtres - TOUS les paramètres doivent être validés
     if filtres and isinstance(filtres, dict):
+        # Filtre par ID (prioritaire)
+        if filtres.get('id'):
+            try:
+                artisan_id = int(filtres['id'])
+                query += " AND id = ?"
+                params.append(artisan_id)
+                # Exécuter directement et retourner
+                cursor.execute(query, params)
+                rows = cursor.fetchall()
+                conn.close()
+                return [dict(row) for row in rows]
+            except:
+                pass
+        
         # Métiers
         metiers_raw = filtres.get('metiers')
         if metiers_raw:
@@ -392,12 +406,22 @@ def marquer_whatsapp_verifie(artisan_id: int, a_whatsapp: bool):
     conn.commit()
     conn.close()
 
-def marquer_message_envoye(artisan_id: int, message_id: str):
-    """Marque un message comme envoyé"""
+def marquer_message_envoye(artisan_id: int, message_id: str = None):
+    """
+    Marque un message comme envoyé
+    
+    Args:
+        artisan_id: ID de l'artisan
+        message_id: ID du message (optionnel, par défaut généré automatiquement)
+    """
     conn = get_connection()
     cursor = conn.cursor()
     
     now = datetime.now().isoformat()
+    
+    # Générer un message_id si non fourni
+    if not message_id:
+        message_id = f"sms_{artisan_id}_{int(datetime.now().timestamp())}"
     
     cursor.execute("""
         UPDATE artisans 

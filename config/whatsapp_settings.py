@@ -37,6 +37,14 @@ METIERS = [
     "piscine", "arrosage automatique",
     "cuisiniste", "cuisine", "salle de bain",
     "aménagement intérieur", "placards",
+    # Métiers supplémentaires
+    "chauffeur livreur", "livreur", "transporteur",
+    "nettoyage", "nettoyage professionnel", "nettoyage industriel",
+    "déménageur", "déménagement",
+    "photographe", "photographe professionnel",
+    "coiffeur", "coiffeur à domicile", "salon de coiffure",
+    "mécanicien", "mécanicien auto", "garagiste",
+    "plombier zingueur", "plombier sanitaire",
 ]
 
 # Départements prioritaires

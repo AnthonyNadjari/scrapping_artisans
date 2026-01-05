@@ -3,8 +3,8 @@ Orchestration de la génération de messages personnalisés
 """
 from typing import Optional
 from whatsapp.phone_utils import (
-    normalize_for_whatsapp, is_mobile, is_landline, 
-    format_display, generate_wa_link
+    is_mobile, is_landline, 
+    format_display
 )
 from whatsapp.name_detector import detect_prenom, detect_company_type
 from whatsapp.templates import select_template, build_message
@@ -75,16 +75,25 @@ def prepare_artisan_message(artisan: dict) -> dict:
     # Sélectionner le template
     template = select_template(artisan)
     
-    # Construire le message
-    message = build_message(artisan, template)
+    # Construire le message avec le prénom détecté
+    message = build_message(artisan, template, prenom_detected)
     
-    # Générer le lien WhatsApp (seulement si mobile)
-    wa_link = None
-    if is_mobile_phone:
-        wa_link = generate_wa_link(telephone, message)
+    # Déterminer si SMS peut être envoyé (seulement si mobile)
+    sms_available = is_mobile_phone
     
     # Format d'affichage du téléphone
     telephone_display = format_display(telephone)
+    
+    # Extraire le département depuis le code postal si manquant
+    departement = artisan.get('departement', '')
+    if not departement and artisan.get('code_postal'):
+        code_postal = str(artisan.get('code_postal', '')).strip()
+        if len(code_postal) >= 2:
+            # Pour les départements d'outre-mer (97x, 98x), prendre les 3 premiers chiffres
+            if code_postal.startswith('97') or code_postal.startswith('98'):
+                departement = code_postal[:3]
+            else:
+                departement = code_postal[:2]
     
     # Récupérer les autres champs de l'artisan pour l'affichage
     return {
@@ -97,14 +106,22 @@ def prepare_artisan_message(artisan: dict) -> dict:
         "template_used": template.get('id', ''),
         "template_name": template.get('name', ''),
         "message": message,
-        "wa_link": wa_link,
+        "sms_available": sms_available,
         "site_type": site_type,
         "prenom_detected": prenom_detected,
         "category": category,
         "ville": artisan.get('ville', '') or artisan.get('ville_recherche', ''),
-        "departement": artisan.get('departement', ''),
+        "departement": departement,
+        "code_postal": artisan.get('code_postal', ''),
+        "adresse": artisan.get('adresse', ''),
+        "type_artisan": artisan.get('type_artisan', '') or artisan.get('recherche', '') or artisan.get('metier', ''),
+        "site_web": artisan.get('site_web', ''),
         "note": artisan.get('note'),
-        "nombre_avis": artisan.get('nombre_avis')
+        "nombre_avis": artisan.get('nombre_avis'),
+        # Ajouter tous les autres champs de la DB pour l'export
+        "ville_recherche": artisan.get('ville_recherche', ''),
+        "source": artisan.get('source', ''),
+        "created_at": artisan.get('created_at', '')
     }
 
 
@@ -136,7 +153,7 @@ def prepare_batch(artisans: list[dict]) -> list[dict]:
                 "template_used": "error",
                 "template_name": "Erreur",
                 "message": f"Erreur lors de la génération: {str(e)}",
-                "wa_link": None,
+                "sms_available": False,
                 "site_type": "none",
                 "prenom_detected": None,
                 "category": "invalid"

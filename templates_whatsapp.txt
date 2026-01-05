@@ -1,0 +1,256 @@
+================================================================================
+TEMPLATES WHATSAPP - MESSAGES POUR ARTISANS
+================================================================================
+
+Ce fichier contient tous les templates de messages WhatsApp utilisés pour
+contacter les artisans. Les variables {metier}, {ville}, {note}, {nombre_avis}
+seront remplacées automatiquement lors de la génération des messages.
+
+================================================================================
+1. REPUTATION × Pas de site
+================================================================================
+ID: reputation_no_site
+Priorité: 100
+Condition: Pas de site web + Note >= 4.0 + Nombre d'avis >= 5
+
+Bonjour,
+
+Je suis tombé sur votre fiche Google en cherchant un {metier} sur {ville}. J'ai vu que vous avez {note}/5 avec {nombre_avis} avis, mais malgré ça, vous n'êtes pas apparu en haut des résultats !
+
+Un site web pourrait vous aider à être mieux positionné ! Je crée des sites simples pour les artisans :
+- Présentation claire de vos services.
+- Formulaire de contact pour recevoir des demandes directement.
+
+Vous payez une seule fois, quand le site est prêt.
+
+Exemple : [https://plomberie-fluide.vercel.app/](https://plomberie-fluide.vercel.app/)
+
+Si ça vous intéresse, je suis dispo pour en discuter !
+
+Anthony
+
+================================================================================
+2. REPUTATION × Facebook/Instagram
+================================================================================
+ID: reputation_social
+Priorité: 95
+Condition: Site Facebook/Instagram + Note >= 4.0 + Nombre d'avis >= 5
+
+Bonjour,
+
+Je suis tombé sur votre page Facebook en cherchant un {metier} sur {ville}. J'ai vu que vous avez {note}/5 avec {nombre_avis} avis, mais malgré ça, vous n'êtes pas apparu en haut des résultats !
+
+Un site web pourrait vous aider à être plus visible ! Je peux vous créer un site simple qui présente vos services et permet aux clients de vous contacter directement.
+
+Vous payez uniquement une fois, à la fin.
+
+Exemple : [https://plomberie-fluide.vercel.app/](https://plomberie-fluide.vercel.app/)
+
+Dites-moi si ça vous parle !
+
+Anthony
+
+================================================================================
+3. CREDIBILITE × Pas de site
+================================================================================
+ID: credibilite_no_site
+Priorité: 90
+Condition: Pas de site web + Nombre d'avis >= 3
+
+Bonjour,
+
+Je suis tombé sur votre entreprise en cherchant un {metier} vers {ville}. J'ai vu que vous avez {note}/5 avec {nombre_avis} avis, mais malgré ça, vous n'êtes pas apparu en haut des résultats !
+
+Un site web pourrait vous aider à être plus visible et à recevoir plus de demandes !
+
+Je fais des sites simples pour les artisans :
+- Présentation de vos services.
+- Formulaire pour recevoir des demandes directement.
+
+Vous payez uniquement quand le site est en ligne.
+
+Exemple : [https://plomberie-fluide.vercel.app/](https://plomberie-fluide.vercel.app/)
+
+Si vous voulez en savoir plus, je suis là !
+
+Anthony
+
+================================================================================
+4. CREDIBILITE × Facebook/Instagram
+================================================================================
+ID: credibilite_social
+Priorité: 85
+Condition: Site Facebook/Instagram + Nombre d'avis >= 3
+
+Bonjour,
+
+Je suis tombé sur votre page Facebook en cherchant un {metier} vers {ville}. J'ai vu que vous avez {note}/5 avec {nombre_avis} avis, mais malgré ça, vous n'êtes pas apparu en haut des résultats !
+
+Un site web pourrait vous aider à être plus visible et à attirer plus de clients !
+
+Je peux vous créer un site simple :
+- Présentation de vos services.
+- Formulaire de contact pour les clients.
+
+Vous payez une seule fois, à la fin.
+
+Exemple : [https://plomberie-fluide.vercel.app/](https://plomberie-fluide.vercel.app/)
+
+Dites-moi si ça vous intéresse !
+
+Anthony
+
+================================================================================
+5. CREDIBILITE × Site web classique
+================================================================================
+ID: credibilite_website
+Priorité: 88
+Condition: Site web classique (pas Facebook/Instagram) + Nombre d'avis >= 3
+
+Bonjour,
+
+Je suis tombé sur votre entreprise en cherchant un {metier} vers {ville}. J'ai vu que vous avez {note}/5 avec {nombre_avis} avis, mais malgré ça, vous n'êtes pas apparu en haut des résultats !
+
+Un site web pourrait vous aider à être plus visible et à recevoir plus de demandes !
+
+Je fais des sites simples pour les artisans :
+- Présentation de vos services.
+- Formulaire de contact pour les clients.
+
+Vous payez uniquement quand le site est en ligne.
+
+Exemple : [https://plomberie-fluide.vercel.app/](https://plomberie-fluide.vercel.app/)
+
+Si vous voulez en savoir plus, je suis là !
+
+Anthony
+
+================================================================================
+6. VISIBILITE × Pas de site
+================================================================================
+ID: visibilite_no_site
+Priorité: 82
+Condition: Pas de site web + (Note < 4.0 OU Nombre d'avis < 3) + (Note OU Nombre d'avis présent)
+
+Bonjour,
+
+Je suis tombé sur votre fiche Google en cherchant un {metier} sur {ville}. J'ai vu que vous avez {note}/5 avec {nombre_avis} avis, mais malgré ça, vous n'êtes pas apparu en haut des résultats !
+
+Un site web pourrait vous aider à être mieux positionné et à recevoir plus de demandes !
+
+Je fais des sites simples pour les artisans :
+- Présentation de vos services.
+- Formulaire de contact pour les clients.
+
+Vous payez uniquement quand le site est prêt.
+
+Exemple : [https://plomberie-fluide.vercel.app/](https://plomberie-fluide.vercel.app/)
+
+Si ça vous parle, je suis dispo !
+
+Anthony
+
+================================================================================
+7. VISIBILITE × Pas de site (sans avis)
+================================================================================
+ID: visibilite_no_site_sans_avis
+Priorité: 81
+Condition: Pas de site web + Pas de note/avis
+
+Bonjour,
+
+Je suis tombé sur votre fiche Google en cherchant un {metier} sur {ville}. Vous n'êtes pas apparu en haut des résultats !
+
+Un site web pourrait vous aider à être mieux positionné et à recevoir plus de demandes !
+
+Je fais des sites simples pour les artisans :
+- Présentation de vos services.
+- Formulaire de contact pour les clients.
+
+Vous payez uniquement quand le site est prêt.
+
+Exemple : [https://plomberie-fluide.vercel.app/](https://plomberie-fluide.vercel.app/)
+
+Si ça vous parle, je suis dispo !
+
+Anthony
+
+================================================================================
+8. VISIBILITE × Facebook/Instagram
+================================================================================
+ID: visibilite_social
+Priorité: 80
+Condition: Site Facebook/Instagram + (Note < 4.0 OU Nombre d'avis < 5) + (Note OU Nombre d'avis présent)
+
+Bonjour,
+
+Je suis tombé sur votre page Facebook en cherchant un {metier} vers {ville}. J'ai vu que vous avez {note}/5 avec {nombre_avis} avis, mais malgré ça, vous n'êtes pas apparu en haut des résultats !
+
+Un site web pourrait vous aider à être mieux référencé sur Google ! Je peux vous en créer un simple pour présenter vos services et recevoir des demandes directement.
+
+Vous payez une seule fois, à la fin.
+
+Exemple : [https://plomberie-fluide.vercel.app/](https://plomberie-fluide.vercel.app/)
+
+Dites-moi si ça vous intéresse !
+
+Anthony
+
+================================================================================
+9. VISIBILITE × Facebook/Instagram (sans avis)
+================================================================================
+ID: visibilite_social_sans_avis
+Priorité: 79
+Condition: Site Facebook/Instagram + Pas de note/avis
+
+Bonjour,
+
+Je suis tombé sur votre page Facebook en cherchant un {metier} vers {ville}. Vous n'êtes pas apparu en haut des résultats !
+
+Un site web pourrait vous aider à être mieux référencé sur Google ! Je peux vous en créer un simple pour présenter vos services et recevoir des demandes directement.
+
+Vous payez une seule fois, à la fin.
+
+Exemple : [https://plomberie-fluide.vercel.app/](https://plomberie-fluide.vercel.app/)
+
+Dites-moi si ça vous intéresse !
+
+Anthony
+
+================================================================================
+10. FALLBACK (Template par défaut)
+================================================================================
+ID: fallback
+Priorité: 10
+Condition: Toujours (utilisé si aucun autre template ne correspond)
+
+Bonjour,
+
+Je suis tombé sur votre entreprise en cherchant un {metier} vers {ville}. J'ai vu que vous avez {note}/5 avec {nombre_avis} avis, mais malgré ça, vous n'êtes pas apparu en haut des résultats !
+
+Un site web pourrait vous aider à être plus visible et à recevoir plus de demandes !
+
+Je fais des sites simples pour les artisans :
+- Présentation de vos services.
+- Formulaire de contact pour les clients.
+
+Vous payez uniquement quand le site est en ligne.
+
+Exemple : [https://plomberie-fluide.vercel.app/](https://plomberie-fluide.vercel.app/)
+
+Si ça vous parle, je suis là !
+
+Anthony
+
+================================================================================
+NOTES IMPORTANTES
+================================================================================
+
+- Les variables {metier}, {ville}, {note}, {nombre_avis} sont remplacées automatiquement
+- Si note ou nombre_avis sont absents, les références sont supprimées du message
+- Les sauts de ligne multiples sont automatiquement réduits
+- Le prénom peut être ajouté automatiquement si détecté dans le nom de l'entreprise
+- Les liens markdown sont conservés pour WhatsApp
+
+================================================================================
+
