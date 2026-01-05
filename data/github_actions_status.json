@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-05T19:59:55.289580",
   "total_tasks": 15432,
-  "completed_tasks": 274,
+  "completed_tasks": 292,
   "failed_tasks": 0,
-  "total_results": 1642,
+  "total_results": 1786,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -1648,7 +1648,115 @@
       "results_count": 0,
       "completed_at": "2026-01-05T22:10:12.268844",
       "error": null
+    },
+    "plombier_77_Saint-Denis-lès-Rebais": {
+      "status": "completed",
+      "results_count": 9,
+      "completed_at": "2026-01-05T22:11:13.548388",
+      "error": null
+    },
+    "plombier_77_Pamfou": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T22:11:31.244053",
+      "error": null
+    },
+    "plombier_77_Bernay-Vilbert": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-05T22:11:37.746152",
+      "error": null
+    },
+    "plombier_77_Chauffry": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-05T22:12:15.749600",
+      "error": null
+    },
+    "plombier_77_Maisoncelles-en-Brie": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-05T22:14:03.845446",
+      "error": null
+    },
+    "plombier_77_Valence-en-Brie": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-05T22:14:09.779111",
+      "error": null
+    },
+    "plombier_77_Arbonne-la-Forêt": {
+      "status": "completed",
+      "results_count": 14,
+      "completed_at": "2026-01-05T22:14:18.293729",
+      "error": null
+    },
+    "plombier_77_Chevru": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-05T22:14:27.637064",
+      "error": null
+    },
+    "plombier_77_Le Mesnil-Amelot": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T22:15:06.051776",
+      "error": null
+    },
+    "plombier_77_Rouvres": {
+      "status": "completed",
+      "results_count": 14,
+      "completed_at": "2026-01-05T22:15:11.928645",
+      "error": null
+    },
+    "plombier_77_Grandpuits-Bailly-Carrois": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T22:16:24.553529",
+      "error": null
+    },
+    "plombier_77_Fontenailles": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-05T22:17:41.826333",
+      "error": null
+    },
+    "plombier_77_Ussy-sur-Marne": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-05T22:17:45.002592",
+      "error": null
+    },
+    "plombier_77_Fontaine-le-Port": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-05T22:18:02.432436",
+      "error": null
+    },
+    "plombier_77_Luzancy": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T22:18:12.105759",
+      "error": null
+    },
+    "plombier_77_Doue": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-05T22:18:36.177771",
+      "error": null
+    },
+    "plombier_77_Châtenay-sur-Seine": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T22:18:51.099746",
+      "error": null
+    },
+    "plombier_77_Chambry": {
+      "status": "completed",
+      "results_count": 18,
+      "completed_at": "2026-01-05T22:19:48.480823",
+      "error": null
     }
   },
-  "last_updated": "2026-01-05T22:10:12.268966"
+  "last_updated": "2026-01-05T22:19:48.481021"
 }
