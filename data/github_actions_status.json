@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-05T19:59:55.289580",
   "total_tasks": 15432,
-  "completed_tasks": 309,
+  "completed_tasks": 317,
   "failed_tasks": 0,
-  "total_results": 1915,
+  "total_results": 2004,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -1858,7 +1858,55 @@
       "results_count": 7,
       "completed_at": "2026-01-05T22:30:22.276389",
       "error": null
+    },
+    "plombier_77_Achères-la-Forêt": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-05T22:30:32.204442",
+      "error": null
+    },
+    "plombier_77_Coutevroult": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-05T22:30:39.171947",
+      "error": null
+    },
+    "plombier_77_Cély": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-05T22:30:42.342180",
+      "error": null
+    },
+    "plombier_77_Messy": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T22:31:49.318629",
+      "error": null
+    },
+    "plombier_77_Touquin": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-05T22:32:00.740998",
+      "error": null
+    },
+    "plombier_77_Férolles-Attilly": {
+      "status": "completed",
+      "results_count": 16,
+      "completed_at": "2026-01-05T22:32:32.469428",
+      "error": null
+    },
+    "plombier_77_Solers": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-05T22:33:27.303771",
+      "error": null
+    },
+    "plombier_77_Favières": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-05T22:33:47.049830",
+      "error": null
     }
   },
-  "last_updated": "2026-01-05T22:30:22.276518"
+  "last_updated": "2026-01-05T22:33:47.049910"
 }
