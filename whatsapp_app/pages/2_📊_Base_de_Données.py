@@ -330,7 +330,7 @@ with col_sync:
         progress_bar.progress(100)
         if total_imported > 0:
             st.success(f"🎉 **{total_imported} nouveau(x) artisan(s) importé(s)!** (JSON: {local_results_count}, Artifacts: {artifacts_imported})")
-            st.rerun()
+            st.experimental_rerun()
         else:
             st.info("ℹ️ Aucun nouveau résultat à importer (tous déjà présents)")
 
