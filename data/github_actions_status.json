@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 420,
+  "completed_tasks": 440,
   "failed_tasks": 0,
-  "total_results": 2765,
+  "total_results": 3009,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -2524,7 +2524,127 @@
       "results_count": 31,
       "completed_at": "2026-01-07T23:04:48.957171",
       "error": null
+    },
+    "plombier_77_Annet-sur-Marne": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-07T23:06:08.897768",
+      "error": null
+    },
+    "plombier_77_Saint-Soupplets": {
+      "status": "completed",
+      "results_count": 15,
+      "completed_at": "2026-01-07T23:07:30.745268",
+      "error": null
+    },
+    "plombier_77_Pringy": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T23:07:45.289235",
+      "error": null
+    },
+    "plombier_77_Saint-Mard": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-07T23:07:59.517632",
+      "error": null
+    },
+    "plombier_77_Servon": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-07T23:08:07.308916",
+      "error": null
+    },
+    "plombier_77_Montry": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-07T23:08:17.981369",
+      "error": null
+    },
+    "plombier_77_Dampmart": {
+      "status": "completed",
+      "results_count": 18,
+      "completed_at": "2026-01-07T23:08:28.966875",
+      "error": null
+    },
+    "plombier_77_Varennes-sur-Seine": {
+      "status": "completed",
+      "results_count": 19,
+      "completed_at": "2026-01-07T23:08:46.338674",
+      "error": null
+    },
+    "plombier_77_La Rochette": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T23:10:13.140562",
+      "error": null
+    },
+    "plombier_77_Saint-Germain-sur-Morin": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T23:10:36.726420",
+      "error": null
+    },
+    "plombier_77_Boissise-le-Roi": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T23:10:42.433077",
+      "error": null
+    },
+    "plombier_77_Chanteloup-en-Brie": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-07T23:11:33.823504",
+      "error": null
+    },
+    "plombier_77_Chauconin-Neufmontiers": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-07T23:12:17.677430",
+      "error": null
+    },
+    "plombier_77_Pomponne": {
+      "status": "completed",
+      "results_count": 11,
+      "completed_at": "2026-01-07T23:12:40.472922",
+      "error": null
+    },
+    "plombier_77_La Ferté-Gaucher": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-07T23:14:03.690995",
+      "error": null
+    },
+    "plombier_77_Guignes": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-07T23:14:10.198698",
+      "error": null
+    },
+    "plombier_77_Jouarre": {
+      "status": "completed",
+      "results_count": 17,
+      "completed_at": "2026-01-07T23:14:29.204210",
+      "error": null
+    },
+    "plombier_77_Ferrières-en-Brie": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-07T23:14:48.808666",
+      "error": null
+    },
+    "plombier_77_Le Châtelet-en-Brie": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T23:15:04.198752",
+      "error": null
+    },
+    "plombier_77_Souppes-sur-Loing": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-07T23:15:11.125583",
+      "error": null
     }
   },
-  "last_updated": "2026-01-07T23:04:48.957362"
+  "last_updated": "2026-01-07T23:15:11.125777"
 }
