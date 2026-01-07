@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 149,
+  "completed_tasks": 169,
   "failed_tasks": 0,
-  "total_results": 879,
+  "total_results": 984,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -898,7 +898,127 @@
       "results_count": 3,
       "completed_at": "2026-01-07T20:55:00.232064",
       "error": null
+    },
+    "plombier_77_Saint-Hilliers": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T20:56:38.470886",
+      "error": null
+    },
+    "plombier_77_Chevry-en-Sereine": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T20:56:40.494964",
+      "error": null
+    },
+    "plombier_77_Paley": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T20:56:43.085221",
+      "error": null
+    },
+    "plombier_77_Faÿ-lès-Nemours": {
+      "status": "completed",
+      "results_count": 9,
+      "completed_at": "2026-01-07T20:57:04.210254",
+      "error": null
+    },
+    "plombier_77_Mauperthuis": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T20:57:10.617059",
+      "error": null
+    },
+    "plombier_77_Poigny": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-07T20:57:58.267659",
+      "error": null
+    },
+    "plombier_77_Vimpelles": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-07T20:58:21.457494",
+      "error": null
+    },
+    "plombier_77_Montereau-sur-le-Jard": {
+      "status": "completed",
+      "results_count": 18,
+      "completed_at": "2026-01-07T20:58:47.558990",
+      "error": null
+    },
+    "plombier_77_Saint-Ouen-sur-Morin": {
+      "status": "completed",
+      "results_count": 11,
+      "completed_at": "2026-01-07T20:59:25.867172",
+      "error": null
+    },
+    "plombier_77_Jutigny": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T20:59:48.195853",
+      "error": null
+    },
+    "plombier_77_Chalautre-la-Petite": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T21:00:08.844508",
+      "error": null
+    },
+    "plombier_77_Meilleray": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:00:41.102641",
+      "error": null
+    },
+    "plombier_77_Gurcy-le-Châtel": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T21:01:52.171964",
+      "error": null
+    },
+    "plombier_77_Blennes": {
+      "status": "completed",
+      "results_count": 14,
+      "completed_at": "2026-01-07T21:02:07.366824",
+      "error": null
+    },
+    "plombier_77_Courtomer": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-07T21:02:40.131382",
+      "error": null
+    },
+    "plombier_77_Échouboulains": {
+      "status": "completed",
+      "results_count": 11,
+      "completed_at": "2026-01-07T21:02:49.219717",
+      "error": null
+    },
+    "plombier_77_Bransles": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:03:13.530274",
+      "error": null
+    },
+    "plombier_77_Coulommes": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:03:15.578512",
+      "error": null
+    },
+    "plombier_77_Fontaine-Fourches": {
+      "status": "completed",
+      "results_count": 9,
+      "completed_at": "2026-01-07T21:05:00.342029",
+      "error": null
+    },
+    "plombier_77_Coulombs-en-Valois": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-07T21:05:23.702950",
+      "error": null
     }
   },
-  "last_updated": "2026-01-07T20:55:00.232161"
+  "last_updated": "2026-01-07T21:05:23.703019"
 }
