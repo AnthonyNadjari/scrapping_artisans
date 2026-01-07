@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 57,
+  "completed_tasks": 82,
   "failed_tasks": 0,
-  "total_results": 397,
+  "total_results": 518,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -346,7 +346,157 @@
       "results_count": 2,
       "completed_at": "2026-01-07T20:14:35.437984",
       "error": null
+    },
+    "plombier_77_Hondevilliers": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T20:16:34.262009",
+      "error": null
+    },
+    "plombier_77_Villuis": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T20:16:47.370696",
+      "error": null
+    },
+    "plombier_77_Chevrainvilliers": {
+      "status": "completed",
+      "results_count": 9,
+      "completed_at": "2026-01-07T20:16:51.951596",
+      "error": null
+    },
+    "plombier_77_Le Plessis-aux-Bois": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-07T20:17:17.395274",
+      "error": null
+    },
+    "plombier_77_Saint-Martin-du-Boschet": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-07T20:17:58.497415",
+      "error": null
+    },
+    "plombier_77_Hautefeuille": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T20:18:36.288480",
+      "error": null
+    },
+    "plombier_77_Boissy-aux-Cailles": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T20:19:38.731183",
+      "error": null
+    },
+    "plombier_77_Saint-Just-en-Brie": {
+      "status": "completed",
+      "results_count": 19,
+      "completed_at": "2026-01-07T20:19:49.380405",
+      "error": null
+    },
+    "plombier_77_Vincy-Manœuvre": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T20:19:51.992938",
+      "error": null
+    },
+    "plombier_77_Augers-en-Brie": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-07T20:20:06.090943",
+      "error": null
+    },
+    "plombier_77_Fontains": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T20:20:19.345453",
+      "error": null
+    },
+    "plombier_77_Coutençon": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T20:21:01.290511",
+      "error": null
+    },
+    "plombier_77_Guercheville": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T20:21:09.367226",
+      "error": null
+    },
+    "plombier_77_Vaucourtois": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-07T20:21:12.714700",
+      "error": null
+    },
+    "plombier_77_Villiers-sur-Seine": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-07T20:22:20.092939",
+      "error": null
+    },
+    "plombier_77_Dagny": {
+      "status": "completed",
+      "results_count": 1,
+      "completed_at": "2026-01-07T20:22:33.811882",
+      "error": null
+    },
+    "plombier_77_Cerneux": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T20:23:51.684158",
+      "error": null
+    },
+    "plombier_77_Le Plessis-l'Évêque": {
+      "status": "completed",
+      "results_count": 10,
+      "completed_at": "2026-01-07T20:23:54.748231",
+      "error": null
+    },
+    "plombier_77_Voulton": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T20:23:56.226345",
+      "error": null
+    },
+    "plombier_77_Montigny-le-Guesdier": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T20:24:09.679427",
+      "error": null
+    },
+    "plombier_77_Chartronges": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T20:24:14.479313",
+      "error": null
+    },
+    "plombier_77_Le Plessis-Placy": {
+      "status": "completed",
+      "results_count": 9,
+      "completed_at": "2026-01-07T20:24:23.779635",
+      "error": null
+    },
+    "plombier_77_Charmentray": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-07T20:24:40.072545",
+      "error": null
+    },
+    "plombier_77_Chenou": {
+      "status": "completed",
+      "results_count": 12,
+      "completed_at": "2026-01-07T20:24:41.813954",
+      "error": null
+    },
+    "plombier_77_Nantouillet": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T20:25:16.301570",
+      "error": null
     }
   },
-  "last_updated": "2026-01-07T20:14:35.438027"
+  "last_updated": "2026-01-07T20:25:16.301614"
 }
