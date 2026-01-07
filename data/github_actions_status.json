@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 440,
+  "completed_tasks": 459,
   "failed_tasks": 0,
-  "total_results": 3009,
+  "total_results": 3231,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -2644,7 +2644,121 @@
       "results_count": 6,
       "completed_at": "2026-01-07T23:15:11.125583",
       "error": null
+    },
+    "plombier_77_Chevry-Cossigny": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-07T23:16:45.864786",
+      "error": null
+    },
+    "plombier_77_Trilport": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T23:17:09.356784",
+      "error": null
+    },
+    "plombier_77_Brou-sur-Chantereine": {
+      "status": "completed",
+      "results_count": 11,
+      "completed_at": "2026-01-07T23:17:10.499752",
+      "error": null
+    },
+    "plombier_77_Villenoy": {
+      "status": "completed",
+      "results_count": 14,
+      "completed_at": "2026-01-07T23:17:24.132054",
+      "error": null
+    },
+    "plombier_77_Mormant": {
+      "status": "completed",
+      "results_count": 10,
+      "completed_at": "2026-01-07T23:18:29.366509",
+      "error": null
+    },
+    "plombier_77_Mouroux": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-07T23:18:38.493359",
+      "error": null
+    },
+    "plombier_77_Crécy-la-Chapelle": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-07T23:19:27.614386",
+      "error": null
+    },
+    "plombier_77_Esbly": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T23:20:16.532100",
+      "error": null
+    },
+    "plombier_77_Saint-Pierre-lès-Nemours": {
+      "status": "completed",
+      "results_count": 16,
+      "completed_at": "2026-01-07T23:20:17.559019",
+      "error": null
+    },
+    "plombier_77_Bois-le-Roi": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-07T23:20:24.820557",
+      "error": null
+    },
+    "plombier_77_Fontenay-Trésigny": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-07T23:20:41.195719",
+      "error": null
+    },
+    "plombier_77_Quincy-Voisins": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T23:21:38.573478",
+      "error": null
+    },
+    "plombier_77_Saint-Pathus": {
+      "status": "completed",
+      "results_count": 10,
+      "completed_at": "2026-01-07T23:22:47.676506",
+      "error": null
+    },
+    "plombier_77_Othis": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-07T23:22:52.250270",
+      "error": null
+    },
+    "plombier_77_Champagne-sur-Seine": {
+      "status": "completed",
+      "results_count": 11,
+      "completed_at": "2026-01-07T23:23:07.329637",
+      "error": null
+    },
+    "plombier_77_Crégy-lès-Meaux": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-07T23:23:13.636251",
+      "error": null
+    },
+    "plombier_77_Nandy": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T23:23:59.638740",
+      "error": null
+    },
+    "plombier_77_Lésigny": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-07T23:25:09.820343",
+      "error": null
+    },
+    "plombier_77_Saint-Thibault-des-Vignes": {
+      "status": "completed",
+      "results_count": 16,
+      "completed_at": "2026-01-07T23:25:43.233102",
+      "error": null
     }
   },
-  "last_updated": "2026-01-07T23:15:11.125777"
+  "last_updated": "2026-01-07T23:25:43.233276"
 }
