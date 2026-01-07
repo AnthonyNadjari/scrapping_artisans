@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 82,
+  "completed_tasks": 102,
   "failed_tasks": 0,
-  "total_results": 518,
+  "total_results": 610,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -496,7 +496,127 @@
       "results_count": 2,
       "completed_at": "2026-01-07T20:25:16.301570",
       "error": null
+    },
+    "plombier_77_Vignely": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T20:27:19.680538",
+      "error": null
+    },
+    "plombier_77_Montceaux-lès-Provins": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-07T20:27:24.188037",
+      "error": null
+    },
+    "plombier_77_Puisieux": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-07T20:27:29.564863",
+      "error": null
+    },
+    "plombier_77_Dhuisy": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T20:27:36.923764",
+      "error": null
+    },
+    "plombier_77_Andrezel": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-07T20:27:38.468771",
+      "error": null
+    },
+    "plombier_77_Jaignes": {
+      "status": "completed",
+      "results_count": 10,
+      "completed_at": "2026-01-07T20:28:11.839772",
+      "error": null
+    },
+    "plombier_77_Mondreville": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-07T20:28:39.777417",
+      "error": null
+    },
+    "plombier_77_Thénisy": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T20:29:08.445823",
+      "error": null
+    },
+    "plombier_77_Boitron": {
+      "status": "completed",
+      "results_count": 12,
+      "completed_at": "2026-01-07T20:29:14.951055",
+      "error": null
+    },
+    "plombier_77_Tancrou": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T20:30:14.902201",
+      "error": null
+    },
+    "plombier_77_Saint-Méry": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T20:30:19.182395",
+      "error": null
+    },
+    "plombier_77_Égligny": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T20:30:25.668536",
+      "error": null
+    },
+    "plombier_77_Sancy-lès-Provins": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-07T20:30:43.947421",
+      "error": null
+    },
+    "plombier_77_Saint-Barthélemy": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-07T20:31:13.367436",
+      "error": null
+    },
+    "plombier_77_Jaulnes": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-07T20:32:59.578241",
+      "error": null
+    },
+    "plombier_77_Lissy": {
+      "status": "completed",
+      "results_count": 10,
+      "completed_at": "2026-01-07T20:33:25.082642",
+      "error": null
+    },
+    "plombier_77_Tousson": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T20:34:11.354411",
+      "error": null
+    },
+    "plombier_77_Mauregard": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-07T20:34:37.856613",
+      "error": null
+    },
+    "plombier_77_Boulancourt": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T20:34:46.237440",
+      "error": null
+    },
+    "plombier_77_La Madeleine-sur-Loing": {
+      "status": "completed",
+      "results_count": 10,
+      "completed_at": "2026-01-07T20:35:01.522697",
+      "error": null
     }
   },
-  "last_updated": "2026-01-07T20:25:16.301614"
+  "last_updated": "2026-01-07T20:35:01.522752"
 }
