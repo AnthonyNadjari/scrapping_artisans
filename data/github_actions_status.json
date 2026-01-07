@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 35,
+  "completed_tasks": 57,
   "failed_tasks": 0,
-  "total_results": 192,
+  "total_results": 397,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -214,7 +214,139 @@
       "results_count": 2,
       "completed_at": "2026-01-07T20:05:24.859953",
       "error": null
+    },
+    "plombier_77_Châtillon-la-Borde": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-07T20:06:08.226736",
+      "error": null
+    },
+    "plombier_77_Bezalles": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-07T20:06:19.028947",
+      "error": null
+    },
+    "plombier_77_Giremoutiers": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-07T20:06:33.832502",
+      "error": null
+    },
+    "plombier_77_La Chapelle-Iger": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-07T20:07:17.689710",
+      "error": null
+    },
+    "plombier_77_La Tombe": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T20:07:34.508995",
+      "error": null
+    },
+    "plombier_77_Trocy-en-Multien": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T20:08:16.789365",
+      "error": null
+    },
+    "plombier_77_Luisetaines": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-07T20:09:09.982156",
+      "error": null
+    },
+    "plombier_77_Meigneux": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T20:09:23.566322",
+      "error": null
+    },
+    "plombier_77_Vaux-sur-Lunain": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-07T20:09:33.373257",
+      "error": null
+    },
+    "plombier_77_Germigny-sous-Coulombs": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-07T20:09:49.349959",
+      "error": null
+    },
+    "plombier_77_Montmachoux": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T20:10:31.233105",
+      "error": null
+    },
+    "plombier_77_Fromont": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T20:11:39.960609",
+      "error": null
+    },
+    "plombier_77_Clos-Fontaine": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T20:12:01.625043",
+      "error": null
+    },
+    "plombier_77_Ormesson": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-07T20:12:48.310918",
+      "error": null
+    },
+    "plombier_77_Saint-Léger": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-07T20:13:23.980351",
+      "error": null
+    },
+    "plombier_77_Villiers-en-Bière": {
+      "status": "completed",
+      "results_count": 11,
+      "completed_at": "2026-01-07T20:13:39.358898",
+      "error": null
+    },
+    "plombier_77_La Chapelle-Saint-Sulpice": {
+      "status": "completed",
+      "results_count": 20,
+      "completed_at": "2026-01-07T20:13:45.345365",
+      "error": null
+    },
+    "plombier_77_Montdauphin": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T20:13:52.313112",
+      "error": null
+    },
+    "plombier_77_Forfry": {
+      "status": "completed",
+      "results_count": 17,
+      "completed_at": "2026-01-07T20:13:56.629950",
+      "error": null
+    },
+    "plombier_77_Courtacon": {
+      "status": "completed",
+      "results_count": 14,
+      "completed_at": "2026-01-07T20:14:24.863397",
+      "error": null
+    },
+    "plombier_77_Saint-Mars-Vieux-Maisons": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-07T20:14:27.362988",
+      "error": null
+    },
+    "plombier_77_Montolivet": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T20:14:35.437984",
+      "error": null
     }
   },
-  "last_updated": "2026-01-07T20:05:24.859988"
+  "last_updated": "2026-01-07T20:14:35.438027"
 }
