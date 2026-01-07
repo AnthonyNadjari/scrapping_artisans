@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 498,
+  "completed_tasks": 518,
   "failed_tasks": 0,
-  "total_results": 3657,
+  "total_results": 3955,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -2992,7 +2992,127 @@
       "results_count": 8,
       "completed_at": "2026-01-07T23:45:14.654702",
       "error": null
+    },
+    "plombier_77_Villeparisis": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-07T23:46:46.297702",
+      "error": null
+    },
+    "plombier_77_Lagny-sur-Marne": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-07T23:47:22.464090",
+      "error": null
+    },
+    "plombier_77_Torcy": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-07T23:48:25.048426",
+      "error": null
+    },
+    "plombier_77_Melun": {
+      "status": "completed",
+      "results_count": 11,
+      "completed_at": "2026-01-07T23:48:46.951014",
+      "error": null
+    },
+    "plombier_77_Pontault-Combault": {
+      "status": "completed",
+      "results_count": 14,
+      "completed_at": "2026-01-07T23:48:47.229957",
+      "error": null
+    },
+    "plombier_77_Roissy-en-Brie": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-07T23:49:43.966874",
+      "error": null
+    },
+    "plombier_77_Savigny-le-Temple": {
+      "status": "completed",
+      "results_count": 20,
+      "completed_at": "2026-01-07T23:49:51.997419",
+      "error": null
+    },
+    "chauffagiste_77_Montenils": {
+      "status": "completed",
+      "results_count": 12,
+      "completed_at": "2026-01-07T23:50:05.846086",
+      "error": null
+    },
+    "chauffagiste_77_Passy-sur-Seine": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-07T23:51:39.663084",
+      "error": null
+    },
+    "chauffagiste_77_Vulaines-lès-Provins": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-07T23:51:53.499337",
+      "error": null
+    },
+    "chauffagiste_77_Rupéreux": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-07T23:52:14.054375",
+      "error": null
+    },
+    "chauffagiste_77_Sigy": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-07T23:52:17.736931",
+      "error": null
+    },
+    "plombier_77_Chelles": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-07T23:53:11.801714",
+      "error": null
+    },
+    "plombier_77_Meaux": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-07T23:53:42.846346",
+      "error": null
+    },
+    "chauffagiste_77_Rumont": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T23:54:44.864821",
+      "error": null
+    },
+    "chauffagiste_77_Mortery": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T23:55:13.047015",
+      "error": null
+    },
+    "chauffagiste_77_Baby": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T23:55:22.398289",
+      "error": null
+    },
+    "chauffagiste_77_Obsonville": {
+      "status": "completed",
+      "results_count": 17,
+      "completed_at": "2026-01-07T23:55:26.496759",
+      "error": null
+    },
+    "chauffagiste_77_Maisoncelles-en-Gâtinais": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-07T23:55:27.956428",
+      "error": null
+    },
+    "chauffagiste_77_Grisy-sur-Seine": {
+      "status": "completed",
+      "results_count": 18,
+      "completed_at": "2026-01-07T23:55:30.658274",
+      "error": null
     }
   },
-  "last_updated": "2026-01-07T23:45:14.654972"
+  "last_updated": "2026-01-07T23:55:30.658424"
 }
