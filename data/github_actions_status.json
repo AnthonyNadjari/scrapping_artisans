@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 316,
+  "completed_tasks": 338,
   "failed_tasks": 0,
-  "total_results": 1951,
+  "total_results": 2117,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -1900,7 +1900,139 @@
       "results_count": 14,
       "completed_at": "2026-01-07T22:14:36.785814",
       "error": null
+    },
+    "plombier_77_Solers": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T22:16:07.599466",
+      "error": null
+    },
+    "plombier_77_Favières": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-07T22:16:51.950965",
+      "error": null
+    },
+    "plombier_77_Saint-Jean-les-Deux-Jumeaux": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-07T22:16:52.087042",
+      "error": null
+    },
+    "plombier_77_Barbizon": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T22:16:54.115199",
+      "error": null
+    },
+    "plombier_77_Neufmoutiers-en-Brie": {
+      "status": "completed",
+      "results_count": 16,
+      "completed_at": "2026-01-07T22:17:25.363612",
+      "error": null
+    },
+    "plombier_77_Penchard": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T22:17:32.865223",
+      "error": null
+    },
+    "plombier_77_Gouaix": {
+      "status": "completed",
+      "results_count": 12,
+      "completed_at": "2026-01-07T22:18:07.900926",
+      "error": null
+    },
+    "plombier_77_Choisy-en-Brie": {
+      "status": "completed",
+      "results_count": 14,
+      "completed_at": "2026-01-07T22:19:02.828706",
+      "error": null
+    },
+    "plombier_77_Changis-sur-Marne": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-07T22:19:25.944117",
+      "error": null
+    },
+    "plombier_77_Germigny-l'Évêque": {
+      "status": "completed",
+      "results_count": 17,
+      "completed_at": "2026-01-07T22:20:06.270618",
+      "error": null
+    },
+    "plombier_77_Moisenay": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-07T22:20:16.732674",
+      "error": null
+    },
+    "plombier_77_Liverdy-en-Brie": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-07T22:20:17.324236",
+      "error": null
+    },
+    "plombier_77_La Chapelle-Gauthier": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-07T22:20:47.166737",
+      "error": null
+    },
+    "plombier_77_Fublaines": {
+      "status": "completed",
+      "results_count": 12,
+      "completed_at": "2026-01-07T22:21:31.020886",
+      "error": null
+    },
+    "plombier_77_Grez-sur-Loing": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T22:22:20.967825",
+      "error": null
+    },
+    "plombier_77_Mortcerf": {
+      "status": "completed",
+      "results_count": 10,
+      "completed_at": "2026-01-07T22:22:25.263119",
+      "error": null
+    },
+    "plombier_77_Montigny-Lencoup": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T22:22:42.346078",
+      "error": null
+    },
+    "plombier_77_Villeneuve-Saint-Denis": {
+      "status": "completed",
+      "results_count": 16,
+      "completed_at": "2026-01-07T22:22:48.088797",
+      "error": null
+    },
+    "plombier_77_Chamigny": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-07T22:22:48.143167",
+      "error": null
+    },
+    "plombier_77_Courpalay": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-07T22:24:01.417227",
+      "error": null
+    },
+    "plombier_77_Lumigny-Nesles-Ormeaux": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-07T22:24:01.805434",
+      "error": null
+    },
+    "plombier_77_Le Pin": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-07T22:25:40.695692",
+      "error": null
     }
   },
-  "last_updated": "2026-01-07T22:14:36.785922"
+  "last_updated": "2026-01-07T22:25:40.695816"
 }
