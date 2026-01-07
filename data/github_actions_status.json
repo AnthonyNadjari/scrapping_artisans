@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 480,
+  "completed_tasks": 498,
   "failed_tasks": 0,
-  "total_results": 3426,
+  "total_results": 3657,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -2884,7 +2884,115 @@
       "results_count": 31,
       "completed_at": "2026-01-07T23:35:45.093644",
       "error": null
+    },
+    "plombier_77_Lognes": {
+      "status": "completed",
+      "results_count": 10,
+      "completed_at": "2026-01-07T23:35:55.822283",
+      "error": null
+    },
+    "plombier_77_Vaires-sur-Marne": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T23:37:38.058367",
+      "error": null
+    },
+    "plombier_77_Moret-Loing-et-Orvanne": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-07T23:37:41.634784",
+      "error": null
+    },
+    "plombier_77_Lieusaint": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T23:38:02.039946",
+      "error": null
+    },
+    "plombier_77_Fontainebleau": {
+      "status": "completed",
+      "results_count": 16,
+      "completed_at": "2026-01-07T23:39:13.320892",
+      "error": null
+    },
+    "plombier_77_Coulommiers": {
+      "status": "completed",
+      "results_count": 18,
+      "completed_at": "2026-01-07T23:39:13.923328",
+      "error": null
+    },
+    "plombier_77_Moissy-Cramayel": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-07T23:39:15.920899",
+      "error": null
+    },
+    "plombier_77_Le Mée-sur-Seine": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-07T23:39:23.212063",
+      "error": null
+    },
+    "plombier_77_Brie-Comte-Robert": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-07T23:40:42.848587",
+      "error": null
+    },
+    "plombier_77_Montévrain": {
+      "status": "completed",
+      "results_count": 32,
+      "completed_at": "2026-01-07T23:41:15.466563",
+      "error": null
+    },
+    "plombier_77_Mitry-Mory": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-07T23:41:39.261073",
+      "error": null
+    },
+    "plombier_77_Noisiel": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-07T23:43:07.809581",
+      "error": null
+    },
+    "plombier_77_Dammarie-les-Lys": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-07T23:43:24.915265",
+      "error": null
+    },
+    "plombier_77_Ozoir-la-Ferrière": {
+      "status": "completed",
+      "results_count": 17,
+      "completed_at": "2026-01-07T23:43:29.050349",
+      "error": null
+    },
+    "plombier_77_Combs-la-Ville": {
+      "status": "completed",
+      "results_count": 12,
+      "completed_at": "2026-01-07T23:44:03.836228",
+      "error": null
+    },
+    "plombier_77_Montereau-Fault-Yonne": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-07T23:44:12.916220",
+      "error": null
+    },
+    "plombier_77_Champs-sur-Marne": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T23:44:36.653703",
+      "error": null
+    },
+    "plombier_77_Bussy-Saint-Georges": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-07T23:45:14.654702",
+      "error": null
     }
   },
-  "last_updated": "2026-01-07T23:35:45.093934"
+  "last_updated": "2026-01-07T23:45:14.654972"
 }
