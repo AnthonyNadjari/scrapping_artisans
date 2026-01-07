@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 102,
+  "completed_tasks": 125,
   "failed_tasks": 0,
-  "total_results": 610,
+  "total_results": 767,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -616,7 +616,145 @@
       "results_count": 10,
       "completed_at": "2026-01-07T20:35:01.522697",
       "error": null
+    },
+    "plombier_77_Argentières": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-07T20:36:23.353645",
+      "error": null
+    },
+    "plombier_77_Saint-Sauveur-lès-Bray": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T20:36:30.095449",
+      "error": null
+    },
+    "plombier_77_Amponville": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T20:36:53.783283",
+      "error": null
+    },
+    "plombier_77_Balloy": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T20:37:00.512608",
+      "error": null
+    },
+    "plombier_77_La Haute-Maison": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-07T20:37:06.820465",
+      "error": null
+    },
+    "plombier_77_Mouy-sur-Seine": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T20:37:16.355450",
+      "error": null
+    },
+    "plombier_77_Melz-sur-Seine": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-07T20:38:40.721514",
+      "error": null
+    },
+    "plombier_77_Saint-Germain-sur-École": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T20:39:25.209603",
+      "error": null
+    },
+    "plombier_77_Bréau": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T20:39:27.881700",
+      "error": null
+    },
+    "plombier_77_Beauchery-Saint-Martin": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T20:39:49.713944",
+      "error": null
+    },
+    "plombier_77_Noyen-sur-Seine": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T20:40:01.634189",
+      "error": null
+    },
+    "plombier_77_Châteaubleau": {
+      "status": "completed",
+      "results_count": 19,
+      "completed_at": "2026-01-07T20:40:40.194908",
+      "error": null
+    },
+    "plombier_77_Aulnoy": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T20:41:12.942683",
+      "error": null
+    },
+    "plombier_77_Ocquerre": {
+      "status": "completed",
+      "results_count": 10,
+      "completed_at": "2026-01-07T20:41:29.972912",
+      "error": null
+    },
+    "plombier_77_Sognolles-en-Montois": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T20:41:35.965666",
+      "error": null
+    },
+    "plombier_77_Vinantes": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T20:41:36.677369",
+      "error": null
+    },
+    "plombier_77_Bassevelle": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-07T20:43:10.922793",
+      "error": null
+    },
+    "plombier_77_Barcy": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T20:43:35.118049",
+      "error": null
+    },
+    "plombier_77_Douy-la-Ramée": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-07T20:43:43.284135",
+      "error": null
+    },
+    "plombier_77_Villemareuil": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-07T20:44:17.748891",
+      "error": null
+    },
+    "plombier_77_Tigeaux": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-07T20:44:37.952946",
+      "error": null
+    },
+    "plombier_77_La Chapelle-Moutils": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T20:44:40.509469",
+      "error": null
+    },
+    "plombier_77_Nanteau-sur-Essonne": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-07T20:45:30.834862",
+      "error": null
     }
   },
-  "last_updated": "2026-01-07T20:35:01.522752"
+  "last_updated": "2026-01-07T20:45:30.834904"
 }
