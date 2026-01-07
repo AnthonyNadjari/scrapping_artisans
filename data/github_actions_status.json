@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 257,
+  "completed_tasks": 278,
   "failed_tasks": 0,
-  "total_results": 1477,
+  "total_results": 1617,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -1546,7 +1546,133 @@
       "results_count": 2,
       "completed_at": "2026-01-07T21:45:20.527303",
       "error": null
+    },
+    "plombier_77_Vaudoy-en-Brie": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-07T21:46:04.403268",
+      "error": null
+    },
+    "plombier_77_Saint-Siméon": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-07T21:46:09.404300",
+      "error": null
+    },
+    "plombier_77_May-en-Multien": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-07T21:46:16.109731",
+      "error": null
+    },
+    "plombier_77_Esmans": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-07T21:47:02.099443",
+      "error": null
+    },
+    "plombier_77_Thieux": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T21:47:13.378573",
+      "error": null
+    },
+    "plombier_77_Les Ormes-sur-Voulzie": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:47:39.457230",
+      "error": null
+    },
+    "plombier_77_Beton-Bazoches": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T21:48:16.086290",
+      "error": null
+    },
+    "plombier_77_Misy-sur-Yonne": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-07T21:48:42.046871",
+      "error": null
+    },
+    "plombier_77_Ury": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:48:51.991225",
+      "error": null
+    },
+    "plombier_77_La Chapelle-Rablais": {
+      "status": "completed",
+      "results_count": 10,
+      "completed_at": "2026-01-07T21:49:18.943682",
+      "error": null
+    },
+    "plombier_77_Aubepierre-Ozouer-le-Repos": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-07T21:50:48.854039",
+      "error": null
+    },
+    "plombier_77_Darvault": {
+      "status": "completed",
+      "results_count": 12,
+      "completed_at": "2026-01-07T21:50:52.863827",
+      "error": null
+    },
+    "plombier_77_Bombon": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:51:38.280742",
+      "error": null
+    },
+    "plombier_77_Yèbles": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-07T21:51:56.536770",
+      "error": null
+    },
+    "plombier_77_Saint-Rémy-de-la-Vanne": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-07T21:52:18.142574",
+      "error": null
+    },
+    "plombier_77_Fresnes-sur-Marne": {
+      "status": "completed",
+      "results_count": 17,
+      "completed_at": "2026-01-07T21:52:35.053806",
+      "error": null
+    },
+    "plombier_77_Citry": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:52:39.102936",
+      "error": null
+    },
+    "plombier_77_Saint-Denis-lès-Rebais": {
+      "status": "completed",
+      "results_count": 9,
+      "completed_at": "2026-01-07T21:53:23.917111",
+      "error": null
+    },
+    "plombier_77_Pamfou": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:54:13.558773",
+      "error": null
+    },
+    "plombier_77_Bernay-Vilbert": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-07T21:54:14.319867",
+      "error": null
+    },
+    "plombier_77_Chauffry": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-07T21:54:53.193286",
+      "error": null
     }
   },
-  "last_updated": "2026-01-07T21:45:20.527416"
+  "last_updated": "2026-01-07T21:54:53.193426"
 }
