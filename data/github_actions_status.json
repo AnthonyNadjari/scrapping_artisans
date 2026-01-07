@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 359,
+  "completed_tasks": 383,
   "failed_tasks": 0,
-  "total_results": 2250,
+  "total_results": 2501,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -2158,7 +2158,151 @@
       "results_count": 0,
       "completed_at": "2026-01-07T22:35:27.352858",
       "error": null
+    },
+    "plombier_77_Maincy": {
+      "status": "completed",
+      "results_count": 15,
+      "completed_at": "2026-01-07T22:35:56.384638",
+      "error": null
+    },
+    "plombier_77_Saâcy-sur-Marne": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-07T22:36:34.131228",
+      "error": null
+    },
+    "plombier_77_Coubert": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T22:37:00.014961",
+      "error": null
+    },
+    "plombier_77_Saint-Augustin": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T22:37:44.006533",
+      "error": null
+    },
+    "plombier_77_Noisy-sur-École": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-07T22:38:27.610443",
+      "error": null
+    },
+    "plombier_77_Marles-en-Brie": {
+      "status": "completed",
+      "results_count": 19,
+      "completed_at": "2026-01-07T22:38:34.154040",
+      "error": null
+    },
+    "plombier_77_Seine-Port": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-07T22:38:56.024372",
+      "error": null
+    },
+    "plombier_77_Moncourt-Fromonville": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T22:39:15.539163",
+      "error": null
+    },
+    "plombier_77_Ozouer-le-Voulgis": {
+      "status": "completed",
+      "results_count": 10,
+      "completed_at": "2026-01-07T22:40:14.904917",
+      "error": null
+    },
+    "plombier_77_Juilly": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-07T22:40:35.905487",
+      "error": null
+    },
+    "plombier_77_Croissy-Beaubourg": {
+      "status": "completed",
+      "results_count": 17,
+      "completed_at": "2026-01-07T22:41:07.226709",
+      "error": null
+    },
+    "plombier_77_Soignolles-en-Brie": {
+      "status": "completed",
+      "results_count": 12,
+      "completed_at": "2026-01-07T22:41:17.360938",
+      "error": null
+    },
+    "plombier_77_Perthes": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T22:42:11.224120",
+      "error": null
+    },
+    "plombier_77_Réau": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-07T22:42:31.022778",
+      "error": null
+    },
+    "plombier_77_Villiers-sur-Morin": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-07T22:42:42.706048",
+      "error": null
+    },
+    "plombier_77_Saint-Cyr-sur-Morin": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-07T22:43:57.552920",
+      "error": null
+    },
+    "plombier_77_Beautheil-Saints": {
+      "status": "completed",
+      "results_count": 17,
+      "completed_at": "2026-01-07T22:43:59.701501",
+      "error": null
+    },
+    "plombier_77_Villevaudé": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-07T22:44:00.573580",
+      "error": null
+    },
+    "plombier_77_Couilly-Pont-aux-Dames": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-07T22:44:11.919461",
+      "error": null
+    },
+    "plombier_77_Égreville": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-07T22:44:32.114474",
+      "error": null
+    },
+    "plombier_77_Varreddes": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T22:45:06.855129",
+      "error": null
+    },
+    "plombier_77_Samois-sur-Seine": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T22:45:09.059305",
+      "error": null
+    },
+    "plombier_77_Chailly-en-Bière": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T22:45:35.909640",
+      "error": null
+    },
+    "plombier_77_Jouy-sur-Morin": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T22:45:38.944688",
+      "error": null
     }
   },
-  "last_updated": "2026-01-07T22:35:27.353010"
+  "last_updated": "2026-01-07T22:45:38.944845"
 }
