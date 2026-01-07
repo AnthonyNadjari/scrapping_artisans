@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 402,
+  "completed_tasks": 420,
   "failed_tasks": 0,
-  "total_results": 2614,
+  "total_results": 2765,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -2416,7 +2416,115 @@
       "results_count": 0,
       "completed_at": "2026-01-07T22:55:27.853390",
       "error": null
+    },
+    "plombier_77_Longperrier": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-07T22:55:52.186423",
+      "error": null
+    },
+    "plombier_77_Rozay-en-Brie": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T22:56:03.893205",
+      "error": null
+    },
+    "plombier_77_Coupvray": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-07T22:56:34.242157",
+      "error": null
+    },
+    "plombier_77_Grisy-Suisnes": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T22:56:40.176253",
+      "error": null
+    },
+    "plombier_77_Château-Landon": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-07T22:57:52.355347",
+      "error": null
+    },
+    "plombier_77_Verneuil-l'Étang": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-07T22:58:16.859603",
+      "error": null
+    },
+    "plombier_77_Saint-Mammès": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-07T22:58:42.184118",
+      "error": null
+    },
+    "plombier_77_Moussy-le-Neuf": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-07T22:59:27.846386",
+      "error": null
+    },
+    "plombier_77_Faremoutiers": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T23:00:06.704610",
+      "error": null
+    },
+    "plombier_77_Collégien": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-07T23:01:41.967224",
+      "error": null
+    },
+    "plombier_77_Thomery": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-07T23:02:07.118046",
+      "error": null
+    },
+    "plombier_77_Pommeuse": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-07T23:02:27.761845",
+      "error": null
+    },
+    "plombier_77_Boissy-le-Châtel": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T23:02:38.703299",
+      "error": null
+    },
+    "plombier_77_Mareuil-lès-Meaux": {
+      "status": "completed",
+      "results_count": 20,
+      "completed_at": "2026-01-07T23:03:07.595097",
+      "error": null
+    },
+    "plombier_77_Rubelles": {
+      "status": "completed",
+      "results_count": 11,
+      "completed_at": "2026-01-07T23:04:06.373159",
+      "error": null
+    },
+    "plombier_77_Chaumes-en-Brie": {
+      "status": "completed",
+      "results_count": 9,
+      "completed_at": "2026-01-07T23:04:19.753673",
+      "error": null
+    },
+    "plombier_77_Lizy-sur-Ourcq": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T23:04:39.191931",
+      "error": null
+    },
+    "plombier_77_Évry-Grégy-sur-Yerre": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-07T23:04:48.957171",
+      "error": null
     }
   },
-  "last_updated": "2026-01-07T22:55:27.853584"
+  "last_updated": "2026-01-07T23:04:48.957362"
 }
