@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 169,
+  "completed_tasks": 194,
   "failed_tasks": 0,
-  "total_results": 984,
+  "total_results": 1108,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -1018,7 +1018,157 @@
       "results_count": 4,
       "completed_at": "2026-01-07T21:05:23.702950",
       "error": null
+    },
+    "plombier_77_Léchelle": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-07T21:05:46.859734",
+      "error": null
+    },
+    "plombier_77_Everly": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:06:22.382112",
+      "error": null
+    },
+    "plombier_77_Saint-Germain-sous-Doue": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-07T21:06:31.347203",
+      "error": null
+    },
+    "plombier_77_Noisy-Rudignon": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-07T21:06:33.262156",
+      "error": null
+    },
+    "plombier_77_Crisenoy": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-07T21:06:39.120028",
+      "error": null
+    },
+    "plombier_77_Bussières": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:06:43.710994",
+      "error": null
+    },
+    "plombier_77_Voinsles": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:07:15.542490",
+      "error": null
+    },
+    "plombier_77_Nonville": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-07T21:08:44.846130",
+      "error": null
+    },
+    "plombier_77_Sept-Sorts": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-07T21:09:00.283364",
+      "error": null
+    },
+    "plombier_77_Iverny": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T21:09:34.454440",
+      "error": null
+    },
+    "plombier_77_Flagy": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:09:47.861210",
+      "error": null
+    },
+    "plombier_77_Féricy": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T21:10:10.762826",
+      "error": null
+    },
+    "plombier_77_Villeneuve-sous-Dammartin": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-07T21:10:18.491188",
+      "error": null
+    },
+    "plombier_77_Le Plessis-Feu-Aussoux": {
+      "status": "completed",
+      "results_count": 12,
+      "completed_at": "2026-01-07T21:11:09.069090",
+      "error": null
+    },
+    "plombier_77_Saint-Mesmes": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:11:58.541989",
+      "error": null
+    },
+    "plombier_77_Marchémoret": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-07T21:12:28.366171",
+      "error": null
+    },
+    "plombier_77_Limoges-Fourches": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:12:57.195613",
+      "error": null
+    },
+    "plombier_77_Cocherel": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-07T21:12:58.607308",
+      "error": null
+    },
+    "plombier_77_Savins": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:13:05.889872",
+      "error": null
+    },
+    "plombier_77_Recloses": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-07T21:13:52.930601",
+      "error": null
+    },
+    "plombier_77_Verdelot": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T21:14:04.507985",
+      "error": null
+    },
+    "plombier_77_Fouju": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T21:15:03.560406",
+      "error": null
+    },
+    "plombier_77_Les Écrennes": {
+      "status": "completed",
+      "results_count": 16,
+      "completed_at": "2026-01-07T21:15:07.560410",
+      "error": null
+    },
+    "plombier_77_Hermé": {
+      "status": "completed",
+      "results_count": 1,
+      "completed_at": "2026-01-07T21:15:13.579005",
+      "error": null
+    },
+    "plombier_77_Villeneuve-les-Bordes": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:15:34.877273",
+      "error": null
     }
   },
-  "last_updated": "2026-01-07T21:05:23.703019"
+  "last_updated": "2026-01-07T21:15:34.877349"
 }
