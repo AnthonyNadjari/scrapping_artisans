@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 236,
+  "completed_tasks": 257,
   "failed_tasks": 0,
-  "total_results": 1372,
+  "total_results": 1477,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -1420,7 +1420,133 @@
       "results_count": 0,
       "completed_at": "2026-01-07T21:34:50.608558",
       "error": null
+    },
+    "plombier_77_Blandy": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:35:44.347364",
+      "error": null
+    },
+    "plombier_77_Reuil-en-Brie": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-07T21:36:56.352874",
+      "error": null
+    },
+    "plombier_77_Bellot": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:36:57.042334",
+      "error": null
+    },
+    "plombier_77_Étrépilly": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T21:37:03.194487",
+      "error": null
+    },
+    "plombier_77_Champeaux": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T21:37:07.015638",
+      "error": null
+    },
+    "plombier_77_Ville-Saint-Jacques": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-07T21:37:19.832930",
+      "error": null
+    },
+    "plombier_77_Amillis": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T21:37:45.753939",
+      "error": null
+    },
+    "plombier_77_Dormelles": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:38:11.639005",
+      "error": null
+    },
+    "plombier_77_Gressy": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:38:28.137561",
+      "error": null
+    },
+    "plombier_77_Chaintreaux": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-07T21:40:11.901832",
+      "error": null
+    },
+    "plombier_77_Saint-Ouen-en-Brie": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-07T21:40:53.974788",
+      "error": null
+    },
+    "plombier_77_La Genevraye": {
+      "status": "completed",
+      "results_count": 9,
+      "completed_at": "2026-01-07T21:41:04.736218",
+      "error": null
+    },
+    "plombier_77_Pécy": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-07T21:41:16.899724",
+      "error": null
+    },
+    "plombier_77_Boutigny": {
+      "status": "completed",
+      "results_count": 9,
+      "completed_at": "2026-01-07T21:42:17.787449",
+      "error": null
+    },
+    "plombier_77_Compans": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:42:18.904077",
+      "error": null
+    },
+    "plombier_77_Soisy-Bouy": {
+      "status": "completed",
+      "results_count": 12,
+      "completed_at": "2026-01-07T21:42:24.983743",
+      "error": null
+    },
+    "plombier_77_Saint-Brice": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-07T21:42:34.271700",
+      "error": null
+    },
+    "plombier_77_Rampillon": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:43:38.278507",
+      "error": null
+    },
+    "plombier_77_Saint-Loup-de-Naud": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-07T21:44:08.884341",
+      "error": null
+    },
+    "plombier_77_Maison-Rouge": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:45:02.581970",
+      "error": null
+    },
+    "plombier_77_Bazoches-lès-Bray": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T21:45:20.527303",
+      "error": null
     }
   },
-  "last_updated": "2026-01-07T21:34:50.608656"
+  "last_updated": "2026-01-07T21:45:20.527416"
 }
