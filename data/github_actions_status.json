@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 194,
+  "completed_tasks": 215,
   "failed_tasks": 0,
-  "total_results": 1108,
+  "total_results": 1251,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -1168,7 +1168,133 @@
       "results_count": 0,
       "completed_at": "2026-01-07T21:15:34.877273",
       "error": null
+    },
+    "plombier_77_Jossigny": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-07T21:16:21.468246",
+      "error": null
+    },
+    "plombier_77_Signy-Signets": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:16:44.985155",
+      "error": null
+    },
+    "plombier_77_Montceaux-lès-Meaux": {
+      "status": "completed",
+      "results_count": 10,
+      "completed_at": "2026-01-07T21:17:14.830704",
+      "error": null
+    },
+    "plombier_77_Thoury-Férottes": {
+      "status": "completed",
+      "results_count": 11,
+      "completed_at": "2026-01-07T21:18:17.301167",
+      "error": null
+    },
+    "plombier_77_Chalautre-la-Grande": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-07T21:18:53.226324",
+      "error": null
+    },
+    "plombier_77_Quiers": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:19:40.539630",
+      "error": null
+    },
+    "plombier_77_Mousseaux-lès-Bray": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T21:19:49.851126",
+      "error": null
+    },
+    "plombier_77_Vendrest": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T21:20:10.808029",
+      "error": null
+    },
+    "plombier_77_Saint-Martin-des-Champs": {
+      "status": "completed",
+      "results_count": 15,
+      "completed_at": "2026-01-07T21:20:23.365439",
+      "error": null
+    },
+    "plombier_77_Jablines": {
+      "status": "completed",
+      "results_count": 19,
+      "completed_at": "2026-01-07T21:21:28.840962",
+      "error": null
+    },
+    "plombier_77_Bannost-Villegagnon": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:21:37.870722",
+      "error": null
+    },
+    "plombier_77_Orly-sur-Morin": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:21:42.692174",
+      "error": null
+    },
+    "plombier_77_La Croix-en-Brie": {
+      "status": "completed",
+      "results_count": 17,
+      "completed_at": "2026-01-07T21:21:52.873034",
+      "error": null
+    },
+    "plombier_77_Fleury-en-Bière": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-07T21:22:01.652359",
+      "error": null
+    },
+    "plombier_77_Villiers-sous-Grez": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T21:22:44.986860",
+      "error": null
+    },
+    "plombier_77_Méry-sur-Marne": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-07T21:22:47.927381",
+      "error": null
+    },
+    "plombier_77_Sainte-Aulde": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-07T21:23:24.086010",
+      "error": null
+    },
+    "plombier_77_Châtres": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T21:24:33.035649",
+      "error": null
+    },
+    "plombier_77_Villecerf": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T21:24:57.706600",
+      "error": null
+    },
+    "plombier_77_Montgé-en-Goële": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-07T21:25:15.697513",
+      "error": null
+    },
+    "plombier_77_Trilbardou": {
+      "status": "completed",
+      "results_count": 15,
+      "completed_at": "2026-01-07T21:25:19.851616",
+      "error": null
     }
   },
-  "last_updated": "2026-01-07T21:15:34.877349"
+  "last_updated": "2026-01-07T21:25:19.851715"
 }
