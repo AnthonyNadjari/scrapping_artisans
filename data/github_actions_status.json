@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 125,
+  "completed_tasks": 149,
   "failed_tasks": 0,
-  "total_results": 767,
+  "total_results": 879,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -754,7 +754,151 @@
       "results_count": 8,
       "completed_at": "2026-01-07T20:45:30.834862",
       "error": null
+    },
+    "plombier_77_Sancy": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T20:46:36.350020",
+      "error": null
+    },
+    "plombier_77_Boissettes": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T20:46:48.242896",
+      "error": null
+    },
+    "plombier_77_Pézarches": {
+      "status": "completed",
+      "results_count": 16,
+      "completed_at": "2026-01-07T20:46:50.085989",
+      "error": null
+    },
+    "plombier_77_Laval-en-Brie": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T20:47:14.137369",
+      "error": null
+    },
+    "plombier_77_Nanteuil-sur-Marne": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-07T20:47:26.614751",
+      "error": null
+    },
+    "plombier_77_Treuzy-Levelay": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T20:47:33.208067",
+      "error": null
+    },
+    "plombier_77_Mons-en-Montois": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T20:47:35.895108",
+      "error": null
+    },
+    "plombier_77_Forges": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-07T20:47:40.753375",
+      "error": null
+    },
+    "plombier_77_Marolles-en-Brie": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T20:49:45.836240",
+      "error": null
+    },
+    "plombier_77_Lescherolles": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-07T20:49:49.999361",
+      "error": null
+    },
+    "plombier_77_Carnetin": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-07T20:50:04.201391",
+      "error": null
+    },
+    "plombier_77_Marcilly": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T20:50:09.265831",
+      "error": null
+    },
+    "plombier_77_Les Chapelles-Bourbon": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T20:50:21.690168",
+      "error": null
+    },
+    "plombier_77_Cuisy": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T20:50:36.060666",
+      "error": null
+    },
+    "plombier_77_Crèvecœur-en-Brie": {
+      "status": "completed",
+      "results_count": 15,
+      "completed_at": "2026-01-07T20:50:39.303155",
+      "error": null
+    },
+    "plombier_77_La Trétoire": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T20:50:40.498707",
+      "error": null
+    },
+    "plombier_77_Villenauxe-la-Petite": {
+      "status": "completed",
+      "results_count": 15,
+      "completed_at": "2026-01-07T20:51:55.973128",
+      "error": null
+    },
+    "plombier_77_Remauville": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-07T20:52:59.212983",
+      "error": null
+    },
+    "plombier_77_Pierre-Levée": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-07T20:53:03.293767",
+      "error": null
+    },
+    "plombier_77_Louan-Villegruis-Fontaine": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T20:53:35.733111",
+      "error": null
+    },
+    "plombier_77_Villebéon": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T20:54:07.302345",
+      "error": null
+    },
+    "plombier_77_Saint-Fiacre": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-07T20:54:23.587427",
+      "error": null
+    },
+    "plombier_77_Aufferville": {
+      "status": "completed",
+      "results_count": 10,
+      "completed_at": "2026-01-07T20:54:36.556722",
+      "error": null
+    },
+    "plombier_77_Rouilly": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T20:55:00.232064",
+      "error": null
     }
   },
-  "last_updated": "2026-01-07T20:45:30.834904"
+  "last_updated": "2026-01-07T20:55:00.232161"
 }
