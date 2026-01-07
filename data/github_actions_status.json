@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 215,
+  "completed_tasks": 236,
   "failed_tasks": 0,
-  "total_results": 1251,
+  "total_results": 1372,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -1294,7 +1294,133 @@
       "results_count": 15,
       "completed_at": "2026-01-07T21:25:19.851616",
       "error": null
+    },
+    "plombier_77_Larchant": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T21:25:43.097698",
+      "error": null
+    },
+    "plombier_77_Villeroy": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:26:57.448876",
+      "error": null
+    },
+    "plombier_77_Bougligny": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-07T21:26:58.711410",
+      "error": null
+    },
+    "plombier_77_Bussy-Saint-Martin": {
+      "status": "completed",
+      "results_count": 15,
+      "completed_at": "2026-01-07T21:27:52.429992",
+      "error": null
+    },
+    "plombier_77_Nanteau-sur-Lunain": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:28:03.514794",
+      "error": null
+    },
+    "plombier_77_Gastins": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:28:16.834604",
+      "error": null
+    },
+    "plombier_77_Le Vaudoué": {
+      "status": "completed",
+      "results_count": 12,
+      "completed_at": "2026-01-07T21:29:10.093834",
+      "error": null
+    },
+    "plombier_77_Saint-Martin-en-Bière": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-07T21:29:38.495329",
+      "error": null
+    },
+    "plombier_77_La Brosse-Montceaux": {
+      "status": "completed",
+      "results_count": 15,
+      "completed_at": "2026-01-07T21:30:22.556704",
+      "error": null
+    },
+    "plombier_77_Chalmaison": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-07T21:30:32.090823",
+      "error": null
+    },
+    "plombier_77_Champdeuil": {
+      "status": "completed",
+      "results_count": 19,
+      "completed_at": "2026-01-07T21:30:49.866213",
+      "error": null
+    },
+    "plombier_77_Précy-sur-Marne": {
+      "status": "completed",
+      "results_count": 9,
+      "completed_at": "2026-01-07T21:31:03.703485",
+      "error": null
+    },
+    "plombier_77_Villemer": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-07T21:31:06.366429",
+      "error": null
+    },
+    "plombier_77_Lesches": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-07T21:31:37.475413",
+      "error": null
+    },
+    "plombier_77_Saint-Germain-Laxis": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:31:53.986897",
+      "error": null
+    },
+    "plombier_77_Buthiers": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-07T21:33:12.679603",
+      "error": null
+    },
+    "plombier_77_Isles-les-Meldeuses": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T21:33:45.225929",
+      "error": null
+    },
+    "plombier_77_Poincy": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-07T21:34:03.287188",
+      "error": null
+    },
+    "plombier_77_Machault": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T21:34:07.893137",
+      "error": null
+    },
+    "plombier_77_Poligny": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T21:34:11.065056",
+      "error": null
+    },
+    "plombier_77_Sablonnières": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T21:34:50.608558",
+      "error": null
     }
   },
-  "last_updated": "2026-01-07T21:25:19.851715"
+  "last_updated": "2026-01-07T21:34:50.608656"
 }
