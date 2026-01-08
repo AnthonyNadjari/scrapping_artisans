@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 518,
+  "completed_tasks": 536,
   "failed_tasks": 0,
-  "total_results": 3955,
+  "total_results": 4031,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -3112,7 +3112,115 @@
       "results_count": 18,
       "completed_at": "2026-01-07T23:55:30.658274",
       "error": null
+    },
+    "chauffagiste_77_Gesvres-le-Chapitre": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-07T23:56:38.011773",
+      "error": null
+    },
+    "chauffagiste_77_Garentreville": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T23:56:40.765022",
+      "error": null
+    },
+    "chauffagiste_77_Boisdon": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T23:58:28.376275",
+      "error": null
+    },
+    "chauffagiste_77_Gravon": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-07T23:58:35.601942",
+      "error": null
+    },
+    "chauffagiste_77_Châtenoy": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-07T23:59:03.654324",
+      "error": null
+    },
+    "chauffagiste_77_Les Marêts": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-07T23:59:11.119043",
+      "error": null
+    },
+    "chauffagiste_77_Arville": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-07T23:59:45.845703",
+      "error": null
+    },
+    "chauffagiste_77_Gironville": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-08T00:00:35.669697",
+      "error": null
+    },
+    "chauffagiste_77_Courchamp": {
+      "status": "completed",
+      "results_count": 16,
+      "completed_at": "2026-01-08T00:00:42.032440",
+      "error": null
+    },
+    "chauffagiste_77_Burcy": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T00:01:19.159594",
+      "error": null
+    },
+    "chauffagiste_77_Barbey": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T00:01:47.448607",
+      "error": null
+    },
+    "chauffagiste_77_Paroy": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-08T00:02:06.595706",
+      "error": null
+    },
+    "chauffagiste_77_Lizines": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-08T00:02:28.907021",
+      "error": null
+    },
+    "chauffagiste_77_Beauvoir": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-08T00:02:42.040318",
+      "error": null
+    },
+    "chauffagiste_77_Ichy": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T00:03:12.461015",
+      "error": null
+    },
+    "chauffagiste_77_Frétoy": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-08T00:03:22.568544",
+      "error": null
+    },
+    "chauffagiste_77_Leudon-en-Brie": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T00:05:03.132038",
+      "error": null
+    },
+    "chauffagiste_77_Vanvillé": {
+      "status": "completed",
+      "results_count": 12,
+      "completed_at": "2026-01-08T00:05:22.242331",
+      "error": null
     }
   },
-  "last_updated": "2026-01-07T23:55:30.658424"
+  "last_updated": "2026-01-08T00:05:22.242691"
 }
