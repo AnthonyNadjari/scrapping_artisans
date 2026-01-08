@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 731,
+  "completed_tasks": 751,
   "failed_tasks": 0,
-  "total_results": 5456,
+  "total_results": 5591,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -4390,7 +4390,127 @@
       "results_count": 8,
       "completed_at": "2026-01-08T01:35:50.046045",
       "error": null
+    },
+    "chauffagiste_77_Saint-Martin-en-Bière": {
+      "status": "completed",
+      "results_count": 10,
+      "completed_at": "2026-01-08T01:36:07.707707",
+      "error": null
+    },
+    "chauffagiste_77_Bussy-Saint-Martin": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-08T01:37:19.442229",
+      "error": null
+    },
+    "chauffagiste_77_Lesches": {
+      "status": "completed",
+      "results_count": 9,
+      "completed_at": "2026-01-08T01:37:32.416372",
+      "error": null
+    },
+    "chauffagiste_77_Saint-Germain-Laxis": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T01:38:02.046385",
+      "error": null
+    },
+    "chauffagiste_77_Le Vaudoué": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-08T01:38:07.322503",
+      "error": null
+    },
+    "chauffagiste_77_Blandy": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-08T01:38:17.920840",
+      "error": null
+    },
+    "chauffagiste_77_Bellot": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-08T01:38:46.415124",
+      "error": null
+    },
+    "chauffagiste_77_Poincy": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-08T01:39:19.975500",
+      "error": null
+    },
+    "chauffagiste_77_Précy-sur-Marne": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T01:39:24.126329",
+      "error": null
+    },
+    "chauffagiste_77_Buthiers": {
+      "status": "completed",
+      "results_count": 11,
+      "completed_at": "2026-01-08T01:40:17.106676",
+      "error": null
+    },
+    "chauffagiste_77_Sablonnières": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T01:40:32.060794",
+      "error": null
+    },
+    "chauffagiste_77_Machault": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-08T01:40:32.839492",
+      "error": null
+    },
+    "chauffagiste_77_Isles-les-Meldeuses": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-08T01:40:54.241368",
+      "error": null
+    },
+    "chauffagiste_77_Poligny": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-08T01:41:07.522306",
+      "error": null
+    },
+    "chauffagiste_77_Gressy": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-08T01:41:53.073290",
+      "error": null
+    },
+    "chauffagiste_77_Reuil-en-Brie": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-08T01:42:31.975105",
+      "error": null
+    },
+    "chauffagiste_77_Ville-Saint-Jacques": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-08T01:42:44.929816",
+      "error": null
+    },
+    "chauffagiste_77_Étrépilly": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-08T01:43:12.907866",
+      "error": null
+    },
+    "chauffagiste_77_Champeaux": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-08T01:43:27.471643",
+      "error": null
+    },
+    "chauffagiste_77_Amillis": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-08T01:43:28.888273",
+      "error": null
     }
   },
-  "last_updated": "2026-01-08T01:35:50.046403"
+  "last_updated": "2026-01-08T01:43:28.888644"
 }
