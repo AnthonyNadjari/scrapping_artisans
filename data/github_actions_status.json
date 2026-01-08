@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 622,
+  "completed_tasks": 647,
   "failed_tasks": 0,
-  "total_results": 4742,
+  "total_results": 4901,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -3736,7 +3736,157 @@
       "results_count": 3,
       "completed_at": "2026-01-08T00:45:25.398594",
       "error": null
+    },
+    "chauffagiste_77_Noyen-sur-Seine": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-08T00:46:01.856922",
+      "error": null
+    },
+    "chauffagiste_77_Ocquerre": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-08T00:46:42.321351",
+      "error": null
+    },
+    "chauffagiste_77_Vinantes": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-08T00:46:58.233972",
+      "error": null
+    },
+    "chauffagiste_77_Bassevelle": {
+      "status": "completed",
+      "results_count": 10,
+      "completed_at": "2026-01-08T00:48:23.028694",
+      "error": null
+    },
+    "chauffagiste_77_Villemareuil": {
+      "status": "completed",
+      "results_count": 12,
+      "completed_at": "2026-01-08T00:48:35.681289",
+      "error": null
+    },
+    "chauffagiste_77_Tigeaux": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-08T00:48:40.590091",
+      "error": null
+    },
+    "chauffagiste_77_Barcy": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T00:49:17.264518",
+      "error": null
+    },
+    "chauffagiste_77_La Chapelle-Moutils": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-08T00:49:47.070256",
+      "error": null
+    },
+    "chauffagiste_77_Nanteau-sur-Essonne": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-08T00:50:43.401905",
+      "error": null
+    },
+    "chauffagiste_77_Douy-la-Ramée": {
+      "status": "completed",
+      "results_count": 19,
+      "completed_at": "2026-01-08T00:50:46.363311",
+      "error": null
+    },
+    "chauffagiste_77_Pézarches": {
+      "status": "completed",
+      "results_count": 14,
+      "completed_at": "2026-01-08T00:51:02.295818",
+      "error": null
+    },
+    "chauffagiste_77_Sancy": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T00:51:33.879945",
+      "error": null
+    },
+    "chauffagiste_77_Nanteuil-sur-Marne": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-08T00:51:51.167316",
+      "error": null
+    },
+    "chauffagiste_77_Laval-en-Brie": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T00:51:59.192691",
+      "error": null
+    },
+    "chauffagiste_77_Boissettes": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-08T00:52:36.184509",
+      "error": null
+    },
+    "chauffagiste_77_Forges": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-08T00:52:42.229867",
+      "error": null
+    },
+    "chauffagiste_77_Treuzy-Levelay": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-08T00:53:11.982390",
+      "error": null
+    },
+    "chauffagiste_77_Marolles-en-Brie": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-08T00:53:12.223295",
+      "error": null
+    },
+    "chauffagiste_77_Mons-en-Montois": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-08T00:53:38.866153",
+      "error": null
+    },
+    "chauffagiste_77_Lescherolles": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-08T00:54:06.427536",
+      "error": null
+    },
+    "chauffagiste_77_Crèvecœur-en-Brie": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-08T00:54:41.178460",
+      "error": null
+    },
+    "chauffagiste_77_Marcilly": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-08T00:55:33.120237",
+      "error": null
+    },
+    "chauffagiste_77_Carnetin": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-08T00:55:36.022657",
+      "error": null
+    },
+    "chauffagiste_77_Villenauxe-la-Petite": {
+      "status": "completed",
+      "results_count": 10,
+      "completed_at": "2026-01-08T00:55:49.940648",
+      "error": null
+    },
+    "chauffagiste_77_Villebéon": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-08T00:55:56.292577",
+      "error": null
     }
   },
-  "last_updated": "2026-01-08T00:45:25.398948"
+  "last_updated": "2026-01-08T00:55:56.292824"
 }
