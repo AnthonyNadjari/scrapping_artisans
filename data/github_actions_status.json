@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 691,
+  "completed_tasks": 709,
   "failed_tasks": 0,
-  "total_results": 5182,
+  "total_results": 5334,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -4150,7 +4150,115 @@
       "results_count": 0,
       "completed_at": "2026-01-08T01:15:57.916723",
       "error": null
+    },
+    "chauffagiste_77_Le Plessis-Feu-Aussoux": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T01:16:03.820221",
+      "error": null
+    },
+    "chauffagiste_77_Marchémoret": {
+      "status": "completed",
+      "results_count": 14,
+      "completed_at": "2026-01-08T01:16:48.949764",
+      "error": null
+    },
+    "chauffagiste_77_Villeneuve-les-Bordes": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T01:18:35.519088",
+      "error": null
+    },
+    "chauffagiste_77_Verdelot": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-08T01:18:53.094953",
+      "error": null
+    },
+    "chauffagiste_77_Recloses": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-08T01:19:15.968329",
+      "error": null
+    },
+    "chauffagiste_77_Fouju": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-08T01:19:24.473417",
+      "error": null
+    },
+    "chauffagiste_77_Cocherel": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T01:19:48.118153",
+      "error": null
+    },
+    "chauffagiste_77_Féricy": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-08T01:20:37.378742",
+      "error": null
+    },
+    "chauffagiste_77_Signy-Signets": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T01:21:20.515517",
+      "error": null
+    },
+    "chauffagiste_77_Jossigny": {
+      "status": "completed",
+      "results_count": 12,
+      "completed_at": "2026-01-08T01:21:27.779577",
+      "error": null
+    },
+    "chauffagiste_77_Les Écrennes": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-08T01:22:06.632304",
+      "error": null
+    },
+    "chauffagiste_77_Hermé": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T01:22:38.061384",
+      "error": null
+    },
+    "chauffagiste_77_Chalautre-la-Grande": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-08T01:23:09.550268",
+      "error": null
+    },
+    "chauffagiste_77_Thoury-Férottes": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-08T01:24:02.879248",
+      "error": null
+    },
+    "chauffagiste_77_Montceaux-lès-Meaux": {
+      "status": "completed",
+      "results_count": 19,
+      "completed_at": "2026-01-08T01:24:31.976059",
+      "error": null
+    },
+    "chauffagiste_77_Quiers": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T01:25:27.994223",
+      "error": null
+    },
+    "chauffagiste_77_La Croix-en-Brie": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-08T01:25:31.329335",
+      "error": null
+    },
+    "chauffagiste_77_Mousseaux-lès-Bray": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-08T01:25:52.637204",
+      "error": null
     }
   },
-  "last_updated": "2026-01-08T01:15:57.916967"
+  "last_updated": "2026-01-08T01:25:52.637406"
 }
