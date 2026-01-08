@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 669,
+  "completed_tasks": 691,
   "failed_tasks": 0,
-  "total_results": 5056,
+  "total_results": 5182,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -4018,7 +4018,139 @@
       "results_count": 5,
       "completed_at": "2026-01-08T01:05:47.184225",
       "error": null
+    },
+    "chauffagiste_77_Courtomer": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-08T01:06:19.132303",
+      "error": null
+    },
+    "chauffagiste_77_Gurcy-le-Châtel": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-08T01:06:21.440294",
+      "error": null
+    },
+    "chauffagiste_77_Chevry-en-Sereine": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-08T01:06:38.790845",
+      "error": null
+    },
+    "chauffagiste_77_Chalautre-la-Petite": {
+      "status": "completed",
+      "results_count": 20,
+      "completed_at": "2026-01-08T01:08:35.669979",
+      "error": null
+    },
+    "chauffagiste_77_Coulommes": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T01:08:40.717472",
+      "error": null
+    },
+    "chauffagiste_77_Saint-Germain-sous-Doue": {
+      "status": "completed",
+      "results_count": 20,
+      "completed_at": "2026-01-08T01:08:43.379983",
+      "error": null
+    },
+    "chauffagiste_77_Léchelle": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-08T01:08:43.431879",
+      "error": null
+    },
+    "chauffagiste_77_Bussières": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-08T01:08:46.011794",
+      "error": null
+    },
+    "chauffagiste_77_Coulombs-en-Valois": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-08T01:09:13.078717",
+      "error": null
+    },
+    "chauffagiste_77_Fontaine-Fourches": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-08T01:09:23.839803",
+      "error": null
+    },
+    "chauffagiste_77_Everly": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T01:09:29.610121",
+      "error": null
+    },
+    "chauffagiste_77_Voinsles": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-08T01:10:33.048090",
+      "error": null
+    },
+    "chauffagiste_77_Flagy": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-08T01:11:30.943333",
+      "error": null
+    },
+    "chauffagiste_77_Crisenoy": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-08T01:11:46.012314",
+      "error": null
+    },
+    "chauffagiste_77_Nonville": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-08T01:11:49.281127",
+      "error": null
+    },
+    "chauffagiste_77_Sept-Sorts": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-08T01:12:01.291675",
+      "error": null
+    },
+    "chauffagiste_77_Noisy-Rudignon": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T01:13:13.489632",
+      "error": null
+    },
+    "chauffagiste_77_Iverny": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-08T01:13:28.451327",
+      "error": null
+    },
+    "chauffagiste_77_Villeneuve-sous-Dammartin": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-08T01:14:45.556584",
+      "error": null
+    },
+    "chauffagiste_77_Saint-Mesmes": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T01:15:18.872974",
+      "error": null
+    },
+    "chauffagiste_77_Limoges-Fourches": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T01:15:47.530313",
+      "error": null
+    },
+    "chauffagiste_77_Savins": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T01:15:57.916723",
+      "error": null
     }
   },
-  "last_updated": "2026-01-08T01:05:47.184633"
+  "last_updated": "2026-01-08T01:15:57.916967"
 }
