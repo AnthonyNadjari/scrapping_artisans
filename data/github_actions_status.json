@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 536,
+  "completed_tasks": 555,
   "failed_tasks": 0,
-  "total_results": 4031,
+  "total_results": 4205,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -3220,7 +3220,121 @@
       "results_count": 12,
       "completed_at": "2026-01-08T00:05:22.242331",
       "error": null
+    },
+    "chauffagiste_77_Champcenest": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-08T00:05:59.188586",
+      "error": null
+    },
+    "chauffagiste_77_Vieux-Champagne": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-08T00:06:42.655382",
+      "error": null
+    },
+    "chauffagiste_77_La Chapelle-Iger": {
+      "status": "completed",
+      "results_count": 15,
+      "completed_at": "2026-01-08T00:07:27.036026",
+      "error": null
+    },
+    "chauffagiste_77_Germigny-sous-Coulombs": {
+      "status": "completed",
+      "results_count": 11,
+      "completed_at": "2026-01-08T00:07:55.267231",
+      "error": null
+    },
+    "chauffagiste_77_Cessoy-en-Montois": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-08T00:07:59.548790",
+      "error": null
+    },
+    "chauffagiste_77_Diant": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T00:09:03.373957",
+      "error": null
+    },
+    "chauffagiste_77_Giremoutiers": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-08T00:09:22.402834",
+      "error": null
+    },
+    "chauffagiste_77_Bezalles": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-08T00:09:45.562556",
+      "error": null
+    },
+    "chauffagiste_77_La Tombe": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T00:09:47.741654",
+      "error": null
+    },
+    "chauffagiste_77_Courquetaine": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-08T00:10:10.199947",
+      "error": null
+    },
+    "chauffagiste_77_Courcelles-en-Bassée": {
+      "status": "completed",
+      "results_count": 14,
+      "completed_at": "2026-01-08T00:10:22.069255",
+      "error": null
+    },
+    "chauffagiste_77_Fromont": {
+      "status": "completed",
+      "results_count": 9,
+      "completed_at": "2026-01-08T00:11:42.510973",
+      "error": null
+    },
+    "chauffagiste_77_Trocy-en-Multien": {
+      "status": "completed",
+      "results_count": 11,
+      "completed_at": "2026-01-08T00:12:24.097796",
+      "error": null
+    },
+    "chauffagiste_77_Vaux-sur-Lunain": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-08T00:12:36.114390",
+      "error": null
+    },
+    "chauffagiste_77_Luisetaines": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-08T00:12:38.295611",
+      "error": null
+    },
+    "chauffagiste_77_Châtillon-la-Borde": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T00:13:17.917019",
+      "error": null
+    },
+    "chauffagiste_77_La Chapelle-Saint-Sulpice": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-08T00:13:56.440538",
+      "error": null
+    },
+    "chauffagiste_77_Montmachoux": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T00:14:01.669159",
+      "error": null
+    },
+    "chauffagiste_77_Clos-Fontaine": {
+      "status": "completed",
+      "results_count": 10,
+      "completed_at": "2026-01-08T00:14:03.088805",
+      "error": null
     }
   },
-  "last_updated": "2026-01-08T00:05:22.242691"
+  "last_updated": "2026-01-08T00:14:03.088957"
 }
