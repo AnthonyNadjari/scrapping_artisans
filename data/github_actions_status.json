@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 647,
+  "completed_tasks": 669,
   "failed_tasks": 0,
-  "total_results": 4901,
+  "total_results": 5056,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -3886,7 +3886,139 @@
       "results_count": 4,
       "completed_at": "2026-01-08T00:55:56.292577",
       "error": null
+    },
+    "chauffagiste_77_Pierre-Levée": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-08T00:57:11.878571",
+      "error": null
+    },
+    "chauffagiste_77_Cuisy": {
+      "status": "completed",
+      "results_count": 9,
+      "completed_at": "2026-01-08T00:57:18.837065",
+      "error": null
+    },
+    "chauffagiste_77_Les Chapelles-Bourbon": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-08T00:57:25.052463",
+      "error": null
+    },
+    "chauffagiste_77_Remauville": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-08T00:57:25.577381",
+      "error": null
+    },
+    "chauffagiste_77_Saint-Hilliers": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-08T00:57:56.357751",
+      "error": null
+    },
+    "chauffagiste_77_Paley": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-08T00:58:29.007390",
+      "error": null
+    },
+    "chauffagiste_77_Aufferville": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-08T00:58:41.239764",
+      "error": null
+    },
+    "chauffagiste_77_La Trétoire": {
+      "status": "completed",
+      "results_count": 17,
+      "completed_at": "2026-01-08T00:58:44.673406",
+      "error": null
+    },
+    "chauffagiste_77_Mauperthuis": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-08T00:59:04.167160",
+      "error": null
+    },
+    "chauffagiste_77_Louan-Villegruis-Fontaine": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-08T01:00:26.811405",
+      "error": null
+    },
+    "chauffagiste_77_Faÿ-lès-Nemours": {
+      "status": "completed",
+      "results_count": 12,
+      "completed_at": "2026-01-08T01:02:05.955836",
+      "error": null
+    },
+    "chauffagiste_77_Poigny": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-08T01:02:19.853570",
+      "error": null
+    },
+    "chauffagiste_77_Vimpelles": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-08T01:02:23.584064",
+      "error": null
+    },
+    "chauffagiste_77_Rouilly": {
+      "status": "completed",
+      "results_count": 14,
+      "completed_at": "2026-01-08T01:02:25.827263",
+      "error": null
+    },
+    "chauffagiste_77_Saint-Fiacre": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T01:02:30.548690",
+      "error": null
+    },
+    "chauffagiste_77_Saint-Ouen-sur-Morin": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-08T01:02:34.060047",
+      "error": null
+    },
+    "chauffagiste_77_Montereau-sur-le-Jard": {
+      "status": "completed",
+      "results_count": 16,
+      "completed_at": "2026-01-08T01:02:55.349361",
+      "error": null
+    },
+    "chauffagiste_77_Bransles": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-08T01:03:23.138939",
+      "error": null
+    },
+    "chauffagiste_77_Meilleray": {
+      "status": "completed",
+      "results_count": 16,
+      "completed_at": "2026-01-08T01:04:00.603426",
+      "error": null
+    },
+    "chauffagiste_77_Échouboulains": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-08T01:05:39.975144",
+      "error": null
+    },
+    "chauffagiste_77_Blennes": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-08T01:05:42.231677",
+      "error": null
+    },
+    "chauffagiste_77_Jutigny": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-08T01:05:47.184225",
+      "error": null
     }
   },
-  "last_updated": "2026-01-08T00:55:56.292824"
+  "last_updated": "2026-01-08T01:05:47.184633"
 }
