@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 597,
+  "completed_tasks": 622,
   "failed_tasks": 0,
-  "total_results": 4545,
+  "total_results": 4742,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -3586,7 +3586,157 @@
       "results_count": 20,
       "completed_at": "2026-01-08T00:35:53.918781",
       "error": null
+    },
+    "chauffagiste_77_Mondreville": {
+      "status": "completed",
+      "results_count": 16,
+      "completed_at": "2026-01-08T00:36:08.460616",
+      "error": null
+    },
+    "chauffagiste_77_Thénisy": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-08T00:36:21.197216",
+      "error": null
+    },
+    "chauffagiste_77_Tancrou": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-08T00:36:21.323724",
+      "error": null
+    },
+    "chauffagiste_77_Sancy-lès-Provins": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-08T00:36:25.681609",
+      "error": null
+    },
+    "chauffagiste_77_Tousson": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-08T00:36:40.552059",
+      "error": null
+    },
+    "chauffagiste_77_Saint-Barthélemy": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-08T00:37:04.682625",
+      "error": null
+    },
+    "chauffagiste_77_Jaulnes": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-08T00:39:13.286117",
+      "error": null
+    },
+    "chauffagiste_77_Saint-Méry": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T00:39:14.306988",
+      "error": null
+    },
+    "chauffagiste_77_Balloy": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-08T00:39:40.874944",
+      "error": null
+    },
+    "chauffagiste_77_La Madeleine-sur-Loing": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-08T00:39:46.155949",
+      "error": null
+    },
+    "chauffagiste_77_Lissy": {
+      "status": "completed",
+      "results_count": 10,
+      "completed_at": "2026-01-08T00:40:13.738402",
+      "error": null
+    },
+    "chauffagiste_77_Boulancourt": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T00:40:37.562654",
+      "error": null
+    },
+    "chauffagiste_77_Mauregard": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-08T00:41:01.917417",
+      "error": null
+    },
+    "chauffagiste_77_Saint-Sauveur-lès-Bray": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-08T00:42:20.206742",
+      "error": null
+    },
+    "chauffagiste_77_Argentières": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-08T00:42:29.322176",
+      "error": null
+    },
+    "chauffagiste_77_Aulnoy": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-08T00:42:42.729443",
+      "error": null
+    },
+    "chauffagiste_77_Amponville": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T00:42:56.397566",
+      "error": null
+    },
+    "chauffagiste_77_La Haute-Maison": {
+      "status": "completed",
+      "results_count": 32,
+      "completed_at": "2026-01-08T00:42:56.937004",
+      "error": null
+    },
+    "chauffagiste_77_Sognolles-en-Montois": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-08T00:43:33.340126",
+      "error": null
+    },
+    "chauffagiste_77_Mouy-sur-Seine": {
+      "status": "completed",
+      "results_count": 10,
+      "completed_at": "2026-01-08T00:43:58.634819",
+      "error": null
+    },
+    "chauffagiste_77_Bréau": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-08T00:44:07.943281",
+      "error": null
+    },
+    "chauffagiste_77_Châteaubleau": {
+      "status": "completed",
+      "results_count": 12,
+      "completed_at": "2026-01-08T00:44:51.997865",
+      "error": null
+    },
+    "chauffagiste_77_Melz-sur-Seine": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-08T00:44:59.267841",
+      "error": null
+    },
+    "chauffagiste_77_Beauchery-Saint-Martin": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-08T00:45:24.474211",
+      "error": null
+    },
+    "chauffagiste_77_Saint-Germain-sur-École": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-08T00:45:25.398594",
+      "error": null
     }
   },
-  "last_updated": "2026-01-08T00:35:53.918913"
+  "last_updated": "2026-01-08T00:45:25.398948"
 }
