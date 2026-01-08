@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 555,
+  "completed_tasks": 576,
   "failed_tasks": 0,
-  "total_results": 4205,
+  "total_results": 4365,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -3334,7 +3334,133 @@
       "results_count": 10,
       "completed_at": "2026-01-08T00:14:03.088805",
       "error": null
+    },
+    "chauffagiste_77_Courtacon": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-08T00:16:01.462352",
+      "error": null
+    },
+    "chauffagiste_77_Meigneux": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T00:16:19.961229",
+      "error": null
+    },
+    "chauffagiste_77_Montdauphin": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T00:16:45.385724",
+      "error": null
+    },
+    "chauffagiste_77_Saint-Mars-Vieux-Maisons": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-08T00:17:01.977093",
+      "error": null
+    },
+    "chauffagiste_77_Saint-Léger": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-08T00:17:04.232965",
+      "error": null
+    },
+    "chauffagiste_77_Forfry": {
+      "status": "completed",
+      "results_count": 17,
+      "completed_at": "2026-01-08T00:17:16.973107",
+      "error": null
+    },
+    "chauffagiste_77_Ormesson": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-08T00:17:28.054741",
+      "error": null
+    },
+    "chauffagiste_77_Montolivet": {
+      "status": "completed",
+      "results_count": 9,
+      "completed_at": "2026-01-08T00:18:08.996115",
+      "error": null
+    },
+    "chauffagiste_77_Villiers-en-Bière": {
+      "status": "completed",
+      "results_count": 20,
+      "completed_at": "2026-01-08T00:18:35.327494",
+      "error": null
+    },
+    "chauffagiste_77_Hautefeuille": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-08T00:18:53.190293",
+      "error": null
+    },
+    "chauffagiste_77_Le Plessis-aux-Bois": {
+      "status": "completed",
+      "results_count": 5,
+      "completed_at": "2026-01-08T00:19:44.407216",
+      "error": null
+    },
+    "chauffagiste_77_Saint-Martin-du-Boschet": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-08T00:20:42.280121",
+      "error": null
+    },
+    "chauffagiste_77_Chevrainvilliers": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-08T00:20:49.275138",
+      "error": null
+    },
+    "chauffagiste_77_Hondevilliers": {
+      "status": "completed",
+      "results_count": 11,
+      "completed_at": "2026-01-08T00:21:11.722132",
+      "error": null
+    },
+    "chauffagiste_77_Guercheville": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-08T00:21:31.273579",
+      "error": null
+    },
+    "chauffagiste_77_Coutençon": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-08T00:21:53.556481",
+      "error": null
+    },
+    "chauffagiste_77_Boissy-aux-Cailles": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-08T00:22:08.133720",
+      "error": null
+    },
+    "chauffagiste_77_Saint-Just-en-Brie": {
+      "status": "completed",
+      "results_count": 17,
+      "completed_at": "2026-01-08T00:22:49.860163",
+      "error": null
+    },
+    "chauffagiste_77_Fontains": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T00:23:37.105722",
+      "error": null
+    },
+    "chauffagiste_77_Villuis": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T00:23:39.244816",
+      "error": null
+    },
+    "chauffagiste_77_Villiers-sur-Seine": {
+      "status": "completed",
+      "results_count": 10,
+      "completed_at": "2026-01-08T00:25:48.101854",
+      "error": null
     }
   },
-  "last_updated": "2026-01-08T00:14:03.088957"
+  "last_updated": "2026-01-08T00:25:48.102147"
 }
