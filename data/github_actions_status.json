@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 709,
+  "completed_tasks": 731,
   "failed_tasks": 0,
-  "total_results": 5334,
+  "total_results": 5456,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -4258,7 +4258,139 @@
       "results_count": 4,
       "completed_at": "2026-01-08T01:25:52.637204",
       "error": null
+    },
+    "chauffagiste_77_Saint-Martin-des-Champs": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-08T01:26:08.479136",
+      "error": null
+    },
+    "chauffagiste_77_Vendrest": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-08T01:26:14.137858",
+      "error": null
+    },
+    "chauffagiste_77_Bannost-Villegagnon": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T01:26:22.574664",
+      "error": null
+    },
+    "chauffagiste_77_Jablines": {
+      "status": "completed",
+      "results_count": 16,
+      "completed_at": "2026-01-08T01:26:50.023056",
+      "error": null
+    },
+    "chauffagiste_77_Orly-sur-Morin": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T01:27:11.360371",
+      "error": null
+    },
+    "chauffagiste_77_Fleury-en-Bière": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-08T01:27:47.683808",
+      "error": null
+    },
+    "chauffagiste_77_Villiers-sous-Grez": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-08T01:28:32.383373",
+      "error": null
+    },
+    "chauffagiste_77_Villeroy": {
+      "status": "completed",
+      "results_count": 1,
+      "completed_at": "2026-01-08T01:28:53.465055",
+      "error": null
+    },
+    "chauffagiste_77_Sainte-Aulde": {
+      "status": "completed",
+      "results_count": 6,
+      "completed_at": "2026-01-08T01:29:05.767095",
+      "error": null
+    },
+    "chauffagiste_77_Méry-sur-Marne": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-08T01:29:21.155608",
+      "error": null
+    },
+    "chauffagiste_77_Trilbardou": {
+      "status": "completed",
+      "results_count": 9,
+      "completed_at": "2026-01-08T01:29:59.438416",
+      "error": null
+    },
+    "chauffagiste_77_Montgé-en-Goële": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-08T01:30:52.612986",
+      "error": null
+    },
+    "chauffagiste_77_Villecerf": {
+      "status": "completed",
+      "results_count": 10,
+      "completed_at": "2026-01-08T01:31:27.258794",
+      "error": null
+    },
+    "chauffagiste_77_Larchant": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-08T01:31:49.064927",
+      "error": null
+    },
+    "chauffagiste_77_Châtres": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T01:31:50.999701",
+      "error": null
+    },
+    "chauffagiste_77_Nanteau-sur-Lunain": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T01:32:49.029244",
+      "error": null
+    },
+    "chauffagiste_77_Bougligny": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-08T01:32:51.848738",
+      "error": null
+    },
+    "chauffagiste_77_Gastins": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T01:33:24.536742",
+      "error": null
+    },
+    "chauffagiste_77_Champdeuil": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-08T01:33:57.823366",
+      "error": null
+    },
+    "chauffagiste_77_La Brosse-Montceaux": {
+      "status": "completed",
+      "results_count": 11,
+      "completed_at": "2026-01-08T01:35:22.474098",
+      "error": null
+    },
+    "chauffagiste_77_Villemer": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-08T01:35:49.168896",
+      "error": null
+    },
+    "chauffagiste_77_Chalmaison": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-08T01:35:50.046045",
+      "error": null
     }
   },
-  "last_updated": "2026-01-08T01:25:52.637406"
+  "last_updated": "2026-01-08T01:35:50.046403"
 }
