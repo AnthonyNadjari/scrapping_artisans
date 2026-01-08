@@ -1,9 +1,9 @@
 {
   "started_at": "2026-01-07T19:45:04.690037",
   "total_tasks": 14268,
-  "completed_tasks": 576,
+  "completed_tasks": 597,
   "failed_tasks": 0,
-  "total_results": 4365,
+  "total_results": 4545,
   "tasks": {
     "plombier_77_Obsonville": {
       "status": "completed",
@@ -3460,7 +3460,133 @@
       "results_count": 10,
       "completed_at": "2026-01-08T00:25:48.101854",
       "error": null
+    },
+    "chauffagiste_77_Vincy-Manœuvre": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T00:26:19.043892",
+      "error": null
+    },
+    "chauffagiste_77_Le Plessis-l'Évêque": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-08T00:26:43.709911",
+      "error": null
+    },
+    "chauffagiste_77_Augers-en-Brie": {
+      "status": "completed",
+      "results_count": 20,
+      "completed_at": "2026-01-08T00:26:51.537353",
+      "error": null
+    },
+    "chauffagiste_77_Cerneux": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T00:27:23.269470",
+      "error": null
+    },
+    "chauffagiste_77_Dagny": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T00:27:36.099563",
+      "error": null
+    },
+    "chauffagiste_77_Chenou": {
+      "status": "completed",
+      "results_count": 13,
+      "completed_at": "2026-01-08T00:28:29.756404",
+      "error": null
+    },
+    "chauffagiste_77_Charmentray": {
+      "status": "completed",
+      "results_count": 18,
+      "completed_at": "2026-01-08T00:28:42.707790",
+      "error": null
+    },
+    "chauffagiste_77_Chartronges": {
+      "status": "completed",
+      "results_count": 4,
+      "completed_at": "2026-01-08T00:29:33.813407",
+      "error": null
+    },
+    "chauffagiste_77_Montigny-le-Guesdier": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-08T00:29:43.159484",
+      "error": null
+    },
+    "chauffagiste_77_Vaucourtois": {
+      "status": "completed",
+      "results_count": 31,
+      "completed_at": "2026-01-08T00:29:48.813057",
+      "error": null
+    },
+    "chauffagiste_77_Nantouillet": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-08T00:29:57.008552",
+      "error": null
+    },
+    "chauffagiste_77_Le Plessis-Placy": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T00:30:13.661705",
+      "error": null
+    },
+    "chauffagiste_77_Égligny": {
+      "status": "completed",
+      "results_count": 3,
+      "completed_at": "2026-01-08T00:30:41.096125",
+      "error": null
+    },
+    "chauffagiste_77_Voulton": {
+      "status": "completed",
+      "results_count": 0,
+      "completed_at": "2026-01-08T00:32:23.240037",
+      "error": null
+    },
+    "chauffagiste_77_Vignely": {
+      "status": "completed",
+      "results_count": 2,
+      "completed_at": "2026-01-08T00:32:39.540924",
+      "error": null
+    },
+    "chauffagiste_77_Puisieux": {
+      "status": "completed",
+      "results_count": 12,
+      "completed_at": "2026-01-08T00:33:09.241083",
+      "error": null
+    },
+    "chauffagiste_77_Boitron": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-08T00:33:44.569725",
+      "error": null
+    },
+    "chauffagiste_77_Andrezel": {
+      "status": "completed",
+      "results_count": 8,
+      "completed_at": "2026-01-08T00:33:49.664630",
+      "error": null
+    },
+    "chauffagiste_77_Dhuisy": {
+      "status": "completed",
+      "results_count": 7,
+      "completed_at": "2026-01-08T00:34:02.658474",
+      "error": null
+    },
+    "chauffagiste_77_Jaignes": {
+      "status": "completed",
+      "results_count": 16,
+      "completed_at": "2026-01-08T00:34:09.423068",
+      "error": null
+    },
+    "chauffagiste_77_Montceaux-lès-Provins": {
+      "status": "completed",
+      "results_count": 20,
+      "completed_at": "2026-01-08T00:35:53.918781",
+      "error": null
     }
   },
-  "last_updated": "2026-01-08T00:25:48.102147"
+  "last_updated": "2026-01-08T00:35:53.918913"
 }
