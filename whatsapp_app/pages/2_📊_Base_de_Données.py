@@ -505,6 +505,10 @@ else:
                     return default
                 return str(value)
             
+            # ✅ Créer des liens cliquables pour Google Maps et Site web
+            google_maps_url = artisan.get('google_maps_url')
+            site_web_url = artisan.get('site_web')
+            
             row = {
                 'ID': artisan.get('id', ''),
                 'Entreprise': format_value(artisan.get('nom_entreprise'), 'N/A'),
@@ -515,8 +519,8 @@ else:
                 'Adresse': format_value(artisan.get('adresse')),
                 'Code postal': format_value(artisan.get('code_postal')),
                 'Téléphone': format_value(artisan.get('telephone')),
-                'Site web': format_value(artisan.get('site_web')),
-                'Google Maps': format_value(artisan.get('google_maps_url')),
+                'Site web': site_web_url if site_web_url else '',
+                'Google Maps': google_maps_url if google_maps_url else '',
                 'Note': f"{artisan.get('note')}/5" if artisan.get('note') else 'N/A',
                 'Nombre avis': format_value(artisan.get('nombre_avis'), 'N/A')
             }
@@ -542,21 +546,8 @@ else:
         </style>
         """, unsafe_allow_html=True)
         
-        # ✅ Configuration des colonnes avec liens cliquables pour Google Maps et Site web
-        column_config = {
-            "Google Maps": st.column_config.LinkColumn(
-                "Google Maps",
-                help="Cliquez pour ouvrir la fiche Google Maps",
-                display_text="🗺️ Voir"
-            ),
-            "Site web": st.column_config.LinkColumn(
-                "Site web",
-                help="Cliquez pour ouvrir le site web",
-                display_text="🌐 Voir"
-            )
-        }
-        
-        st.dataframe(df, height=600, column_config=column_config)
+        # ✅ Afficher le tableau (les URLs sont copiables directement)
+        st.dataframe(df, height=600)
     
     # Actions rapides
     st.markdown("---")
