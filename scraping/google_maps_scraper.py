@@ -1406,11 +1406,12 @@ class GoogleMapsScraper:
             # URL Google Maps (capturer en premier)
             try:
                 current_url = self.driver.current_url
-                if '/maps/place/' in current_url:
+                # ✅ Capturer toute URL Google Maps valide
+                if current_url and ('maps.google' in current_url or 'google.com/maps' in current_url or '/maps/' in current_url):
                     info['google_maps_url'] = current_url
-                    logger.info(f"  🔗 [DEBUG] URL Google Maps capturée")
-            except:
-                pass
+                    logger.info(f"  🔗 [DEBUG] URL Google Maps capturée: {current_url[:80]}...")
+            except Exception as e:
+                logger.debug(f"  ⚠️ Impossible de capturer l'URL: {e}")
 
             # Nom de l'établissement
             try:
@@ -1546,17 +1547,25 @@ class GoogleMapsScraper:
             try:
                 if element.tag_name == 'a':
                     href = element.get_attribute('href')
-                    if href and '/maps/place/' in href:
+                    # ✅ Capturer toute URL Google Maps valide
+                    if href and ('maps.google' in href or 'google.com/maps' in href or '/maps/' in href):
                         info['google_maps_url'] = href
                         logger.info(f"  🔗 [DEBUG] URL Google Maps extraite depuis lien")
                 else:
-                    # Essayer de trouver un lien dans l'élément
-                    link = element.find_element(By.CSS_SELECTOR, 'a[href*="/maps/place/"]')
-                    if link:
-                        info['google_maps_url'] = link.get_attribute('href')
-                        logger.info(f"  🔗 [DEBUG] URL Google Maps extraite depuis sous-lien")
-            except:
-                pass
+                    # Essayer de trouver un lien dans l'élément (plusieurs sélecteurs)
+                    for selector in ['a[href*="/maps/"]', 'a[href*="google.com/maps"]', 'a[data-value]']:
+                        try:
+                            link = element.find_element(By.CSS_SELECTOR, selector)
+                            if link:
+                                href = link.get_attribute('href')
+                                if href and ('maps' in href or 'google' in href):
+                                    info['google_maps_url'] = href
+                                    logger.info(f"  🔗 [DEBUG] URL Google Maps extraite depuis sous-lien")
+                                    break
+                        except:
+                            continue
+            except Exception as e:
+                logger.debug(f"  ⚠️ Impossible d'extraire l'URL depuis l'élément: {e}")
 
             # Nom de l'établissement
             try:
