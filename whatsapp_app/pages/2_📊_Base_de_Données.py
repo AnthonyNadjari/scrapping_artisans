@@ -16,8 +16,11 @@ st.set_page_config(page_title="Base de Données", page_icon="📊", layout="wide
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from whatsapp_database.queries import get_artisans, get_statistiques, ajouter_artisan, importer_artisans_batch
-from whatsapp_database.models import get_connection
+from whatsapp_database.models import get_connection, init_database
 import sqlite3
+
+# Ensure database and tables exist
+init_database()
 import re
 
 st.title("📊 Base de Données - Artisans")
