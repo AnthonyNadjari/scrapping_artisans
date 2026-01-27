@@ -542,7 +542,21 @@ else:
         </style>
         """, unsafe_allow_html=True)
         
-        st.dataframe(df, height=600)
+        # ✅ Configuration des colonnes avec liens cliquables pour Google Maps et Site web
+        column_config = {
+            "Google Maps": st.column_config.LinkColumn(
+                "Google Maps",
+                help="Cliquez pour ouvrir la fiche Google Maps",
+                display_text="🗺️ Voir"
+            ),
+            "Site web": st.column_config.LinkColumn(
+                "Site web",
+                help="Cliquez pour ouvrir le site web",
+                display_text="🌐 Voir"
+            )
+        }
+        
+        st.dataframe(df, height=600, column_config=column_config)
     
     # Actions rapides
     st.markdown("---")

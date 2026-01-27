@@ -1186,71 +1186,8 @@ if not st.session_state.scraped_results:
     if results_list:
         st.session_state.scraped_results = results_list
 
-# Afficher les résultats scrapés
-if st.session_state.scraped_results:
-    st.markdown("---")
-    st.subheader("📊 Résultats scrapés")
-    
-    df = pd.DataFrame(st.session_state.scraped_results)
-    
-    # Stats
-    avec_tel = len(df[df['telephone'].notna()])
-    avec_site = len(df[df['site_web'].notna()])
-    sans_site = len(df[df['site_web'].isna()])
-    
-    col_res1, col_res2, col_res3, col_res4 = st.columns(4)
-    with col_res1:
-        st.metric("Total scrapés", len(df))
-    with col_res2:
-        st.metric("Avec téléphone", f"{avec_tel} ({avec_tel/len(df)*100:.1f}%)")
-    with col_res3:
-        st.metric("Avec site web", f"{avec_site} ({avec_site/len(df)*100:.1f}%)")
-    with col_res4:
-        st.metric("⭐ SANS site web", f"{sans_site} ({sans_site/len(df)*100:.1f}%)")
-    
-    # ✅ Filtres supprimés comme demandé
-    df_filtre = df.copy()
-    
-    # ✅ Afficher le tableau avec toutes les colonnes importantes
-    colonnes_afficher = ['nom', 'telephone', 'site_web', 'google_maps_url', 'adresse', 'ville', 'code_postal', 'departement', 'ville_recherche', 'note', 'nb_avis']
-    colonnes_disponibles = [col for col in colonnes_afficher if col in df_filtre.columns]
-    
-    # CSS amélioré pour le tableau
-    css_table = (
-        "<style>"
-        ".stDataFrame { width: 100% !important; }"
-        ".stDataFrame > div { width: 100% !important; }"
-        ".stDataFrame table { width: 100% !important; table-layout: auto !important; }"
-        ".stDataFrame th, .stDataFrame td { padding: 8px !important; word-wrap: break-word !important; overflow-wrap: break-word !important; white-space: normal !important; }"
-        ".stDataFrame th:nth-child(1) { width: 15% !important; }"
-        ".stDataFrame th:nth-child(2) { width: 10% !important; }"
-        ".stDataFrame th:nth-child(3) { width: 20% !important; }"
-        ".stDataFrame th:nth-child(4) { width: 20% !important; }"
-        ".stDataFrame th:nth-child(5) { width: 12% !important; }"
-        ".stDataFrame th:nth-child(6) { width: 10% !important; }"
-        ".stDataFrame th:nth-child(7) { width: 6% !important; }"
-        ".stDataFrame th:nth-child(8) { width: 7% !important; }"
-        "</style>"
-    )
-    st.markdown(css_table, unsafe_allow_html=True)
-    
-    # ✅ Utiliser width au lieu de use_container_width (compatibilité Streamlit)
-    st.dataframe(
-        df_filtre[colonnes_disponibles],
-        height=600
-    )
-    
-    # ✅ Bouton d'export CSV complet
-    csv_all = df.to_csv(index=False, encoding='utf-8-sig')
-    dept = st.session_state.get('departements_selected', departements)[0] if st.session_state.get('departements_selected') else (departements[0] if departements else '77')
-    metier_export = st.session_state.get('metiers_selected', metiers)[0] if st.session_state.get('metiers_selected') else (metiers[0] if metiers else 'plombier')
-    st.download_button(
-        "📥 Télécharger CSV complet",
-        csv_all,
-        f"{metier_export}_{dept}_complet_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-        "text/csv"
-    )
-    
+# ✅ Section "Résultats scrapés" supprimée pour simplifier la page
+
 # ✅ Expander "Mode d'exécution" tout en bas de la page
 with st.expander("ℹ️ Mode d'exécution", expanded=False):
     st.info("☁️ **Mode GitHub Actions activé** - Le scraping s'exécutera sur GitHub Actions (gratuit jusqu'à 2000 min/mois)")
