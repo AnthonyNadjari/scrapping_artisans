@@ -197,6 +197,7 @@ with col_sync:
                 'departement': dept,
                 'departement_recherche': info.get('departement_recherche', ''),
                 'type_artisan': info.get('recherche') or info.get('type_artisan', 'artisan'),
+                'google_maps_url': info.get('google_maps_url'),
                 'source': 'google_maps_github_actions',
                 'note': info.get('note'),
                 'nombre_avis': info.get('nb_avis') or info.get('nombre_avis')
