@@ -17,6 +17,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from whatsapp_database.queries import get_artisans, get_statistiques, ajouter_artisan, importer_artisans_batch
 from whatsapp_database.models import get_connection, init_database
+from whatsapp.message_builder import detect_site_type
+from whatsapp.phone_utils import is_mobile, is_landline
 import sqlite3
 
 # Ensure database and tables exist
@@ -25,7 +27,8 @@ import re
 
 st.title("📊 Base de Données - Artisans")
 
-# Stats globales
+# Récupérer tous les artisans pour les stats globales (avant filtres)
+all_artisans_stats = get_artisans(limit=10000)
 stats = get_statistiques()
 
 col1, col2, col3 = st.columns(3)
@@ -88,45 +91,147 @@ except Exception as e:
 
 st.markdown("---")
 
-# Filtres
-st.subheader("🔍 Filtres de Recherche")
-
-col_f1, col_f2, col_f3 = st.columns(3)
-
-with col_f1:
-    filtre_metier = st.multiselect(
+# Sidebar : Filtres (même système que Messages WhatsApp)
+with st.sidebar:
+    st.header("🔍 Filtres")
+    
+    # Récupérer tous les artisans pour les filtres
+    all_artisans_for_filters = get_artisans(limit=10000)
+    
+    # Type de contact
+    contact_type = st.radio(
+        "Type de contact",
+        ["Tous", "SMS uniquement (06/07)", "Cold Call uniquement (01-05)"],
+        key="filter_contact_type_bdd"
+    )
+    
+    # Type de site web
+    site_types = st.multiselect(
+        "Type de site web",
+        ["Pas de site", "Facebook", "Instagram", "Site web classique"],
+        key="filter_site_type_bdd"
+    )
+    
+    # Métier
+    metiers = sorted(list(set([a.get('type_artisan') for a in all_artisans_for_filters if a.get('type_artisan')])))
+    metiers_selected = st.multiselect(
         "Métier",
-        options=["plombier", "électricien", "menuisier", "peintre", "chauffagiste", "carreleur", "maçon", "charpentier"],
-        default=[]
+        metiers,
+        key="filter_metier_bdd"
     )
-
-with col_f2:
-    filtre_dept = st.text_input(
+    
+    # Département
+    depts = sorted(list(set([a.get('departement') for a in all_artisans_for_filters if a.get('departement')])))
+    depts_selected = st.multiselect(
         "Département",
-        placeholder="77, 78, 91..."
+        depts,
+        key="filter_dept_bdd"
+    )
+    
+    # Note Google (multiselect avec tags)
+    note_options = ["4.5+", "4.0+", "3.5+", "< 3.5", "Sans note (NA)"]
+    note_filters = st.multiselect(
+        "Note Google",
+        note_options,
+        key="filter_note_bdd"
+    )
+    
+    # Nombre d'avis (multiselect avec tags)
+    avis_options = ["50+ avis", "20-50 avis", "10-20 avis", "< 10 avis", "Sans avis (NA)"]
+    avis_filters = st.multiselect(
+        "Nombre d'avis",
+        avis_options,
+        key="filter_avis_bdd"
     )
 
-with col_f3:
-    filtre_recherche = st.text_input(
-        "Recherche",
-        placeholder="Nom, ville, téléphone...",
-        value=""
-    )
+# Récupérer tous les artisans pour appliquer les filtres
+all_artisans = get_artisans(limit=10000)
 
-# Construire filtres avec validation stricte
-filtres = {}
+# Appliquer les filtres (même logique que Messages WhatsApp)
+filtered_artisans = all_artisans.copy()
 
-if filtre_metier and isinstance(filtre_metier, list) and len(filtre_metier) > 0:
-    filtres['metiers'] = filtre_metier
+# Filtre type de contact
+if contact_type == "SMS uniquement (06/07)":
+    filtered_artisans = [a for a in filtered_artisans if is_mobile(a.get('telephone', ''))]
+elif contact_type == "Cold Call uniquement (01-05)":
+    filtered_artisans = [a for a in filtered_artisans if is_landline(a.get('telephone', ''))]
 
-if filtre_dept and isinstance(filtre_dept, str) and filtre_dept.strip():
-    depts = [d.strip() for d in filtre_dept.split(',') if d.strip()]
-    if depts:
-        filtres['departements'] = depts
+# Filtre type de site
+if site_types:
+    def match_site_type(artisan_site, selected_types):
+        """Vérifie si le type de site correspond aux sélections"""
+        site_type = detect_site_type(artisan_site)
+        for stype in selected_types:
+            if stype == "Pas de site" and site_type == "none":
+                return True
+            elif stype == "Facebook" and site_type == "facebook":
+                return True
+            elif stype == "Instagram" and site_type == "instagram":
+                return True
+            elif stype == "Site web classique" and site_type == "website":
+                return True
+        return False
+    
+    filtered_artisans = [a for a in filtered_artisans if match_site_type(a.get('site_web'), site_types)]
 
-# Ne pas ajouter recherche si vide ou None
-if filtre_recherche and isinstance(filtre_recherche, str) and filtre_recherche.strip():
-    filtres['recherche'] = str(filtre_recherche).strip()
+# Filtre métier
+if metiers_selected:
+    filtered_artisans = [a for a in filtered_artisans if a.get('type_artisan') in metiers_selected]
+
+# Filtre département
+if depts_selected:
+    filtered_artisans = [a for a in filtered_artisans if a.get('departement') in depts_selected]
+
+# Filtre note (multiselect - peut sélectionner plusieurs critères)
+if note_filters:
+    def match_note(artisan_note):
+        """Vérifie si la note correspond à au moins un des filtres sélectionnés"""
+        if not artisan_note or artisan_note == '':
+            return "Sans note (NA)" in note_filters
+        
+        try:
+            note_val = float(artisan_note)
+            for note_filter in note_filters:
+                if note_filter == "4.5+" and note_val >= 4.5:
+                    return True
+                elif note_filter == "4.0+" and note_val >= 4.0:
+                    return True
+                elif note_filter == "3.5+" and note_val >= 3.5:
+                    return True
+                elif note_filter == "< 3.5" and note_val < 3.5:
+                    return True
+            return False
+        except:
+            return "Sans note (NA)" in note_filters
+    
+    filtered_artisans = [a for a in filtered_artisans if match_note(a.get('note'))]
+
+# Filtre nombre d'avis (multiselect - peut sélectionner plusieurs critères)
+if avis_filters:
+    def match_avis(artisan_avis):
+        """Vérifie si le nombre d'avis correspond à au moins un des filtres sélectionnés"""
+        if not artisan_avis or artisan_avis == '':
+            return "Sans avis (NA)" in avis_filters
+        
+        try:
+            avis_val = int(artisan_avis)
+            for avis_filter in avis_filters:
+                if avis_filter == "50+ avis" and avis_val >= 50:
+                    return True
+                elif avis_filter == "20-50 avis" and 20 <= avis_val < 50:
+                    return True
+                elif avis_filter == "10-20 avis" and 10 <= avis_val < 20:
+                    return True
+                elif avis_filter == "< 10 avis" and avis_val < 10:
+                    return True
+            return False
+        except:
+            return "Sans avis (NA)" in avis_filters
+    
+    filtered_artisans = [a for a in filtered_artisans if match_avis(a.get('nombre_avis'))]
+
+# Utiliser les artisans filtrés au lieu de ceux récupérés avec filtres
+artisans = filtered_artisans
 
 # ✅ Bouton unique pour synchroniser avec GitHub (git pull + import JSON + import artifacts)
 col_sync, col_empty = st.columns([1, 4])
@@ -356,16 +461,13 @@ with col_sync:
         else:
             st.info("ℹ️ Aucun nouveau résultat à importer (tous déjà présents)")
 
-# Récupérer artisans (toujours recharger depuis la BDD)
-# ✅ Toujours recharger depuis la BDD pour avoir les dernières données
-# ✅ Pas de limite pour afficher tous les artisans
-artisans = get_artisans(filtres=filtres, limit=None)
+# Les artisans sont déjà filtrés ci-dessus dans filtered_artisans
 
-# ✅ Afficher un message si des données sont trouvées
+# ✅ Afficher un message avec le nombre d'artisans filtrés
 if artisans:
-    st.info(f"✅ {len(artisans)} artisan(s) trouvé(s) dans la base de données")
+    st.info(f"✅ {len(artisans)} artisan(s) correspondant aux filtres")
 else:
-    st.warning("⚠️ Aucun artisan dans la base de données. Les résultats de GitHub Actions doivent être importés manuellement.")
+    st.warning("⚠️ Aucun artisan ne correspond aux filtres sélectionnés. Essayez de modifier les critères de recherche.")
 
 st.markdown("---")
 
