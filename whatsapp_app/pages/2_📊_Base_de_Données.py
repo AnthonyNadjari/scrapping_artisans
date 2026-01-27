@@ -340,11 +340,12 @@ with col_sync:
                         except Exception:
                             pass
                     local_results_count = len(results_list)
-                    st.info(f"📄 JSON local: {local_results_count} résultats chargés")
+                    # Message via status_text au lieu de st.info pour éviter la persistance
+                    status_text.text(f"📄 JSON local: {local_results_count} résultats chargés")
             except Exception as e:
                 st.warning(f"⚠️ Erreur lecture JSON: {e}")
         else:
-            st.info("📄 Pas de fichier JSON local")
+            status_text.text("📄 Pas de fichier JSON local")
 
         # === ÉTAPE 3: Load Artifacts GitHub (skip downloading if JSON already has data) ===
         status_text.text("☁️ Vérification Artifacts GitHub...")
@@ -427,16 +428,16 @@ with col_sync:
                                                                 pass
                                                 break  # Only process one artifact
                         if artifacts_count > 0:
-                            st.info(f"☁️ {artifacts_count} résultats depuis artifact GitHub")
+                            status_text.text(f"☁️ {artifacts_count} résultats depuis artifact GitHub")
                     else:
-                        st.info("☁️ Config GitHub non configurée")
+                        status_text.text("☁️ Config GitHub non configurée")
             except Exception as e:
                 st.warning(f"⚠️ Erreur artifacts: {e}")
         else:
             if local_results_count > 0:
-                st.info("☁️ Artifacts ignorés (JSON local suffisant)")
+                status_text.text("☁️ Artifacts ignorés (JSON local suffisant)")
             else:
-                st.info("☁️ Pas de config GitHub")
+                status_text.text("☁️ Pas de config GitHub")
 
         # === ÉTAPE 4: Batch import all records ===
         if all_records_to_import:
@@ -452,17 +453,27 @@ with col_sync:
             import_stats = importer_artisans_batch(all_records_to_import, progress_callback=update_progress)
             total_imported = import_stats['imported']
             total_updated = import_stats['updated']
-            st.info(f"💾 Import: {import_stats['imported']} nouveaux, {import_stats['updated']} mis à jour, {import_stats['errors']} erreurs")
+            # Message final important - garder st.info pour le résultat final
+            if total_imported > 0 or total_updated > 0:
+                st.success(f"✅ Import: {import_stats['imported']} nouveaux, {import_stats['updated']} mis à jour, {import_stats['errors']} erreurs")
+            else:
+                status_text.text(f"💾 Import: {import_stats['imported']} nouveaux, {import_stats['updated']} mis à jour, {import_stats['errors']} erreurs")
 
         # === RÉSULTAT FINAL ===
-        status_text.text("✅ Synchronisation terminée!")
         progress_bar.progress(100)
+        # Nettoyer les messages temporaires
+        status_text.empty()
+        progress_bar.empty()
+        
         if total_imported > 0:
             st.success(f"🎉 **{total_imported} nouveau(x) artisan(s) importé(s)!** (JSON: {local_results_count}, Artifacts: {artifacts_count})")
             try:
                 st.rerun()
             except AttributeError:
-                st.experimental_rerun()
+                try:
+                    st.experimental_rerun()
+                except:
+                    pass
         else:
             st.info("ℹ️ Aucun nouveau résultat à importer (tous déjà présents)")
 

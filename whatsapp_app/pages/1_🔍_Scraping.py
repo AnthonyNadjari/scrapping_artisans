@@ -95,20 +95,6 @@ def get_communes_from_api(departement: str, min_population: int = 0, max_populat
 
 st.title("🔍 Scraping Google Maps - Artisans")
 
-# Stats actuelles
-stats = get_statistiques()
-col_stat1, col_stat2, col_stat3, col_stat4 = st.columns(4)
-with col_stat1:
-    st.metric("Total artisans", f"{stats.get('total', 0):,}")
-with col_stat2:
-    st.metric("Avec téléphone", f"{stats.get('avec_telephone', 0):,}")
-with col_stat3:
-    st.metric("Avec site web", f"{stats.get('avec_site_web', 0):,}")
-with col_stat4:
-    st.metric("Sans site web", f"{stats.get('sans_site_web', 0):,}")
-
-st.markdown("---")
-
 # Configuration du scraping
 st.subheader("⚙️ Configuration")
 
@@ -395,7 +381,13 @@ if github_token and github_repo:
             if 'workflows_last_refresh' in st.session_state:
                 del st.session_state.workflows_last_refresh
             # Forcer le rerun immédiatement
-            st.experimental_rerun()
+            try:
+                st.rerun()
+            except AttributeError:
+                try:
+                    st.experimental_rerun()
+                except:
+                    pass
 
     # Lister les workflows en cours
     try:
@@ -500,585 +492,6 @@ else:
 
 st.markdown("---")
 
-# ✅ SECTION : Carte de scraping par métier (basée sur la BDD locale)
-st.markdown("### 🗺️ Carte des scrapings par métier")
-st.caption("Visualisez les départements scrapés pour chaque métier. La taille des points est proportionnelle au nombre d'artisans.")
-
-# Récupérer la liste des métiers depuis la BDD
-from whatsapp_database.queries import get_artisans
-all_artisans = get_artisans(limit=10000)
-metiers_bdd = sorted(list(set([a.get('type_artisan') for a in all_artisans if a.get('type_artisan')])))
-
-col_map1, col_map2 = st.columns([1, 3])
-with col_map1:
-    if metiers_bdd:
-        metier_carte = st.selectbox("Sélectionner un métier", ["Tous"] + metiers_bdd, key="map_metier_selection")
-    else:
-        metier_carte = "Tous"
-        st.info("ℹ️ Aucun métier dans la BDD")
-
-# Importer et utiliser la fonction de carte
-try:
-    from whatsapp_app.utils.map_utils import create_scraping_map_by_job
-    from streamlit_folium import st_folium
-    
-    carte = create_scraping_map_by_job(metier_carte if metier_carte != "Tous" else None)
-    
-    if carte:
-        with col_map2:
-            st_folium(carte, width=None, height=500, returned_objects=[])
-    else:
-        with col_map2:
-            st.info("ℹ️ Aucune donnée de scraping pour ce métier. Lancez un scraping pour voir la carte se remplir.")
-except ImportError as e:
-    st.warning(f"⚠️ Erreur import map_utils: {e}")
-    st.info("💡 Installez les dépendances: `pip install folium streamlit-folium`")
-except Exception as e:
-    st.error(f"❌ Erreur création carte: {e}")
-    import traceback
-    st.code(traceback.format_exc())
-
-# ✅ SECTION : Tableau de bord stratégique de recherche
-try:
-    from whatsapp_database.scraping_analytics import (
-        get_metier_statistics, get_departement_statistics,
-        get_coverage_metrics, get_session_statistics,
-        get_priority_suggestions, generate_research_report
-    )
-    ANALYTICS_AVAILABLE = True
-except ImportError as e:
-    ANALYTICS_AVAILABLE = False
-    # Debug: afficher l'erreur en mode développement
-    import traceback
-    # st.warning(f"Module analytics non disponible: {e}")  # Commenté pour ne pas polluer l'UI
-
-# ✅ SECTION : Historique des scrapings par département (masqué si vide)
-from whatsapp_database.queries import get_scraping_history
-historique = get_scraping_history()
-
-# ✅ Initialiser departements_stats pour éviter l'erreur
-departements_stats = {}
-
-if historique:
-    col_title, col_filter = st.columns([2, 1])
-    with col_title:
-        st.markdown("### 📊 Historique des scrapings par département")
-    with col_filter:
-        # Sélection du métier pour filtrer
-        metiers_disponibles = list(set([h['metier'] for h in historique if h.get('metier')]))
-        if metiers_disponibles:
-            metier_selectionne = st.selectbox("Métier", ["Tous"] + sorted(metiers_disponibles), key="tracking_metier", label_visibility="visible")
-        else:
-            metier_selectionne = "Tous"
-    
-    # Filtrer par métier si spécifié
-    if metier_selectionne != "Tous":
-        historique = [h for h in historique if h.get('metier') == metier_selectionne]
-    
-    # Calculer les statistiques par département
-    for entry in historique:
-        dept = entry.get('departement', '')
-        metier = entry.get('metier', '')
-        results_count = entry.get('results_count', 0)
-        
-        if not dept:
-            continue
-        
-        key = f"{metier}_{dept}"
-        if key not in departements_stats:
-            departements_stats[key] = {
-                'departement': dept,
-                'metier': metier,
-                'total_results': 0,
-                'villes_scrapees': 0,
-                'max_results': 0
-            }
-        
-        departements_stats[key]['total_results'] += results_count
-        departements_stats[key]['villes_scrapees'] += 1
-        departements_stats[key]['max_results'] = max(departements_stats[key]['max_results'], results_count)
-
-# Coordonnées approximatives des départements français (centres)
-dept_coords = {
-    '01': (46.2, 5.2), '02': (49.4, 3.4), '03': (46.3, 3.1), '04': (44.1, 6.1), '05': (44.7, 6.1),
-    '06': (43.7, 7.3), '07': (44.5, 4.4), '08': (49.8, 4.7), '09': (43.0, 1.6), '10': (48.3, 4.1),
-    '11': (43.2, 2.4), '12': (44.3, 2.6), '13': (43.3, 5.4), '14': (49.2, -0.4), '15': (45.0, 2.4),
-    '16': (45.6, 0.2), '17': (46.2, -1.2), '18': (47.1, 2.4), '19': (45.3, 1.8), '21': (47.3, 5.0),
-    '22': (48.5, -2.8), '23': (46.2, 1.9), '24': (45.2, 0.7), '25': (47.2, 6.0), '26': (44.9, 4.9),
-    '27': (49.1, 1.1), '28': (48.4, 1.5), '29': (48.4, -4.5), '30': (44.1, 4.1), '31': (43.6, 1.4),
-    '32': (43.6, 0.6), '33': (44.8, -0.6), '34': (43.6, 3.9), '35': (48.1, -1.7), '36': (46.8, 1.7),
-    '37': (47.4, 0.7), '38': (45.2, 5.7), '39': (46.7, 5.6), '40': (43.9, -0.5), '41': (47.6, 1.3),
-    '42': (45.4, 4.4), '43': (45.0, 3.9), '44': (47.2, -1.6), '45': (47.9, 1.9), '46': (44.4, 1.4),
-    '47': (44.2, 0.6), '48': (44.5, 3.5), '49': (47.5, -0.6), '50': (49.1, -1.1), '51': (49.3, 4.0),
-    '52': (48.1, 5.1), '53': (48.1, -0.8), '54': (48.7, 6.2), '55': (49.1, 5.4), '56': (47.7, -2.8),
-    '57': (49.1, 6.2), '58': (47.0, 3.4), '59': (50.6, 3.1), '60': (49.4, 2.8), '61': (48.4, 0.1),
-    '62': (50.3, 2.8), '63': (45.8, 3.1), '64': (43.3, -0.4), '65': (43.2, 0.1), '66': (42.7, 2.9),
-    '67': (48.6, 7.8), '68': (47.7, 7.3), '69': (45.8, 4.8), '70': (47.6, 6.2), '71': (46.8, 4.9),
-    '72': (48.0, 0.2), '73': (45.6, 5.9), '74': (46.0, 6.1), '75': (48.9, 2.3), '76': (49.4, 1.1),
-    '77': (48.6, 2.7), '78': (48.8, 2.1), '79': (46.3, -0.5), '80': (49.9, 2.3), '81': (43.6, 2.1),
-    '82': (44.0, 1.4), '83': (43.1, 6.0), '84': (44.0, 5.0), '85': (46.7, -1.4), '86': (46.6, 0.3),
-    '87': (45.8, 1.3), '88': (48.2, 6.5), '89': (47.8, 3.6), '90': (47.6, 6.9), '91': (48.6, 2.3),
-    '92': (48.9, 2.2), '93': (48.9, 2.4), '94': (48.8, 2.4), '95': (49.1, 2.3)
-}
-
-# Créer la carte
-if departements_stats:
-    import folium
-    from streamlit_folium import st_folium
-    
-    # Centre de la France
-    m = folium.Map(location=[46.6, 2.2], zoom_start=6)
-    
-    # Seuils pour déterminer le statut
-    SEUIL_FAIT = 5  # Au moins 5 résultats = "fait"
-    SEUIL_PARTIEL = 1  # Entre 1 et 4 = "partiellement fait"
-    
-    for key, stats in departements_stats.items():
-        dept = stats['departement']
-        metier = stats['metier']
-        total_results = stats['total_results']
-        villes_scrapees = stats['villes_scrapees']
-        max_results = stats['max_results']
-        
-        if dept in dept_coords:
-            lat, lon = dept_coords[dept]
-            
-            # Déterminer le statut et la couleur
-            if max_results >= SEUIL_FAIT:
-                couleur = 'green'
-                statut = '✅ Fait'
-                taille = 15
-            elif max_results >= SEUIL_PARTIEL:
-                couleur = 'orange'
-                statut = '⚠️ Partiellement fait'
-                taille = 10
-            else:
-                couleur = 'gray'
-                statut = '❌ Non fait'
-                taille = 5
-            
-            # Popup avec informations
-            popup_text = f"""
-            <b>Département {dept}</b><br>
-            <b>Métier:</b> {metier}<br>
-            <b>Statut:</b> {statut}<br>
-            <b>Villes scrapées:</b> {villes_scrapees}<br>
-            <b>Total résultats:</b> {total_results}<br>
-            <b>Max par ville:</b> {max_results}
-            """
-            
-            folium.CircleMarker(
-                location=[lat, lon],
-                radius=taille,
-                popup=folium.Popup(popup_text, max_width=300),
-                color='black',
-                weight=2,
-                fillColor=couleur,
-                fillOpacity=0.8,
-                tooltip=f"Dépt {dept}: {statut} ({villes_scrapees} villes, {total_results} résultats)"
-            ).add_to(m)
-    
-    # ✅ AUSSI afficher les villes individuelles scrapées (petits points bleus)
-    # Récupérer les coordonnées des villes depuis l'API ou depuis les artisans scrapés
-    from whatsapp_database.queries import get_artisans
-    artisans = get_artisans(limit=10000)
-    
-    # Grouper les villes scrapées par métier/département
-    villes_scrapees_coords = {}
-    for artisan in artisans:
-        if metier_selectionne != "Tous" and artisan.get('type_artisan') != metier_selectionne:
-            continue
-        dept_art = artisan.get('departement', '')
-        ville_art = artisan.get('ville', '')
-        if dept_art and ville_art:
-            key = f"{dept_art}_{ville_art}"
-            if key not in villes_scrapees_coords:
-                # Essayer de récupérer les coordonnées depuis l'API
-                try:
-                    communes = get_communes_from_api(dept_art, 0, 1000000)  # Toutes les communes
-                    for commune in communes:
-                        if commune['nom'].lower() == ville_art.lower():
-                            villes_scrapees_coords[key] = {
-                                'lat': commune.get('latitude'),
-                                'lon': commune.get('longitude'),
-                                'ville': ville_art,
-                                'dept': dept_art
-                            }
-                            break
-                except:
-                    pass
-    
-    # Ajouter les villes sur la carte (petits points bleus)
-    for key, coords in villes_scrapees_coords.items():
-        if coords.get('lat') and coords.get('lon'):
-            folium.CircleMarker(
-                location=[coords['lat'], coords['lon']],
-                radius=3,
-                popup=folium.Popup(f"<b>{coords['ville']}</b><br>Département: {coords['dept']}", max_width=200),
-                color='blue',
-                weight=1,
-                fillColor='blue',
-                fillOpacity=0.6,
-                tooltip=f"{coords['ville']} ({coords['dept']})"
-            ).add_to(m)
-    
-    # Légende
-    legend_html = '''
-    <div style="position: fixed; 
-                bottom: 50px; left: 50px; width: 200px; height: 120px; 
-                background-color: white; z-index:9999; font-size:14px;
-                border:2px solid grey; border-radius:5px; padding: 10px">
-    <b>Légende</b><br>
-    <span style="color:green">●</span> Fait (≥5 résultats)<br>
-    <span style="color:orange">●</span> Partiel (1-4 résultats)<br>
-    <span style="color:gray">●</span> Non fait (0 résultat)<br>
-    <span style="color:blue">●</span> Villes scrapées
-    </div>
-    '''
-    m.get_root().html.add_child(folium.Element(legend_html))
-    
-    # ✅ Afficher la carte EN GRAND
-    st_folium(m, width=None, height=600, returned_objects=[])
-    
-    # Statistiques résumées
-    col_stat1, col_stat2, col_stat3 = st.columns(3)
-    with col_stat1:
-        total_depts = len(departements_stats)
-        st.metric("Départements scrapés", total_depts)
-    with col_stat2:
-        depts_faits = len([s for s in departements_stats.values() if s['max_results'] >= SEUIL_FAIT])
-        st.metric("Départements complets", depts_faits)
-    with col_stat3:
-        total_villes = sum([s['villes_scrapees'] for s in departements_stats.values()])
-        st.metric("Villes scrapées", total_villes)
-else:
-    st.empty()  # Pas de message si aucun scraping - affichage plus compact
-
-# ✅ NOUVELLE SECTION : Tableau de bord stratégique de recherche
-st.markdown("---")
-st.markdown("### 📊 Tableau de bord stratégique de recherche")
-
-if not ANALYTICS_AVAILABLE:
-    st.warning("⚠️ Le module d'analytics n'est pas disponible. Vérifiez que le fichier `whatsapp_database/scraping_analytics.py` existe.")
-    st.stop()
-
-if not historique or len(historique) == 0:
-    st.info("ℹ️ Aucun historique de scraping trouvé dans la base de données. Les statistiques apparaîtront après vos premiers scrapings qui seront enregistrés dans `scraping_history`.")
-    st.caption("💡 Note: Les scrapings effectués via GitHub Actions doivent être marqués dans la table `scraping_history` pour apparaître ici.")
-    
-    # Bouton pour forcer la réinitialisation de la BDD (utile si les colonnes manquent)
-    if st.button("🔄 Réinitialiser la structure de la base de données", help="Ajoute les nouvelles colonnes à la table scraping_history si elles manquent"):
-        try:
-            from whatsapp_database.models import init_database
-            init_database()
-            st.success("✅ Base de données réinitialisée ! Rafraîchissez la page.")
-            try:
-                st.rerun()
-            except:
-                st.experimental_rerun()
-        except Exception as e:
-            st.error(f"❌ Erreur: {e}")
-else:
-    # Tabs pour organiser les différentes vues
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "🎯 Vue d'ensemble", 
-        "📈 Par métier", 
-        "🗺️ Par département",
-        "📅 Sessions récentes",
-        "💡 Suggestions"
-    ])
-    
-    with tab1:
-        st.markdown("#### Vue d'ensemble globale")
-        
-        # Statistiques globales
-        try:
-            stats_metiers = get_metier_statistics()
-            stats_departements = get_departement_statistics()
-            
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                st.metric("Métiers scrapés", len(stats_metiers))
-            with col2:
-                st.metric("Départements couverts", len(stats_departements))
-            with col3:
-                total_artisans = sum(s['artisans_trouves'] for s in stats_metiers)
-                st.metric("Artisans trouvés", f"{total_artisans:,}")
-            with col4:
-                total_villes = sum(s['villes_scrapees'] for s in stats_metiers)
-                st.metric("Villes scrapées", f"{total_villes:,}")
-            
-            # Graphique des métiers les plus scrapés
-            if stats_metiers:
-                st.markdown("#### Top métiers par nombre d'artisans trouvés")
-                df_metiers = pd.DataFrame(stats_metiers[:10])
-                st.bar_chart(df_metiers.set_index('metier')['artisans_trouves'])
-                
-        except Exception as e:
-            st.warning(f"⚠️ Erreur calcul statistiques: {e}")
-    
-    with tab2:
-        st.markdown("#### Statistiques par métier")
-        
-        try:
-            stats_metiers = get_metier_statistics()
-            
-            if stats_metiers:
-                # Tableau détaillé
-                df = pd.DataFrame(stats_metiers)
-                df['taux_couverture_moyen'] = df['taux_couverture_moyen'].apply(
-                    lambda x: f"{x:.1f}%" if x is not None else "N/A"
-                )
-                
-                st.dataframe(
-                    df[['metier', 'departements_couverts', 'villes_scrapees', 
-                        'artisans_trouves', 'taux_couverture_moyen']],
-                    use_container_width=True,
-                    hide_index=True
-                )
-                
-                # Export
-                csv = df.to_csv(index=False).encode('utf-8')
-                st.download_button(
-                    "📥 Télécharger en CSV",
-                    csv,
-                    f"stats_metiers_{datetime.now().strftime('%Y%m%d')}.csv",
-                    "text/csv"
-                )
-            else:
-                st.info("Aucune statistique disponible")
-                
-        except Exception as e:
-            st.warning(f"⚠️ Erreur: {e}")
-    
-    with tab3:
-        st.markdown("#### Statistiques par département")
-        
-        try:
-            stats_departements = get_departement_statistics()
-            
-            if stats_departements:
-                # Filtre par métier
-                metiers_list = sorted(list(set([h.get('metier', '') for h in historique if h.get('metier')])))
-                if metiers_list:
-                    metier_filter = st.selectbox(
-                        "Filtrer par métier",
-                        ["Tous"] + metiers_list,
-                        key="dept_metier_filter"
-                    )
-                    
-                    if metier_filter != "Tous":
-                        stats_departements = [s for s in stats_departements 
-                                            if any(h.get('metier') == metier_filter 
-                                                  for h in historique if h.get('departement') == s['departement'])]
-                
-                # Tableau
-                df = pd.DataFrame(stats_departements)
-                df['taux_couverture'] = df['taux_couverture'].apply(
-                    lambda x: f"{x:.1f}%" if x is not None else "N/A"
-                )
-                
-                st.dataframe(
-                    df[['departement', 'metiers_scrapes', 'villes_scrapees', 
-                        'villes_disponibles', 'taux_couverture', 'artisans_trouves']],
-                    use_container_width=True,
-                    hide_index=True
-                )
-                
-                # Export
-                csv = df.to_csv(index=False).encode('utf-8')
-                st.download_button(
-                    "📥 Télécharger en CSV",
-                    csv,
-                    f"stats_departements_{datetime.now().strftime('%Y%m%d')}.csv",
-                    "text/csv"
-                )
-            else:
-                st.info("Aucune statistique disponible")
-                
-        except Exception as e:
-            st.warning(f"⚠️ Erreur: {e}")
-    
-    with tab4:
-        st.markdown("#### Sessions de scraping récentes (30 derniers jours)")
-        
-        try:
-            sessions = get_session_statistics(days=30)
-            
-            if sessions:
-                df_sessions = pd.DataFrame(sessions)
-                df_sessions['duree_moyenne'] = df_sessions['duree_moyenne'].apply(
-                    lambda x: f"{x:.0f}s" if x and not pd.isna(x) else "N/A"
-                )
-                
-                st.dataframe(
-                    df_sessions,
-                    use_container_width=True,
-                    hide_index=True
-                )
-                
-                # Graphique d'évolution
-                if len(df_sessions) > 1:
-                    st.markdown("#### Évolution du nombre d'artisans trouvés")
-                    st.line_chart(df_sessions.set_index('date')['artisans_trouves'])
-            else:
-                st.info("Aucune session récente")
-                
-        except Exception as e:
-            st.warning(f"⚠️ Erreur: {e}")
-    
-    with tab5:
-        st.markdown("#### Suggestions de départements prioritaires")
-        st.caption("Départements partiellement couverts nécessitant un complément de scraping")
-        
-        try:
-            suggestions = get_priority_suggestions(limit=10)
-            
-            if suggestions:
-                df_suggestions = pd.DataFrame(suggestions)
-                df_suggestions['taux_couverture_actuel'] = df_suggestions['taux_couverture_actuel'].apply(
-                    lambda x: f"{x:.1f}%" if x is not None else "N/A"
-                )
-                df_suggestions['priorite_score'] = df_suggestions['priorite_score'].apply(
-                    lambda x: f"{x:.0f}"
-                )
-                
-                st.dataframe(
-                    df_suggestions[['departement', 'metier', 'taux_couverture_actuel', 
-                                   'villes_manquantes', 'raison', 'priorite_score']],
-                    use_container_width=True,
-                    hide_index=True
-                )
-            else:
-                st.success("✅ Tous les départements sont bien couverts !")
-                
-        except Exception as e:
-            st.warning(f"⚠️ Erreur: {e}")
-    
-    # Section Rapport complet
-    st.markdown("---")
-    st.markdown("#### 📄 Générer un rapport complet")
-    
-    col_report1, col_report2 = st.columns(2)
-    with col_report1:
-        metier_report = st.selectbox(
-            "Métier (optionnel)",
-            ["Tous"] + sorted(list(set([h.get('metier', '') for h in historique if h.get('metier')]))),
-            key="report_metier"
-        )
-    with col_report2:
-        dept_report = st.selectbox(
-            "Département (optionnel)",
-            ["Tous"] + sorted(list(set([h.get('departement', '') for h in historique if h.get('departement')]))),
-            key="report_dept"
-        )
-    
-    if st.button("📊 Générer rapport", key="generate_report"):
-        try:
-            with st.spinner("Génération du rapport..."):
-                report = generate_research_report(
-                    metier=metier_report if metier_report != "Tous" else None,
-                    departement=dept_report if dept_report != "Tous" else None
-                )
-                
-                st.success("✅ Rapport généré avec succès !")
-                
-                # Afficher le résumé
-                st.markdown("##### Résumé")
-                stats_gen = report['statistiques_generales']
-                col_r1, col_r2, col_r3, col_r4 = st.columns(4)
-                with col_r1:
-                    st.metric("Scrapings", stats_gen['total_scrapings'])
-                with col_r2:
-                    st.metric("Artisans", f"{stats_gen['total_artisans_trouves']:,}")
-                with col_r3:
-                    st.metric("Villes", stats_gen['villes_scrapees'])
-                with col_r4:
-                    st.metric("Départements", stats_gen['departements_couverts'])
-                
-                # Exports
-                col_exp1, col_exp2 = st.columns(2)
-                
-                with col_exp1:
-                    # Export JSON
-                    import json
-                    report_json = json.dumps(report, ensure_ascii=False, indent=2)
-                    st.download_button(
-                        "📥 Télécharger rapport JSON",
-                        report_json.encode('utf-8'),
-                        f"rapport_recherche_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-                        "application/json"
-                    )
-                
-                with col_exp2:
-                    # Export Excel si disponible
-                    if EXCEL_AVAILABLE:
-                        try:
-                            wb = Workbook()
-                            ws = wb.active
-                            ws.title = "Résumé"
-                            
-                            # Style header
-                            header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
-                            header_font = Font(bold=True, color="FFFFFF")
-                            
-                            # Feuille 1: Résumé
-                            ws.append(["Rapport de recherche"])
-                            ws.append(["Généré le", report['periode']['generated_at']])
-                            ws.append([])
-                            
-                            stats = report['statistiques_generales']
-                            ws.append(["Statistiques générales"])
-                            ws.append(["Total scrapings", stats['total_scrapings']])
-                            ws.append(["Artisans trouvés", stats['total_artisans_trouves']])
-                            ws.append(["Villes scrapées", stats['villes_scrapees']])
-                            ws.append(["Départements couverts", stats['departements_couverts']])
-                            ws.append(["Métiers scrapés", stats['metiers_scrapes']])
-                            ws.append(["Moyenne artisans/scraping", f"{stats['artisans_moyen_par_scraping']:.2f}"])
-                            
-                            # Feuille 2: Par métier
-                            if report['statistiques_par_metier']:
-                                ws2 = wb.create_sheet("Par métier")
-                                df_metiers = pd.DataFrame(report['statistiques_par_metier'])
-                                for r_idx, row in enumerate(df_metiers.itertuples(), start=1):
-                                    for c_idx, value in enumerate(row[1:], start=1):
-                                        cell = ws2.cell(row=r_idx, column=c_idx, value=value)
-                                        if r_idx == 1:
-                                            cell.fill = header_fill
-                                            cell.font = header_font
-                            
-                            # Feuille 3: Par département
-                            if report['statistiques_par_departement']:
-                                ws3 = wb.create_sheet("Par département")
-                                df_depts = pd.DataFrame(report['statistiques_par_departement'])
-                                for r_idx, row in enumerate(df_depts.itertuples(), start=1):
-                                    for c_idx, value in enumerate(row[1:], start=1):
-                                        cell = ws3.cell(row=r_idx, column=c_idx, value=value)
-                                        if r_idx == 1:
-                                            cell.fill = header_fill
-                                            cell.font = header_font
-                            
-                            # Sauvegarder en mémoire
-                            excel_buffer = BytesIO()
-                            wb.save(excel_buffer)
-                            excel_buffer.seek(0)
-                            
-                            st.download_button(
-                                "📊 Télécharger rapport Excel",
-                                excel_buffer.getvalue(),
-                                f"rapport_recherche_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
-                                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                            )
-                        except Exception as e:
-                            st.warning(f"⚠️ Export Excel non disponible: {e}")
-                    else:
-                        st.info("💡 Installez openpyxl pour l'export Excel: `pip install openpyxl`")
-                
-        except Exception as e:
-            st.error(f"❌ Erreur génération rapport: {e}")
-            import traceback
-            st.code(traceback.format_exc())
-
 # ✅ Initialiser les variables GitHub Actions dans session_state AVANT de les utiliser
 if 'github_workflow_id' not in st.session_state:
     st.session_state.github_workflow_id = None
@@ -1095,7 +508,7 @@ if 'scraping_running' not in st.session_state:
 # Note: get_github_workflow_status est défini plus tard, donc on ne peut pas l'appeler ici
 # Cette vérification sera faite dans la section du dashboard GitHub Actions
 
-# ✅ Options avancées
+# ✅ Options avancées et communes
 with st.expander("⚙️ Options avancées"):
     col_adv1, col_adv2 = st.columns(2)
     with col_adv1:
@@ -1130,250 +543,241 @@ with st.expander("⚙️ Options avancées"):
 
 # ✅ Afficher les communes si demandé
 if st.session_state.get('show_communes', False) and use_api_communes and departements:
-    st.markdown("---")
-    st.subheader("📍 Communes trouvées via API data.gouv.fr")
-    
-    communes_trouvees = {}
-    with st.spinner("🔄 Récupération des communes depuis l'API..."):
-        for dept in departements:
-            communes = get_communes_from_api(dept, min_pop if use_api_communes else 0, max_pop if use_api_communes else 50000)
-            communes_trouvees[dept] = communes
-    
-    # Afficher un tableau avec toutes les communes
-    all_communes = []
-    for dept, communes in communes_trouvees.items():
-        for commune in communes:
-            all_communes.append({
-                'Département': dept,
-                'Commune': commune['nom'],
-                'Code postal': commune['code_postal'],
-                'Population': commune['population'] if commune['population'] > 0 else None
-            })
-    
-    if all_communes:
-        st.info(f"📊 Total: {len(all_communes)} communes trouvées")
+    # Section communes (dans un expander pour simplifier)
+    with st.expander("📍 Voir les communes trouvées via API data.gouv.fr", expanded=False):
+        communes_trouvees = {}
+        with st.spinner("🔄 Récupération des communes depuis l'API..."):
+            for dept in departements:
+                communes = get_communes_from_api(dept, min_pop if use_api_communes else 0, max_pop if use_api_communes else 50000)
+                communes_trouvees[dept] = communes
         
-        # ✅ Mise en page côte à côte : tableau et carte
-        col_table, col_map = st.columns([1, 1])
+        # Afficher un tableau avec toutes les communes
+        all_communes = []
+        for dept, communes in communes_trouvees.items():
+            for commune in communes:
+                all_communes.append({
+                    'Département': dept,
+                    'Commune': commune['nom'],
+                    'Code postal': commune['code_postal'],
+                    'Population': commune['population'] if commune['population'] > 0 else None
+                })
         
-        with col_table:
-            st.subheader("📋 Liste des communes")
-            df_communes = pd.DataFrame(all_communes)
-            # ✅ Convertir la colonne 'Population' en numérique pour le tri
-            if 'Population' in df_communes.columns:
-                df_communes['Population'] = pd.to_numeric(df_communes['Population'], errors='coerce').fillna(0).astype(int)
-                # Créer une colonne formatée pour l'affichage avec espaces (ex: 56 659)
-                # On garde la colonne numérique pour le tri, et on crée une colonne formatée pour l'affichage
-                df_communes['Population (formatée)'] = df_communes['Population'].apply(
-                    lambda x: f"{x:,}".replace(',', ' ') if x > 0 else "N/A"
-                )
-                # Pour le tri numérique, on garde la colonne Population comme nombre
-                # Pour l'affichage, on utilise la version formatée
-                df_communes_display = df_communes[['Département', 'Commune', 'Code postal', 'Population']].copy()
-                # On remplace la colonne Population par la version formatée pour l'affichage
-                df_communes_display['Population'] = df_communes['Population (formatée)']
-            else:
-                df_communes_display = df_communes
+        if all_communes:
+            st.info(f"📊 Total: {len(all_communes)} communes trouvées")
             
-            # CSS pour autofit toutes les colonnes et éviter la colonne vide
-            st.markdown("""
-            <style>
-            /* Cibler le conteneur du DataFrame */
-            div[data-testid="stDataFrame"] {
-                width: 100% !important;
-            }
-            div[data-testid="stDataFrame"] > div {
-                width: 100% !important;
-                overflow-x: visible !important;
-            }
-            /* Tableau avec ajustement automatique - largeur 100% mais colonnes auto */
-            div[data-testid="stDataFrame"] table {
-                width: 100% !important;
-                table-layout: auto !important;
-                border-collapse: collapse !important;
-            }
-            /* Colonnes avec ajustement automatique selon le contenu */
-            div[data-testid="stDataFrame"] th,
-            div[data-testid="stDataFrame"] td {
-                white-space: nowrap !important;
-                padding: 8px 12px !important;
-                width: auto !important;
-                max-width: none !important;
-            }
-            /* Masquer complètement la dernière colonne si elle est vide */
-            div[data-testid="stDataFrame"] table thead tr th:last-child:empty,
-            div[data-testid="stDataFrame"] table tbody tr td:last-child:empty {
-                display: none !important;
-                width: 0 !important;
-                padding: 0 !important;
-                border: none !important;
-            }
-            </style>
-            """, unsafe_allow_html=True)
+            # ✅ Mise en page côte à côte : tableau et carte
+            col_table, col_map = st.columns([1, 1])
             
-            # Utiliser dataframe avec formatage de la population (espaces pour séparer les milliers)
-            st.dataframe(df_communes_display, height=600)
-            
-            # JavaScript pour masquer la colonne vide après le rendu
-            st.markdown("""
-            <script>
-            function hideEmptyColumn() {
-                const tables = document.querySelectorAll('div[data-testid="stDataFrame"] table');
-                tables.forEach(function(table) {
-                    const rows = table.querySelectorAll('tr');
-                    if (rows.length > 0) {
-                        // Vérifier si la dernière colonne est vide dans toutes les lignes
-                        let allEmpty = true;
-                        rows.forEach(function(row) {
-                            const lastCell = row.querySelector('th:last-child, td:last-child');
-                            if (lastCell && lastCell.textContent && lastCell.textContent.trim() !== '') {
-                                allEmpty = false;
-                            }
-                        });
-                        
-                        // Si toutes les dernières colonnes sont vides, les masquer
-                        if (allEmpty) {
+            with col_table:
+                st.markdown("#### 📋 Liste des communes")
+                df_communes = pd.DataFrame(all_communes)
+                # ✅ Convertir la colonne 'Population' en numérique pour le tri
+                if 'Population' in df_communes.columns:
+                    df_communes['Population'] = pd.to_numeric(df_communes['Population'], errors='coerce').fillna(0).astype(int)
+                    # Créer une colonne formatée pour l'affichage avec espaces (ex: 56 659)
+                    # On garde la colonne numérique pour le tri, et on crée une colonne formatée pour l'affichage
+                    df_communes['Population (formatée)'] = df_communes['Population'].apply(
+                        lambda x: f"{x:,}".replace(',', ' ') if x > 0 else "N/A"
+                    )
+                    # Pour le tri numérique, on garde la colonne Population comme nombre
+                    # Pour l'affichage, on utilise la version formatée
+                    df_communes_display = df_communes[['Département', 'Commune', 'Code postal', 'Population']].copy()
+                    # On remplace la colonne Population par la version formatée pour l'affichage
+                    df_communes_display['Population'] = df_communes['Population (formatée)']
+                else:
+                    df_communes_display = df_communes
+                
+                # CSS pour autofit toutes les colonnes et éviter la colonne vide
+                st.markdown("""
+                <style>
+                /* Cibler le conteneur du DataFrame */
+                div[data-testid="stDataFrame"] {
+                    width: 100% !important;
+                }
+                div[data-testid="stDataFrame"] > div {
+                    width: 100% !important;
+                    overflow-x: visible !important;
+                }
+                /* Tableau avec ajustement automatique - largeur 100% mais colonnes auto */
+                div[data-testid="stDataFrame"] table {
+                    width: 100% !important;
+                    table-layout: auto !important;
+                    border-collapse: collapse !important;
+                }
+                /* Colonnes avec ajustement automatique selon le contenu */
+                div[data-testid="stDataFrame"] th,
+                div[data-testid="stDataFrame"] td {
+                    white-space: nowrap !important;
+                    padding: 8px 12px !important;
+                    width: auto !important;
+                    max-width: none !important;
+                }
+                /* Masquer complètement la dernière colonne si elle est vide */
+                div[data-testid="stDataFrame"] table thead tr th:last-child:empty,
+                div[data-testid="stDataFrame"] table tbody tr td:last-child:empty {
+                    display: none !important;
+                    width: 0 !important;
+                    padding: 0 !important;
+                    border: none !important;
+                }
+                </style>
+                """, unsafe_allow_html=True)
+                
+                # Utiliser dataframe avec formatage de la population (espaces pour séparer les milliers)
+                st.dataframe(df_communes_display, height=400)
+                
+                # JavaScript pour masquer la colonne vide après le rendu
+                st.markdown("""
+                <script>
+                function hideEmptyColumn() {
+                    const tables = document.querySelectorAll('div[data-testid="stDataFrame"] table');
+                    tables.forEach(function(table) {
+                        const rows = table.querySelectorAll('tr');
+                        if (rows.length > 0) {
+                            // Vérifier si la dernière colonne est vide dans toutes les lignes
+                            let allEmpty = true;
                             rows.forEach(function(row) {
                                 const lastCell = row.querySelector('th:last-child, td:last-child');
-                                if (lastCell) {
-                                    lastCell.style.display = 'none';
-                                    lastCell.style.width = '0';
-                                    lastCell.style.padding = '0';
-                                    lastCell.style.border = 'none';
+                                if (lastCell && lastCell.textContent && lastCell.textContent.trim() !== '') {
+                                    allEmpty = false;
                                 }
                             });
+                            
+                            // Si toutes les dernières colonnes sont vides, les masquer
+                            if (allEmpty) {
+                                rows.forEach(function(row) {
+                                    const lastCell = row.querySelector('th:last-child, td:last-child');
+                                    if (lastCell) {
+                                        lastCell.style.display = 'none';
+                                        lastCell.style.width = '0';
+                                        lastCell.style.padding = '0';
+                                        lastCell.style.border = 'none';
+                                    }
+                                });
+                            }
                         }
-                    }
-                });
-            }
-            // Exécuter après le chargement
-            setTimeout(hideEmptyColumn, 100);
-            setTimeout(hideEmptyColumn, 500);
-            setTimeout(hideEmptyColumn, 1000);
-            </script>
-            """, unsafe_allow_html=True)
-        
-        with col_map:
-            st.subheader("🗺️ Carte interactive")
+                    });
+                }
+                // Exécuter après le chargement
+                setTimeout(hideEmptyColumn, 100);
+                setTimeout(hideEmptyColumn, 500);
+                setTimeout(hideEmptyColumn, 1000);
+                </script>
+                """, unsafe_allow_html=True)
             
-            # ✅ Carte interactive avec folium
-            try:
-                import folium
-                from streamlit_folium import folium_static
+            with col_map:
+                st.markdown("#### 🗺️ Carte interactive")
                 
-                # Filtrer les communes avec coordonnées GPS directement depuis communes_trouvees
-                communes_avec_gps = []
-                for dept, communes_list in communes_trouvees.items():
-                    for comm in communes_list:
-                        if comm.get('latitude') and comm.get('longitude'):
-                            communes_avec_gps.append({
-                                'nom': comm['nom'],
-                                'departement': dept,
-                                'code_postal': comm.get('code_postal', ''),
-                                'population': comm.get('population', 0),
-                                'latitude': comm['latitude'],
-                                'longitude': comm['longitude']
-                            })
-                
-                if communes_avec_gps:
-                    # Calculer le centre de la carte (moyenne des coordonnées)
-                    avg_lat = sum(c['latitude'] for c in communes_avec_gps) / len(communes_avec_gps)
-                    avg_lon = sum(c['longitude'] for c in communes_avec_gps) / len(communes_avec_gps)
+                # ✅ Carte interactive avec folium
+                try:
+                    import folium
+                    from streamlit_folium import folium_static
                     
-                    # Créer une carte centrée sur les communes avec un meilleur style
-                    m = folium.Map(
-                        location=[avg_lat, avg_lon], 
-                        zoom_start=8,
-                        tiles='OpenStreetMap'  # Style plus propre
-                    )
+                    # Filtrer les communes avec coordonnées GPS directement depuis communes_trouvees
+                    communes_avec_gps = []
+                    for dept, communes_list in communes_trouvees.items():
+                        for comm in communes_list:
+                            if comm.get('latitude') and comm.get('longitude'):
+                                communes_avec_gps.append({
+                                    'nom': comm['nom'],
+                                    'departement': dept,
+                                    'code_postal': comm.get('code_postal', ''),
+                                    'population': comm.get('population', 0),
+                                    'latitude': comm['latitude'],
+                                    'longitude': comm['longitude']
+                                })
                     
-                    # ✅ AFFICHER TOUTES LES COMMUNES (pas de limite de 200)
-                    populations = [c['population'] for c in communes_avec_gps if c['population'] > 0]
-                    
-                    if populations:
-                        min_pop_displayed = min(populations)
-                        max_pop_displayed = max(populations)
-                        pop_range_displayed = max_pop_displayed - min_pop_displayed if max_pop_displayed > min_pop_displayed else 1
+                    if communes_avec_gps:
+                        # Calculer le centre de la carte (moyenne des coordonnées)
+                        avg_lat = sum(c['latitude'] for c in communes_avec_gps) / len(communes_avec_gps)
+                        avg_lon = sum(c['longitude'] for c in communes_avec_gps) / len(communes_avec_gps)
+                        
+                        # Créer une carte centrée sur les communes avec un meilleur style
+                        m = folium.Map(
+                            location=[avg_lat, avg_lon], 
+                            zoom_start=8,
+                            tiles='OpenStreetMap'  # Style plus propre
+                        )
+                        
+                        # ✅ AFFICHER TOUTES LES COMMUNES (pas de limite de 200)
+                        populations = [c['population'] for c in communes_avec_gps if c['population'] > 0]
+                        
+                        if populations:
+                            min_pop_displayed = min(populations)
+                            max_pop_displayed = max(populations)
+                            pop_range_displayed = max_pop_displayed - min_pop_displayed if max_pop_displayed > min_pop_displayed else 1
+                        else:
+                            min_pop_displayed = 0
+                            max_pop_displayed = 1
+                            pop_range_displayed = 1
+                        
+                        # ✅ Améliorer le design : utiliser des clusters pour les grandes quantités
+                        from folium.plugins import MarkerCluster
+                        marker_cluster = MarkerCluster().add_to(m)
+                        
+                        for commune in communes_avec_gps:
+                            pop = commune['population']
+                            pop_str = f"{pop:,}" if pop > 0 else "N/A"
+                            popup_text = f"""
+                            <div style='font-family: Arial, sans-serif;'>
+                                <h4 style='margin: 0 0 10px 0; color: #2c3e50;'>{commune['nom']}</h4>
+                                <p style='margin: 5px 0;'><strong>Département:</strong> {commune['departement']}</p>
+                                <p style='margin: 5px 0;'><strong>Code postal:</strong> {commune['code_postal']}</p>
+                                <p style='margin: 5px 0;'><strong>Population:</strong> {pop_str}</p>
+                            </div>
+                            """
+                            
+                            # ✅ Taille du marqueur proportionnelle à la population (plus petite pour un meilleur design)
+                            if pop > 0 and pop_range_displayed > 0:
+                                # Normaliser entre 3 et 10 pixels de radius
+                                normalized = (pop - min_pop_displayed) / pop_range_displayed
+                                radius = 3 + (normalized * 7)  # Entre 3 et 10 pixels
+                            else:
+                                radius = 3
+                            
+                            # Couleur selon la population (seuils fixes pour la couleur)
+                            if pop > 10000:
+                                icon_color = '#e74c3c'  # Rouge
+                            elif pop > 5000:
+                                icon_color = '#f39c12'  # Orange
+                            elif pop > 2000:
+                                icon_color = '#3498db'  # Bleu
+                            else:
+                                icon_color = '#27ae60'  # Vert
+                            
+                            folium.CircleMarker(
+                                location=[commune['latitude'], commune['longitude']],
+                                radius=radius,
+                                popup=folium.Popup(popup_text, max_width=250),
+                                tooltip=f"{commune['nom']} ({pop:,} hab.)" if pop > 0 else commune['nom'],
+                                color='white',
+                                weight=1.5,
+                                fillColor=icon_color,
+                                fillOpacity=0.7,
+                            ).add_to(marker_cluster)
+                        
+                        # Afficher la carte
+                        folium_static(m, width=700, height=400)
+                        
+                        st.success(f"🗺️ {len(communes_avec_gps)} communes affichées avec coordonnées GPS")
                     else:
-                        min_pop_displayed = 0
-                        max_pop_displayed = 1
-                        pop_range_displayed = 1
-                    
-                    # ✅ Améliorer le design : utiliser des clusters pour les grandes quantités
-                    from folium.plugins import MarkerCluster
-                    marker_cluster = MarkerCluster().add_to(m)
-                    
-                    for commune in communes_avec_gps:
-                        pop = commune['population']
-                        pop_str = f"{pop:,}" if pop > 0 else "N/A"
-                        popup_text = f"""
-                        <div style='font-family: Arial, sans-serif;'>
-                            <h4 style='margin: 0 0 10px 0; color: #2c3e50;'>{commune['nom']}</h4>
-                            <p style='margin: 5px 0;'><strong>Département:</strong> {commune['departement']}</p>
-                            <p style='margin: 5px 0;'><strong>Code postal:</strong> {commune['code_postal']}</p>
-                            <p style='margin: 5px 0;'><strong>Population:</strong> {pop_str}</p>
-                        </div>
-                        """
-                        
-                        # ✅ Taille du marqueur proportionnelle à la population (plus petite pour un meilleur design)
-                        if pop > 0 and pop_range_displayed > 0:
-                            # Normaliser entre 3 et 10 pixels de radius
-                            normalized = (pop - min_pop_displayed) / pop_range_displayed
-                            radius = 3 + (normalized * 7)  # Entre 3 et 10 pixels
-                        else:
-                            radius = 3
-                        
-                        # Couleur selon la population (seuils fixes pour la couleur)
-                        if pop > 10000:
-                            icon_color = '#e74c3c'  # Rouge
-                        elif pop > 5000:
-                            icon_color = '#f39c12'  # Orange
-                        elif pop > 2000:
-                            icon_color = '#3498db'  # Bleu
-                        else:
-                            icon_color = '#27ae60'  # Vert
-                        
-                        folium.CircleMarker(
-                            location=[commune['latitude'], commune['longitude']],
-                            radius=radius,
-                            popup=folium.Popup(popup_text, max_width=250),
-                            tooltip=f"{commune['nom']} ({pop:,} hab.)" if pop > 0 else commune['nom'],
-                            color='white',
-                            weight=1.5,
-                            fillColor=icon_color,
-                            fillOpacity=0.7,
-                        ).add_to(marker_cluster)
-                    
-                    # Afficher la carte
-                    folium_static(m, width=700, height=600)
-                    
-                    st.success(f"🗺️ {len(communes_avec_gps)} communes affichées avec coordonnées GPS")
-                    
-                    # Légende améliorée
-                    st.markdown("""
-                    <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 8px; margin-top: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
-                        <strong style='font-size: 16px;'>📊 Légende :</strong><br>
-                        <div style='margin-top: 10px; line-height: 1.8;'>
-                            <span style='color: #e74c3c; font-weight: bold;'>●</span> Rouge : > 10 000 hab. | 
-                            <span style='color: #f39c12; font-weight: bold;'>●</span> Orange : 5 000 - 10 000 hab. | 
-                            <span style='color: #3498db; font-weight: bold;'>●</span> Bleu : 2 000 - 5 000 hab. | 
-                            <span style='color: #27ae60; font-weight: bold;'>●</span> Vert : < 2 000 hab.<br>
-                            <small style='opacity: 0.9;'>La taille des points est proportionnelle à la population. Les points proches sont regroupés automatiquement.</small>
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                else:
-                    st.warning("⚠️ Aucune commune avec coordonnées GPS trouvée")
-            except ImportError:
-                st.info("💡 Pour afficher une carte interactive, installez: `pip install folium streamlit-folium`")
-            except Exception as e:
-                st.error(f"Erreur lors de la création de la carte: {e}")
-    else:
-        st.warning("Aucune commune trouvée avec les critères sélectionnés")
-    
-    if st.button("❌ Fermer l'affichage des communes"):
-        st.session_state.show_communes = False
-        st.experimental_rerun()
+                        st.warning("⚠️ Aucune commune avec coordonnées GPS trouvée")
+                except ImportError:
+                    st.info("💡 Pour afficher une carte interactive, installez: `pip install folium streamlit-folium`")
+                except Exception as e:
+                    st.error(f"Erreur lors de la création de la carte: {e}")
+        else:
+            st.warning("Aucune commune trouvée avec les critères sélectionnés")
+        
+        if st.button("❌ Fermer l'affichage des communes"):
+            st.session_state.show_communes = False
+            try:
+                st.rerun()
+            except:
+                try:
+                    st.experimental_rerun()
+                except:
+                    pass
 
 st.markdown("---")
 
@@ -1636,7 +1040,13 @@ with col_btn1:
                         st.session_state.github_workflow_id = run_id
                     # ✅ Marquer qu'on vient de lancer un workflow pour ne pas l'annuler
                     st.session_state.workflow_just_launched = True
-                    st.experimental_rerun()
+                    try:
+                        st.rerun()
+                    except AttributeError:
+                        try:
+                            st.experimental_rerun()
+                        except:
+                            pass
                 else:
                     st.error(f"❌ {message}")
 
@@ -1652,7 +1062,13 @@ with col_btn2:
                     st.session_state.github_workflow_status = None
                     st.session_state.github_workflow_id = None
                     st.session_state.scraped_results = []
-                    st.experimental_rerun()
+                    try:
+                        st.rerun()
+                    except AttributeError:
+                        try:
+                            st.experimental_rerun()
+                        except:
+                            pass
                 else:
                     st.error(f"❌ {message}")
 
@@ -1682,7 +1098,13 @@ if github_token and github_repo and not st.session_state.get('workflow_just_laun
                     st.session_state.github_workflow_id = None
                 st.success(f"✅ {message}")
                 # ✅ Rerun seulement si on a annulé avec succès
-                st.experimental_rerun()
+                try:
+                    st.rerun()
+                except AttributeError:
+                    try:
+                        st.experimental_rerun()
+                    except:
+                        pass
             else:
                 st.warning(f"⚠️ {message}")
                 # ✅ NE PAS faire de rerun en cas d'échec pour éviter les boucles
