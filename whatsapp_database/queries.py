@@ -2,12 +2,39 @@
 Requêtes SQL pour la base de données WhatsApp
 """
 import sqlite3
+import re
+import hashlib
 from datetime import datetime
 from typing import List, Dict, Optional
 from whatsapp_database.models import get_connection
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def normalize_name_for_dedup(name: str) -> str:
+    """Normalize name for deduplication comparison"""
+    if not name:
+        return ""
+    normalized = str(name).lower().strip()
+    # Remove common business suffixes
+    for suffix in ['sarl', 'sas', 'eurl', 'sa', 'sasu', 'snc']:
+        normalized = re.sub(rf'\b{suffix}\b', '', normalized)
+    normalized = re.sub(r'[,;.\-\'\"]+', ' ', normalized)
+    normalized = re.sub(r'\s+', ' ', normalized).strip()
+    return normalized
+
+
+def normalize_address_for_dedup(address: str) -> str:
+    """Normalize address for deduplication comparison"""
+    if not address:
+        return ""
+    normalized = str(address).lower().strip()
+    for word in ['france', 'closed', 'fermé', 'fermée', 'ouvert', 'open']:
+        normalized = normalized.replace(word, '')
+    normalized = re.sub(r'[,;.\n\r]+', ' ', normalized)
+    normalized = re.sub(r'\s+', ' ', normalized).strip()
+    return normalized
 
 def formater_telephone_fr(telephone: str) -> str:
     """
@@ -27,38 +54,91 @@ def formater_telephone_fr(telephone: str) -> str:
     
     return tel_clean
 
-def ajouter_artisan(data: Dict) -> int:
+def generate_name_addr_hash(name: str, address: str) -> str:
+    """Generate a hash key for name+address deduplication"""
+    norm_name = normalize_name_for_dedup(name or '')
+    norm_addr = normalize_address_for_dedup(address or '')
+    if norm_name and norm_addr:
+        combined = f"{norm_name}|{norm_addr}"
+        return hashlib.md5(combined.encode()).hexdigest()[:16]
+    return None
+
+
+def ajouter_artisan(data: Dict, conn=None, dedup_cache: Dict = None) -> int:
     """
-    Ajoute un artisan ou met à jour si doublon (par téléphone ou SIRET)
+    Ajoute un artisan ou met à jour si doublon (par téléphone, SIRET, ou nom+adresse)
     Retourne l'ID de l'artisan
+
+    Deduplication priority:
+    1. Phone number (if present and valid)
+    2. SIRET (if present)
+    3. Name+address hash (fast lookup via cache or index)
+
+    Args:
+        data: Artisan data dictionary
+        conn: Optional existing connection (for batch operations)
+        dedup_cache: Optional cache dict for name+address lookups (for batch operations)
     """
-    conn = get_connection()
+    own_connection = conn is None
+    if own_connection:
+        conn = get_connection()
     cursor = conn.cursor()
-    
+
     # Formater le téléphone si présent
     if data.get('telephone'):
         data['telephone_formate'] = formater_telephone_fr(data['telephone'])
-    
-    # Vérifier doublon par téléphone (si téléphone présent)
+
     existing_id = None
+
+    # Priority 1: Check duplicate by phone number (uses index - fast)
     if data.get('telephone'):
-        cursor.execute("SELECT id FROM artisans WHERE telephone = ?", (data['telephone'],))
+        phone = data['telephone']
+        cursor.execute("SELECT id FROM artisans WHERE telephone = ?", (phone,))
         result = cursor.fetchone()
         if result:
             existing_id = result[0]
-    
-    # Vérifier doublon par SIRET (si SIRET présent et pas déjà trouvé par téléphone)
+
+    # Priority 2: Check duplicate by SIRET (uses index - fast)
     if not existing_id and data.get('siret'):
         cursor.execute("SELECT id FROM artisans WHERE siret = ?", (data['siret'],))
         result = cursor.fetchone()
         if result:
             existing_id = result[0]
-    
+
+    # Priority 3: Check duplicate by name+address hash
+    if not existing_id:
+        name = data.get('nom_entreprise', '')
+        address = data.get('adresse', '')
+        if name and address:
+            name_addr_hash = generate_name_addr_hash(name, address)
+            if name_addr_hash:
+                # Use cache if provided (batch mode) - much faster
+                if dedup_cache is not None:
+                    if name_addr_hash in dedup_cache:
+                        existing_id = dedup_cache[name_addr_hash]
+                else:
+                    # Fallback: Limited search for similar names (not full table scan)
+                    # Use LIKE on first few chars of name for a rough filter
+                    name_prefix = normalize_name_for_dedup(name)[:10] if name else ''
+                    if name_prefix:
+                        cursor.execute("""
+                            SELECT id, nom_entreprise, adresse, telephone
+                            FROM artisans
+                            WHERE nom_entreprise IS NOT NULL
+                            AND LOWER(nom_entreprise) LIKE ?
+                            LIMIT 100
+                        """, (f"{name_prefix}%",))
+                        for row in cursor.fetchall():
+                            existing_hash = generate_name_addr_hash(row[1], row[2])
+                            if existing_hash == name_addr_hash:
+                                existing_id = row[0]
+                                break
+
     if existing_id:
         # Mettre à jour l'artisan existant
         update_fields = []
         update_values = []
-        
+
         for key, value in data.items():
             # Ne pas écraser les champs existants si la nouvelle valeur est vide
             # Sauf pour les champs qui peuvent être mis à jour (nom, prenom, adresse, etc.)
@@ -68,19 +148,20 @@ def ajouter_artisan(data: Dict) -> int:
                     continue
                 update_fields.append(f"{key} = ?")
                 update_values.append(value)
-        
+
         if update_fields:
             update_values.append(existing_id)
             query = f"UPDATE artisans SET {', '.join(update_fields)} WHERE id = ?"
             cursor.execute(query, update_values)
-        
+
         conn.commit()
-        conn.close()
+        if own_connection:
+            conn.close()
         return existing_id
     else:
         # Nouvel artisan
         data['created_at'] = datetime.now().isoformat()
-        
+
         # Filtrer les champs None ou vides pour éviter erreurs
         fields = []
         values = []
@@ -88,22 +169,29 @@ def ajouter_artisan(data: Dict) -> int:
             if value is not None and value != '':
                 fields.append(key)
                 values.append(value)
-        
+
         if not fields:
-            conn.close()
-            print(f"⚠️ ajouter_artisan: Aucune donnée valide à insérer. Données reçues: {data}")
-            raise ValueError("Aucune donnée valide à insérer")
-        
+            if own_connection:
+                conn.close()
+            print(f"ajouter_artisan: Aucune donnee valide a inserer. Donnees recues: {data}")
+            raise ValueError("Aucune donnee valide a inserer")
+
         placeholders = ', '.join(['?' for _ in fields])
         query = f"INSERT INTO artisans ({', '.join(fields)}) VALUES ({placeholders})"
-        
+
         try:
             cursor.execute(query, values)
             artisan_id = cursor.lastrowid
             conn.commit()
-            conn.close()
-            # ✅ Logs réduits - seulement en mode debug
-            # print(f"✅ ajouter_artisan: Artisan inséré avec succès (ID: {artisan_id})")
+
+            # Update dedup cache if provided
+            if dedup_cache is not None and artisan_id:
+                name_hash = generate_name_addr_hash(data.get('nom_entreprise', ''), data.get('adresse', ''))
+                if name_hash:
+                    dedup_cache[name_hash] = artisan_id
+
+            if own_connection:
+                conn.close()
             return artisan_id
         except sqlite3.IntegrityError as e:
             # Si erreur d'intégrité (doublon), essayer de récupérer l'ID existant
@@ -114,13 +202,131 @@ def ajouter_artisan(data: Dict) -> int:
                     result = cursor.fetchone()
                     if result:
                         conn.commit()
-                        conn.close()
-                        # ✅ Logs réduits - seulement en mode debug
-                        # print(f"ℹ️ ajouter_artisan: Doublon trouvé (ID: {result[0]}) - Mise à jour effectuée")
+                        if own_connection:
+                            conn.close()
                         return result[0]
-            conn.close()
-            print(f"❌ ajouter_artisan: Erreur intégrité: {e}")
+            if own_connection:
+                conn.close()
+            print(f"ajouter_artisan: Erreur integrite: {e}")
             raise
+
+
+def build_dedup_cache() -> Dict:
+    """
+    Build a deduplication cache from existing database records.
+    Returns a dict mapping name+address hashes to record IDs.
+
+    This is used for fast batch imports.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cache = {}
+
+    # Build cache for name+address deduplication
+    cursor.execute("""
+        SELECT id, nom_entreprise, adresse
+        FROM artisans
+        WHERE nom_entreprise IS NOT NULL AND adresse IS NOT NULL
+    """)
+
+    for row in cursor.fetchall():
+        name_hash = generate_name_addr_hash(row[1], row[2])
+        if name_hash:
+            cache[name_hash] = row[0]
+
+    conn.close()
+    return cache
+
+
+def importer_artisans_batch(records: list, progress_callback=None) -> dict:
+    """
+    Import multiple artisan records efficiently using batch processing.
+
+    This function is optimized for importing large numbers of records:
+    - Uses a single database connection
+    - Pre-builds deduplication cache to avoid repeated queries
+    - Commits in batches for better performance
+
+    Args:
+        records: List of artisan data dictionaries
+        progress_callback: Optional callback(current, total, message) for progress updates
+
+    Returns:
+        Dict with import statistics: {imported, updated, skipped, errors, total}
+    """
+    if not records:
+        return {'imported': 0, 'updated': 0, 'skipped': 0, 'errors': 0, 'total': 0}
+
+    stats = {'imported': 0, 'updated': 0, 'skipped': 0, 'errors': 0, 'total': len(records)}
+
+    # Single connection for entire batch
+    conn = get_connection()
+
+    # Build deduplication cache ONCE at the start
+    if progress_callback:
+        progress_callback(0, len(records), "Building deduplication cache...")
+
+    dedup_cache = {}
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id, nom_entreprise, adresse
+        FROM artisans
+        WHERE nom_entreprise IS NOT NULL AND adresse IS NOT NULL
+    """)
+    for row in cursor.fetchall():
+        name_hash = generate_name_addr_hash(row[1], row[2])
+        if name_hash:
+            dedup_cache[name_hash] = row[0]
+
+    # Process records
+    batch_size = 100
+    for i, record in enumerate(records):
+        try:
+            # Check if this is a new record or update
+            phone = record.get('telephone')
+            existing_id = None
+
+            # Check phone first (fast index lookup)
+            if phone:
+                cursor.execute("SELECT id FROM artisans WHERE telephone = ?", (phone,))
+                result = cursor.fetchone()
+                if result:
+                    existing_id = result[0]
+                    stats['updated'] += 1
+                else:
+                    stats['imported'] += 1
+            else:
+                # Check name+address cache
+                name_hash = generate_name_addr_hash(record.get('nom_entreprise', ''), record.get('adresse', ''))
+                if name_hash and name_hash in dedup_cache:
+                    existing_id = dedup_cache[name_hash]
+                    stats['updated'] += 1
+                else:
+                    stats['imported'] += 1
+
+            # Use ajouter_artisan with shared connection and cache
+            artisan_id = ajouter_artisan(record, conn=conn, dedup_cache=dedup_cache)
+
+            # Commit in batches
+            if (i + 1) % batch_size == 0:
+                conn.commit()
+                if progress_callback:
+                    progress_callback(i + 1, len(records), f"Processed {i + 1}/{len(records)}")
+
+        except Exception as e:
+            stats['errors'] += 1
+            # Continue processing other records
+
+    # Final commit
+    conn.commit()
+    conn.close()
+
+    if progress_callback:
+        progress_callback(len(records), len(records), "Import complete")
+
+    return stats
+
 
 def get_artisans(filtres: Optional[Dict] = None, limit: Optional[int] = None) -> List[Dict]:
     """Récupère les artisans avec filtres optionnels

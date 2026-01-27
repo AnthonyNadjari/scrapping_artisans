@@ -15,9 +15,10 @@ st.set_page_config(page_title="Base de Données", page_icon="📊", layout="wide
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from whatsapp_database.queries import get_artisans, get_statistiques, ajouter_artisan
+from whatsapp_database.queries import get_artisans, get_statistiques, ajouter_artisan, importer_artisans_batch
 from whatsapp_database.models import get_connection
 import sqlite3
+import re
 
 st.title("📊 Base de Données - Artisans")
 
@@ -164,11 +165,49 @@ with col_sync:
         except Exception as e:
             st.warning(f"⚠️ Git pull échoué: {e}")
 
-        # === ÉTAPE 2: Import depuis le fichier JSON local (après pull) ===
-        status_text.text("📄 Import JSON local...")
+        # === Helper function to transform raw data to artisan format ===
+        def transform_to_artisan(info: dict) -> dict:
+            """Transform raw JSON record to artisan data format with proper department extraction"""
+            code_postal = info.get('code_postal', '')
+            dept = None
+
+            # Priority 1: Extract from code_postal (most reliable)
+            if code_postal and re.match(r'^\d{5}$', str(code_postal).strip()):
+                cp = str(code_postal).strip()
+                if cp.startswith('97') or cp.startswith('98'):
+                    dept = cp[:3]
+                else:
+                    dept = cp[:2]
+
+            # Fallback: Use departement_recherche only if no code_postal
+            if not dept:
+                dept = info.get('departement_recherche') or info.get('departement', '')
+
+            return {
+                'nom_entreprise': info.get('nom', 'N/A'),
+                'telephone': info.get('telephone', '').replace(' ', '') if info.get('telephone') else None,
+                'site_web': info.get('site_web'),
+                'adresse': info.get('adresse', ''),
+                'code_postal': code_postal,
+                'ville': info.get('ville') or info.get('ville_recherche', ''),
+                'ville_recherche': info.get('ville_recherche', ''),
+                'departement': dept,
+                'departement_recherche': info.get('departement_recherche', ''),
+                'type_artisan': info.get('recherche') or info.get('type_artisan', 'artisan'),
+                'source': 'google_maps_github_actions',
+                'note': info.get('note'),
+                'nombre_avis': info.get('nb_avis') or info.get('nombre_avis')
+            }
+
+        # === Collect all records to import ===
+        all_records_to_import = []
+
+        # === ÉTAPE 2: Load JSON local (après pull) ===
+        status_text.text("📄 Chargement JSON local...")
         progress_bar.progress(30)
         results_file = data_dir / "scraping_results_github_actions.json"
         local_results_count = 0
+
         if results_file.exists():
             try:
                 with open(results_file, 'r', encoding='utf-8') as f:
@@ -183,42 +222,26 @@ with col_sync:
                 if results_list:
                     for info in results_list:
                         try:
-                            # ✅ Use departement_recherche as priority for correct department
-                            dept = info.get('departement_recherche') or info.get('departement', '')
-                            artisan_data = {
-                                'nom_entreprise': info.get('nom', 'N/A'),
-                                'telephone': info.get('telephone', '').replace(' ', '') if info.get('telephone') else None,
-                                'site_web': info.get('site_web'),
-                                'adresse': info.get('adresse', ''),
-                                'code_postal': info.get('code_postal', ''),
-                                'ville': info.get('ville') or info.get('ville_recherche', ''),
-                                'ville_recherche': info.get('ville_recherche', ''),
-                                'departement': dept,
-                                'type_artisan': info.get('recherche') or info.get('type_artisan', 'artisan'),
-                                'source': 'google_maps_github_actions',
-                                'note': info.get('note'),
-                                'nombre_avis': info.get('nb_avis') or info.get('nombre_avis')
-                            }
-                            artisan_id = ajouter_artisan(artisan_data)
-                            if artisan_id:
-                                total_imported += 1
+                            all_records_to_import.append(transform_to_artisan(info))
                         except Exception:
                             pass
                     local_results_count = len(results_list)
-                    st.info(f"📄 JSON local: {local_results_count} résultats trouvés")
+                    st.info(f"📄 JSON local: {local_results_count} résultats chargés")
             except Exception as e:
                 st.warning(f"⚠️ Erreur lecture JSON: {e}")
         else:
             st.info("📄 Pas de fichier JSON local")
 
-        # === ÉTAPE 3: Import depuis les Artifacts GitHub (TOUS les artifacts récents) ===
-        status_text.text("☁️ Import Artifacts GitHub...")
+        # === ÉTAPE 3: Load Artifacts GitHub (skip downloading if JSON already has data) ===
+        status_text.text("☁️ Vérification Artifacts GitHub...")
         progress_bar.progress(50)
         config_file = repo_root / "config" / "github_config.json"
-        artifacts_imported = 0
-        processed_artifact_ids = set()  # Track processed artifacts to avoid duplicates
+        artifacts_count = 0
 
-        if config_file.exists():
+        # Only fetch artifacts if we want to ensure we have all data
+        # The JSON file committed to repo should already contain all results
+        # Artifacts are just a backup - skip if JSON has enough data
+        if local_results_count == 0 and config_file.exists():
             try:
                 with open(config_file, 'r', encoding='utf-8') as f:
                     github_config = json.load(f)
@@ -232,105 +255,97 @@ with col_sync:
                             "X-GitHub-Api-Version": "2022-11-28"
                         }
 
-                        # ✅ Get MORE workflow runs to ensure we don't miss any data
-                        for status in ['completed', 'in_progress']:
-                            try:
-                                url = f"https://api.github.com/repos/{github_repo}/actions/runs?per_page=10&status={status}"
-                                response = requests.get(url, headers=headers)
-                                if response.status_code == 200:
-                                    runs = response.json().get('workflow_runs', [])
-                                    for run in runs:
-                                        run_id = run.get('id')
-                                        if run_id:
-                                            # Get artifacts for this run
-                                            artifacts_url = f"https://api.github.com/repos/{github_repo}/actions/runs/{run_id}/artifacts"
-                                            art_response = requests.get(artifacts_url, headers=headers)
-                                            if art_response.status_code == 200:
-                                                artifacts = art_response.json().get('artifacts', [])
-                                                for artifact in artifacts:
-                                                    artifact_id = artifact.get('id')
-                                                    if artifact.get('name') == 'scraping-results' and artifact_id not in processed_artifact_ids:
-                                                        processed_artifact_ids.add(artifact_id)
-                                                        download_url = artifact.get('archive_download_url')
-                                                        if download_url:
-                                                            dl_response = requests.get(download_url, headers=headers)
-                                                            if dl_response.status_code == 200:
-                                                                zip_path = data_dir / f"github_artifact_{artifact_id}.zip"
-                                                                temp_extract_dir = data_dir / f"temp_artifact_{artifact_id}"
+                        # Get only the most recent completed run's artifact
+                        url = f"https://api.github.com/repos/{github_repo}/actions/runs?per_page=5&status=completed"
+                        response = requests.get(url, headers=headers, timeout=10)
+                        if response.status_code == 200:
+                            runs = response.json().get('workflow_runs', [])
+                            for run in runs[:1]:  # Only check the most recent run
+                                run_id = run.get('id')
+                                if run_id:
+                                    artifacts_url = f"https://api.github.com/repos/{github_repo}/actions/runs/{run_id}/artifacts"
+                                    art_response = requests.get(artifacts_url, headers=headers, timeout=10)
+                                    if art_response.status_code == 200:
+                                        artifacts = art_response.json().get('artifacts', [])
+                                        for artifact in artifacts:
+                                            if artifact.get('name') == 'scraping-results':
+                                                download_url = artifact.get('archive_download_url')
+                                                if download_url:
+                                                    dl_response = requests.get(download_url, headers=headers, timeout=60)
+                                                    if dl_response.status_code == 200:
+                                                        zip_path = data_dir / f"temp_artifact.zip"
+                                                        temp_extract_dir = data_dir / "temp_artifact"
 
-                                                                try:
-                                                                    with open(zip_path, 'wb') as f:
-                                                                        f.write(dl_response.content)
+                                                        try:
+                                                            with open(zip_path, 'wb') as f:
+                                                                f.write(dl_response.content)
 
-                                                                    # Extract to temp directory to avoid overwriting
-                                                                    temp_extract_dir.mkdir(exist_ok=True)
-                                                                    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                                                                        zip_ref.extractall(temp_extract_dir)
+                                                            temp_extract_dir.mkdir(exist_ok=True)
+                                                            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                                                                zip_ref.extractall(temp_extract_dir)
 
-                                                                    # Read and import from temp location
-                                                                    artifact_file = temp_extract_dir / "scraping_results_github_actions.json"
-                                                                    if artifact_file.exists():
-                                                                        with open(artifact_file, 'r', encoding='utf-8') as f:
-                                                                            artifact_data = json.load(f)
+                                                            artifact_file = temp_extract_dir / "scraping_results_github_actions.json"
+                                                            if artifact_file.exists():
+                                                                with open(artifact_file, 'r', encoding='utf-8') as f:
+                                                                    artifact_data = json.load(f)
 
-                                                                        art_results = []
-                                                                        if isinstance(artifact_data, dict) and 'results' in artifact_data:
-                                                                            art_results = artifact_data.get('results', [])
-                                                                        elif isinstance(artifact_data, list):
-                                                                            art_results = artifact_data
+                                                                art_results = []
+                                                                if isinstance(artifact_data, dict) and 'results' in artifact_data:
+                                                                    art_results = artifact_data.get('results', [])
+                                                                elif isinstance(artifact_data, list):
+                                                                    art_results = artifact_data
 
-                                                                        for info in art_results:
-                                                                            try:
-                                                                                # ✅ Use departement_recherche as priority
-                                                                                dept = info.get('departement_recherche') or info.get('departement', '')
-                                                                                artisan_data = {
-                                                                                    'nom_entreprise': info.get('nom', 'N/A'),
-                                                                                    'telephone': info.get('telephone', '').replace(' ', '') if info.get('telephone') else None,
-                                                                                    'site_web': info.get('site_web'),
-                                                                                    'adresse': info.get('adresse', ''),
-                                                                                    'code_postal': info.get('code_postal', ''),
-                                                                                    'ville': info.get('ville') or info.get('ville_recherche', ''),
-                                                                                    'ville_recherche': info.get('ville_recherche', ''),
-                                                                                    'departement': dept,
-                                                                                    'type_artisan': info.get('recherche') or info.get('type_artisan', 'artisan'),
-                                                                                    'source': 'google_maps_github_actions',
-                                                                                    'note': info.get('note'),
-                                                                                    'nombre_avis': info.get('nb_avis') or info.get('nombre_avis')
-                                                                                }
-                                                                                artisan_id = ajouter_artisan(artisan_data)
-                                                                                if artisan_id:
-                                                                                    total_imported += 1
-                                                                                    artifacts_imported += 1
-                                                                            except:
-                                                                                pass
-                                                                finally:
-                                                                    # Cleanup temp files
+                                                                for info in art_results:
                                                                     try:
-                                                                        zip_path.unlink()
+                                                                        all_records_to_import.append(transform_to_artisan(info))
+                                                                        artifacts_count += 1
                                                                     except:
                                                                         pass
-                                                                    try:
-                                                                        import shutil
-                                                                        shutil.rmtree(temp_extract_dir)
-                                                                    except:
-                                                                        pass
-                            except Exception as e:
-                                st.warning(f"⚠️ Erreur récupération runs ({status}): {e}")
-
-                        st.info(f"☁️ {len(processed_artifact_ids)} artifacts GitHub traités")
+                                                        finally:
+                                                            try:
+                                                                zip_path.unlink()
+                                                            except:
+                                                                pass
+                                                            try:
+                                                                import shutil
+                                                                shutil.rmtree(temp_extract_dir)
+                                                            except:
+                                                                pass
+                                                break  # Only process one artifact
+                        if artifacts_count > 0:
+                            st.info(f"☁️ {artifacts_count} résultats depuis artifact GitHub")
                     else:
-                        st.info("☁️ Config GitHub non configurée (optionnel)")
+                        st.info("☁️ Config GitHub non configurée")
             except Exception as e:
                 st.warning(f"⚠️ Erreur artifacts: {e}")
         else:
-            st.info("☁️ Pas de config GitHub (optionnel)")
+            if local_results_count > 0:
+                st.info("☁️ Artifacts ignorés (JSON local suffisant)")
+            else:
+                st.info("☁️ Pas de config GitHub")
+
+        # === ÉTAPE 4: Batch import all records ===
+        if all_records_to_import:
+            status_text.text(f"💾 Import de {len(all_records_to_import)} enregistrements...")
+            progress_bar.progress(60)
+
+            # Use batch import for much faster performance
+            def update_progress(current, total, message):
+                pct = 60 + int((current / total) * 35)  # 60% to 95%
+                progress_bar.progress(min(pct, 95))
+                status_text.text(f"💾 {message}")
+
+            import_stats = importer_artisans_batch(all_records_to_import, progress_callback=update_progress)
+            total_imported = import_stats['imported']
+            total_updated = import_stats['updated']
+            st.info(f"💾 Import: {import_stats['imported']} nouveaux, {import_stats['updated']} mis à jour, {import_stats['errors']} erreurs")
 
         # === RÉSULTAT FINAL ===
         status_text.text("✅ Synchronisation terminée!")
         progress_bar.progress(100)
         if total_imported > 0:
-            st.success(f"🎉 **{total_imported} nouveau(x) artisan(s) importé(s)!** (JSON: {local_results_count}, Artifacts: {artifacts_imported})")
-            st.experimental_rerun()
+            st.success(f"🎉 **{total_imported} nouveau(x) artisan(s) importé(s)!** (JSON: {local_results_count}, Artifacts: {artifacts_count})")
+            st.rerun()
         else:
             st.info("ℹ️ Aucun nouveau résultat à importer (tous déjà présents)")
 
@@ -376,6 +391,7 @@ else:
                 'Code postal': format_value(artisan.get('code_postal')),
                 'Téléphone': format_value(artisan.get('telephone')),
                 'Site web': format_value(artisan.get('site_web')),
+                'Google Maps': format_value(artisan.get('google_maps_url')),
                 'Note': f"{artisan.get('note')}/5" if artisan.get('note') else 'N/A',
                 'Nombre avis': format_value(artisan.get('nombre_avis'), 'N/A')
             }
@@ -433,5 +449,5 @@ else:
     
     with col_act3:
         if st.button("🔄 Rafraîchir"):
-            st.experimental_rerun()
+            st.rerun()
 

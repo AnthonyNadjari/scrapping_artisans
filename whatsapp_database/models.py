@@ -119,7 +119,9 @@ def init_database():
         ("site_web", "TEXT"),
         ("note", "REAL"),  # Note Google Maps (0-5)
         ("nombre_avis", "INTEGER"),  # Nombre d'avis Google Maps
-        ("ville_recherche", "TEXT")  # Ville utilisée pour la recherche
+        ("ville_recherche", "TEXT"),  # Ville utilisée pour la recherche
+        ("departement_recherche", "TEXT"),  # Département de la recherche (peut différer du département réel)
+        ("google_maps_url", "TEXT"),  # URL directe vers la fiche Google Maps
     ]
     
     for colonne, type_col in nouvelles_colonnes:

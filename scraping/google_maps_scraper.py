@@ -1382,16 +1382,17 @@ class GoogleMapsScraper:
     def _extraire_donnees_etablissement(self, index: int, total: int) -> Optional[Dict]:
         """
         Extrait les données d'un établissement depuis la page détail
-        
+
         Args:
             index: Index de l'établissement (pour les logs)
             total: Total d'établissements à traiter
-        
+
         Returns:
             Dict avec les données ou None si erreur
         """
         info = {
             'nom': None,
+            'google_maps_url': None,  # URL directe vers la fiche Google Maps
             'telephone': None,
             'site_web': None,
             'adresse': None,
@@ -1400,8 +1401,17 @@ class GoogleMapsScraper:
             'note': None,
             'nb_avis': None
         }
-        
+
         try:
+            # URL Google Maps (capturer en premier)
+            try:
+                current_url = self.driver.current_url
+                if '/maps/place/' in current_url:
+                    info['google_maps_url'] = current_url
+                    logger.info(f"  🔗 [DEBUG] URL Google Maps capturée")
+            except:
+                pass
+
             # Nom de l'établissement
             try:
                 nom_elem = self.wait.until(
@@ -1510,17 +1520,18 @@ class GoogleMapsScraper:
     def _extraire_donnees_depuis_element(self, element, index: int, total: int) -> Optional[Dict]:
         """
         Extrait les données depuis un élément directement (sans panneau de détail)
-        
+
         Args:
             element: Élément Selenium (lien ou div)
             index: Index de l'établissement
             total: Total d'établissements
-        
+
         Returns:
             Dict avec les données ou None
         """
         info = {
             'nom': None,
+            'google_maps_url': None,  # URL directe vers la fiche Google Maps
             'telephone': None,
             'site_web': None,
             'adresse': None,
@@ -1529,8 +1540,24 @@ class GoogleMapsScraper:
             'note': None,
             'nb_avis': None
         }
-        
+
         try:
+            # URL Google Maps (extraire depuis l'élément lien si disponible)
+            try:
+                if element.tag_name == 'a':
+                    href = element.get_attribute('href')
+                    if href and '/maps/place/' in href:
+                        info['google_maps_url'] = href
+                        logger.info(f"  🔗 [DEBUG] URL Google Maps extraite depuis lien")
+                else:
+                    # Essayer de trouver un lien dans l'élément
+                    link = element.find_element(By.CSS_SELECTOR, 'a[href*="/maps/place/"]')
+                    if link:
+                        info['google_maps_url'] = link.get_attribute('href')
+                        logger.info(f"  🔗 [DEBUG] URL Google Maps extraite depuis sous-lien")
+            except:
+                pass
+
             # Nom de l'établissement
             try:
                 # ✅ FIX : Améliorer l'extraction du nom pour éviter "Résultats"

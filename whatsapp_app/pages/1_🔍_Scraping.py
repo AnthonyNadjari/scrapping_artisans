@@ -1393,6 +1393,7 @@ if not st.session_state.scraped_results:
                         'nom': artisan.get('nom_entreprise') or artisan.get('nom'),
                         'telephone': artisan.get('telephone'),
                         'site_web': artisan.get('site_web'),
+                        'google_maps_url': artisan.get('google_maps_url'),
                         'adresse': artisan.get('adresse'),
                         'ville': artisan.get('ville'),
                         'code_postal': code_postal,
@@ -1434,7 +1435,7 @@ if st.session_state.scraped_results:
     df_filtre = df.copy()
     
     # ✅ Afficher le tableau avec toutes les colonnes importantes
-    colonnes_afficher = ['nom', 'telephone', 'site_web', 'adresse', 'ville', 'code_postal', 'departement', 'ville_recherche', 'note', 'nb_avis']
+    colonnes_afficher = ['nom', 'telephone', 'site_web', 'google_maps_url', 'adresse', 'ville', 'code_postal', 'departement', 'ville_recherche', 'note', 'nb_avis']
     colonnes_disponibles = [col for col in colonnes_afficher if col in df_filtre.columns]
     
     # CSS amélioré pour le tableau

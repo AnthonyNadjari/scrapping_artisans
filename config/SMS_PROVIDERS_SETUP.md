@@ -148,3 +148,5 @@ result = send_sms("0612345678", "Votre message", provider="ovh")
 - Limite de 160 caractères par SMS (standard GSM)
 
 
+
+

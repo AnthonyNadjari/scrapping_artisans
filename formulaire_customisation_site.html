@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulaire de Personnalisation - Site Web Artisan</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .form-section {
+            padding: 30px 40px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .form-section:last-child {
+            border-bottom: none;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::before {
+            content: "📋";
+            font-size: 1.2em;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.95em;
+        }
+
+        .label-help {
+            font-size: 0.85em;
+            color: #666;
+            font-weight: normal;
+            margin-left: 5px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="url"],
+        input[type="color"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .checkbox-group,
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .checkbox-item,
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .checkbox-item:hover,
+        .radio-item:hover {
+            background: #e9ecef;
+        }
+
+        input[type="checkbox"],
+        input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .color-picker-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .color-picker-group input[type="color"] {
+            width: 80px;
+            height: 50px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .service-item {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: end;
+        }
+
+        .add-service-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.3s;
+        }
+
+        .add-service-btn:hover {
+            background: #5568d3;
+        }
+
+        .remove-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+
+        .remove-btn:hover {
+            background: #c82333;
+        }
+
+        .submit-section {
+            padding: 40px;
+            background: #f8f9fa;
+            text-align: center;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 18px 50px;
+            font-size: 1.2em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: 600;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .required {
+            color: #dc3545;
+        }
+
+        @media (max-width: 768px) {
+            .service-item {
+                grid-template-columns: 1fr;
+            }
+
+            .color-picker-group {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .form-section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 Personnalisation de Votre Site Web</h1>
+            <p>Remplissez ce formulaire pour que nous puissions créer votre site sur mesure</p>
+        </div>
+
+        <form id="customizationForm" action="https://formspree.io/f/xykzryvv" method="POST">
+            <!-- INFORMATIONS GÉNÉRALES -->
+            <div class="form-section">
+                <h2 class="section-title">Informations Générales</h2>
+
+                <div class="form-group">
+                    <label for="nom_entreprise">Nom de l'entreprise <span class="required">*</span></label>
+                    <input type="text" id="nom_entreprise" name="nom_entreprise" required placeholder="Ex: Plomberie Martin" />
+                </div>
+
+                <div class="form-group">
+                    <label for="metier">Type de métier/Activité <span class="required">*</span></label>
+                    <select id="metier" name="metier" required>
+                        <option value="">-- Sélectionnez --</option>
+                        <option value="plombier">Plombier</option>
+                        <option value="electricien">Électricien</option>
+                        <option value="chauffagiste">Chauffagiste</option>
+                        <option value="menuisier">Menuisier</option>
+                        <option value="peintre">Peintre</option>
+                        <option value="maçon">Maçon</option>
+                        <option value="couvreur">Couvreur</option>
+                        <option value="carreleur">Carreleur</option>
+                        <option value="serrurier">Serrurier</option>
+                        <option value="vitrier">Vitrier</option>
+                        <option value="autre">Autre</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="metier_autre_group" style="display: none;">
+                    <label for="metier_autre">Si "Autre", précisez votre métier <span class="required">*</span></label>
+                    <input type="text" id="metier_autre" name="metier_autre" placeholder="Ex: Ébéniste, Carrossier..." />
+                </div>
+
+                <div class="form-group">
+                    <label for="slogan">Slogan ou phrase d'accroche</label>
+                    <input type="text" id="slogan" name="slogan" placeholder="Ex: Votre plombier de confiance depuis 20 ans" />
+                </div>
+
+                <div class="form-group">
+                    <label for="description_courte">Description courte (2-3 phrases) <span class="required">*</span></label>
+                    <textarea id="description_courte" name="description_courte" required placeholder="Décrivez brièvement votre entreprise..."></textarea>
+                </div>
+            </div>
+
+            <!-- COORDONNÉES -->
+            <div class="form-section">
+                <h2 class="section-title">Coordonnées</h2>
+
+                <div class="form-group">
+                    <label for="adresse">Adresse complète <span class="required">*</span></label>
+                    <input type="text" id="adresse" name="adresse" required placeholder="Ex: 123 Rue de la République, 75001 Paris" />
+                </div>
+
+                <div class="form-group">
+                    <label for="code_postal">Code postal <span class="required">*</span></label>
+                    <input type="text" id="code_postal" name="code_postal" required placeholder="Ex: 75001" pattern="[0-9]{5}" />
+                </div>
+
+                <div class="form-group">
+                    <label for="ville">Ville <span class="required">*</span></label>
+                    <input type="text" id="ville" name="ville" required placeholder="Ex: Paris" />
+                </div>
+
+                <div class="form-group">
+                    <label for="telephone">Téléphone <span class="required">*</span></label>
+                    <input type="tel" id="telephone" name="telephone" required placeholder="Ex: 06 12 34 56 78" />
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email <span class="required">*</span></label>
+                    <input type="email" id="email" name="email" required placeholder="Ex: contact@votreentreprise.fr" />
+                </div>
+
+                <div class="form-group">
+                    <label for="horaires">Horaires d'ouverture</label>
+                    <textarea id="horaires" name="horaires" placeholder="Ex:&#10;Lundi - Vendredi: 8h - 18h&#10;Samedi: 9h - 12h&#10;Dimanche: Fermé"></textarea>
+                </div>
+            </div>
+
+            <!-- SERVICES -->
+            <div class="form-section">
+                <h2 class="section-title">Services Proposés</h2>
+
+                <div id="services-container">
+                    <div class="service-item">
+                        <div class="form-group">
+                            <label>Nom du service</label>
+                            <input type="text" name="services[]" placeholder="Ex: Réparation de fuites" />
+                        </div>
+                        <div class="form-group">
+                            <label>Description (optionnel)</label>
+                            <input type="text" name="services_desc[]" placeholder="Ex: Intervention rapide 24/7" />
+                        </div>
+                        <div class="form-group">
+                            <button type="button" class="remove-btn" onclick="removeService(this)" style="display:none;">Supprimer</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" class="add-service-btn" onclick="addService()">+ Ajouter un service</button>
+            </div>
+
+            <!-- À PROPOS -->
+            <div class="form-section">
+                <h2 class="section-title">À Propos de Vous <span style="font-size: 0.7em; font-weight: normal; color: #666;">(Optionnel)</span></h2>
+
+                <div class="form-group">
+                    <label for="annees_experience">Années d'expérience</label>
+                    <input type="text" id="annees_experience" name="annees_experience" placeholder="Ex: 15" />
+                </div>
+
+                <div class="form-group">
+                    <label for="certifications">Certifications, diplômes, garanties</label>
+                    <textarea id="certifications" name="certifications" placeholder="Ex: Certifié RGE, Garantie décennale..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="histoire">Votre histoire / Présentation</label>
+                    <textarea id="histoire" name="histoire" placeholder="Racontez l'histoire de votre entreprise..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Points forts à mettre en avant</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="points_forts[]" value="intervention_rapide" />
+                            <span>Intervention rapide (24/7)</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="points_forts[]" value="devis_gratuit" />
+                            <span>Devis gratuit</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="points_forts[]" value="artisan_local" />
+                            <span>Artisan local</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="points_forts[]" value="garantie_travaux" />
+                            <span>Garantie sur les travaux</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="points_forts[]" value="certifie_rge" />
+                            <span>Certifié RGE</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ZONE D'INTERVENTION -->
+            <div class="form-section">
+                <h2 class="section-title">Zone d'Intervention</h2>
+
+                <div class="form-group">
+                    <label for="zones_intervention">Villes ou zones où vous intervenez <span class="required">*</span></label>
+                    <textarea id="zones_intervention" name="zones_intervention" required placeholder="Ex: Paris, Boulogne-Billancourt, Issy-les-Moulineaux et alentours"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="rayon_intervention">Rayon d'intervention (en km)</label>
+                    <input type="text" id="rayon_intervention" name="rayon_intervention" placeholder="Ex: 30" />
+                </div>
+            </div>
+
+            <!-- DESIGN & COULEURS -->
+            <div class="form-section">
+                <h2 class="section-title">Design & Couleurs</h2>
+
+                <div class="form-group">
+                    <label>Couleur principale du site <span class="required">*</span></label>
+                    <div class="color-picker-group">
+                        <input type="color" id="couleur_principale" name="couleur_principale" value="#667eea" />
+                        <input type="text" id="couleur_principale_hex" value="#667eea" placeholder="#667eea" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Couleur secondaire</label>
+                    <div class="color-picker-group">
+                        <input type="color" id="couleur_secondaire" name="couleur_secondaire" value="#764ba2" />
+                        <input type="text" id="couleur_secondaire_hex" value="#764ba2" placeholder="#764ba2" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="style_prefere">Style préféré</label>
+                    <div class="radio-group">
+                        <label class="radio-item">
+                            <input type="radio" name="style_prefere" value="moderne" checked />
+                            <span>Moderne et épuré</span>
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="style_prefere" value="classique" />
+                            <span>Classique et professionnel</span>
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="style_prefere" value="chaleureux" />
+                            <span>Chaleureux et accueillant</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PHOTOS & MÉDIAS -->
+            <div class="form-section">
+                <h2 class="section-title">Photos & Médias</h2>
+
+                <div class="form-group">
+                    <label>Photos disponibles</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="photos_disponibles[]" value="logo" />
+                            <span>Logo de l'entreprise</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="photos_disponibles[]" value="equipe" />
+                            <span>Photo de l'équipe</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="photos_disponibles[]" value="travaux" />
+                            <span>Photos de réalisations</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="photos_disponibles[]" value="aucune" />
+                            <span>Aucune photo (utiliser images libres)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="photos_commentaire">Commentaire sur les photos (optionnel)</label>
+                    <textarea id="photos_commentaire" name="photos_commentaire" placeholder="Lien Google Drive, Dropbox, etc."></textarea>
+                </div>
+            </div>
+
+            <!-- RÉSEAUX SOCIAUX -->
+            <div class="form-section">
+                <h2 class="section-title">Réseaux Sociaux</h2>
+
+                <div class="form-group">
+                    <label for="facebook">Page Facebook (URL complète)</label>
+                    <input type="url" id="facebook" name="facebook" placeholder="Ex: https://www.facebook.com/votrepage" />
+                </div>
+
+                <div class="form-group">
+                    <label for="instagram">Compte Instagram (URL complète)</label>
+                    <input type="url" id="instagram" name="instagram" placeholder="Ex: https://www.instagram.com/votrecompte" />
+                </div>
+
+                <div class="form-group">
+                    <label for="linkedin">Profil LinkedIn (URL complète)</label>
+                    <input type="url" id="linkedin" name="linkedin" placeholder="Ex: https://www.linkedin.com/company/votreentreprise" />
+                </div>
+
+                <div class="form-group">
+                    <label for="google_business">Google Business Profile (URL)</label>
+                    <input type="url" id="google_business" name="google_business" placeholder="Ex: https://g.page/votre-entreprise" />
+                </div>
+            </div>
+
+            <!-- TÉMOIGNAGES -->
+            <div class="form-section">
+                <h2 class="section-title">Témoignages Clients <span style="font-size: 0.7em; font-weight: normal; color: #666;">(Optionnel)</span></h2>
+
+                <div class="form-group">
+                    <label for="note_google">Note Google (sur 5)</label>
+                    <input type="text" id="note_google" name="note_google" placeholder="Ex: 4.8" pattern="[0-5](\.[0-9])?" />
+                </div>
+
+                <div class="form-group">
+                    <label for="nombre_avis_google">Nombre d'avis Google</label>
+                    <input type="text" id="nombre_avis_google" name="nombre_avis_google" placeholder="Ex: 127" />
+                </div>
+            </div>
+
+            <!-- FONCTIONNALITÉS -->
+            <div class="form-section">
+                <h2 class="section-title">Fonctionnalités du Site</h2>
+
+                <div class="form-group">
+                    <label>Fonctionnalités souhaitées</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="fonctionnalites[]" value="formulaire_contact" checked />
+                            <span>Formulaire de contact</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="fonctionnalites[]" value="devis_en_ligne" />
+                            <span>Demande de devis en ligne</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="fonctionnalites[]" value="galerie_photos" />
+                            <span>Galerie photos de réalisations</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="fonctionnalites[]" value="reservation_rdv" />
+                            <span>Demande de prise de RDV</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEO & RÉFÉRENCEMENT -->
+            <div class="form-section">
+                <h2 class="section-title">Référencement (SEO)</h2>
+
+                <div class="form-group">
+                    <label for="concurrents">Sites de concurrents que vous admirez (optionnel)</label>
+                    <textarea id="concurrents" name="concurrents" placeholder="Ex: https://exemple-plomberie.fr"></textarea>
+                </div>
+            </div>
+
+            <!-- INFORMATIONS COMPLÉMENTAIRES -->
+            <div class="form-section">
+                <h2 class="section-title">Informations Complémentaires</h2>
+
+                <div class="form-group">
+                    <label for="date_lancement">Date souhaitée de mise en ligne</label>
+                    <input type="text" id="date_lancement" name="date_lancement" placeholder="Ex: Dans 2 semaines, fin du mois..." />
+                </div>
+
+                <div class="form-group">
+                    <label for="domaine">Nom de domaine souhaité (optionnel)</label>
+                    <input type="text" id="domaine" name="domaine" placeholder="Ex: plomberie-martin.fr" />
+                </div>
+
+                <div class="form-group">
+                    <label for="remarques">Remarques, questions ou demandes particulières</label>
+                    <textarea id="remarques" name="remarques" placeholder="Tout ce que vous souhaitez nous communiquer..."></textarea>
+                </div>
+            </div>
+
+            <!-- SOUMISSION -->
+            <div class="submit-section">
+                <button type="submit" class="submit-btn" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    ✅ Envoyer le Formulaire
+                </button>
+                <p style="margin-top: 20px; color: #666; font-size: 0.9em; text-align: center;">
+                    Vos données seront envoyées automatiquement
+                </p>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Gestion des couleurs
+        document.getElementById('couleur_principale').addEventListener('input', function(e) {
+            document.getElementById('couleur_principale_hex').value = e.target.value;
+        });
+        document.getElementById('couleur_principale_hex').addEventListener('input', function(e) {
+            if (/^#[0-9A-F]{6}$/i.test(e.target.value)) {
+                document.getElementById('couleur_principale').value = e.target.value;
+            }
+        });
+
+        document.getElementById('couleur_secondaire').addEventListener('input', function(e) {
+            document.getElementById('couleur_secondaire_hex').value = e.target.value;
+        });
+        document.getElementById('couleur_secondaire_hex').addEventListener('input', function(e) {
+            if (/^#[0-9A-F]{6}$/i.test(e.target.value)) {
+                document.getElementById('couleur_secondaire').value = e.target.value;
+            }
+        });
+
+        // Gestion des services
+        let serviceCount = 1;
+        
+        function addService() {
+            const container = document.getElementById('services-container');
+            const newService = document.createElement('div');
+            newService.className = 'service-item';
+            newService.innerHTML = `
+                <div class="form-group">
+                    <label>Nom du service</label>
+                    <input type="text" name="services[]" placeholder="Ex: Réparation de fuites" />
+                </div>
+                <div class="form-group">
+                    <label>Description (optionnel)</label>
+                    <input type="text" name="services_desc[]" placeholder="Ex: Intervention rapide 24/7" />
+                </div>
+                <div class="form-group">
+                    <button type="button" class="remove-btn" onclick="removeService(this)">Supprimer</button>
+                </div>
+            `;
+            container.appendChild(newService);
+            serviceCount++;
+            updateRemoveButtons();
+        }
+
+        function removeService(btn) {
+            const container = document.getElementById('services-container');
+            if (container.children.length > 1) {
+                btn.closest('.service-item').remove();
+                updateRemoveButtons();
+            }
+        }
+
+        function updateRemoveButtons() {
+            const container = document.getElementById('services-container');
+            const items = container.querySelectorAll('.service-item');
+            items.forEach((item, index) => {
+                const removeBtn = item.querySelector('.remove-btn');
+                if (items.length > 1) {
+                    removeBtn.style.display = 'block';
+                } else {
+                    removeBtn.style.display = 'none';
+                }
+            });
+        }
+
+        // Fonction pour collecter toutes les données du formulaire
+        function collecterDonnees() {
+            const formData = new FormData(document.getElementById('customizationForm'));
+            const data = {};
+            
+            for (let [key, value] of formData.entries()) {
+                if (value && value.trim() !== '') {
+                    if (data[key]) {
+                        if (Array.isArray(data[key])) {
+                            data[key].push(value);
+                        } else {
+                            data[key] = [data[key], value];
+                        }
+                    } else {
+                        data[key] = value;
+                    }
+                }
+            }
+            
+            document.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
+                const name = cb.name;
+                if (name.includes('[]')) {
+                    const key = name.replace('[]', '');
+                    if (!data[key]) data[key] = [];
+                    data[key].push(cb.value);
+                } else {
+                    if (!data[name]) data[name] = [];
+                    data[name].push(cb.value);
+                }
+            });
+            
+            document.querySelectorAll('input[type="radio"]:checked').forEach(radio => {
+                data[radio.name] = radio.value;
+            });
+            
+            return data;
+        }
+
+        // Fonction pour formater les données en texte lisible
+        function formaterDonneesPourEmail(data) {
+            let texte = "FORMULAIRE DE PERSONNALISATION DE SITE WEB\n";
+            texte += "==========================================\n\n";
+            texte += "Date: " + new Date().toLocaleString('fr-FR') + "\n\n";
+            
+            const sections = {
+                "INFORMATIONS GÉNÉRALES": [
+                    'nom_entreprise', 'metier', 'metier_autre', 'slogan', 'description_courte'
+                ],
+                "COORDONNÉES": [
+                    'adresse', 'code_postal', 'ville', 'telephone', 'email', 'horaires'
+                ],
+                "SERVICES": [
+                    'services', 'services_desc'
+                ],
+                "À PROPOS": [
+                    'annees_experience', 'certifications', 'histoire', 'points_forts'
+                ],
+                "ZONE D'INTERVENTION": [
+                    'zones_intervention', 'rayon_intervention'
+                ],
+                "DESIGN": [
+                    'couleur_principale', 'couleur_secondaire', 'style_prefere'
+                ],
+                "PHOTOS": [
+                    'photos_disponibles', 'photos_commentaire'
+                ],
+                "RÉSEAUX SOCIAUX": [
+                    'facebook', 'instagram', 'linkedin', 'google_business'
+                ],
+                "TÉMOIGNAGES": [
+                    'note_google', 'nombre_avis_google'
+                ],
+                "FONCTIONNALITÉS": [
+                    'fonctionnalites'
+                ],
+                "SEO": [
+                    'concurrents'
+                ],
+                "AUTRES": [
+                    'date_lancement', 'domaine', 'remarques', 'email_reception'
+                ]
+            };
+            
+            for (const [sectionName, keys] of Object.entries(sections)) {
+                let sectionTexte = `\n${sectionName}\n${'='.repeat(sectionName.length)}\n`;
+                let hasContent = false;
+                
+                keys.forEach(key => {
+                    if (data[key]) {
+                        hasContent = true;
+                        const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        if (Array.isArray(data[key])) {
+                            sectionTexte += `${label}: ${data[key].join(', ')}\n`;
+                        } else {
+                            sectionTexte += `${label}: ${data[key]}\n`;
+                        }
+                    }
+                });
+                
+                if (hasContent) {
+                    texte += sectionTexte;
+                }
+            }
+            
+            return texte;
+        }
+
+        // Fonction pour valider les champs obligatoires
+        function validerFormulaire() {
+            const champsObligatoires = [
+                'nom_entreprise',
+                'metier',
+                'description_courte',
+                'adresse',
+                'code_postal',
+                'ville',
+                'telephone',
+                'email',
+                'zones_intervention',
+                'couleur_principale'
+            ];
+            
+            for (const champId of champsObligatoires) {
+                const champ = document.getElementById(champId);
+                if (champ) {
+                    if (!champ.value || champ.value.trim() === '') {
+                        champ.focus();
+                        champ.style.borderColor = '#dc3545';
+                        setTimeout(() => {
+                            champ.style.borderColor = '';
+                        }, 2000);
+                        return false;
+                    }
+                    if (champId === 'metier' && champ.value === 'autre') {
+                        const metierAutre = document.getElementById('metier_autre');
+                        if (!metierAutre || !metierAutre.value || metierAutre.value.trim() === '') {
+                            metierAutre.focus();
+                            metierAutre.style.borderColor = '#dc3545';
+                            setTimeout(() => {
+                                metierAutre.style.borderColor = '';
+                            }, 2000);
+                            return false;
+                        }
+                    }
+                }
+            }
+            
+            return true;
+        }
+
+        // Gestion de la soumission du formulaire
+        document.getElementById('customizationForm').addEventListener('submit', function(e) {
+            if (!validerFormulaire()) {
+                e.preventDefault();
+                alert('⚠️ Veuillez remplir tous les champs obligatoires (marqués d\'un *)');
+                return false;
+            }
+        });
+
+        // Afficher/masquer le champ métier autre
+        document.getElementById('metier').addEventListener('change', function(e) {
+            const autreField = document.getElementById('metier_autre_group');
+            const autreInput = document.getElementById('metier_autre');
+            if (e.target.value === 'autre') {
+                autreField.style.display = 'block';
+                autreInput.required = true;
+            } else {
+                autreField.style.display = 'none';
+                autreInput.required = false;
+                autreInput.value = '';
+            }
+        });
+    </script>
+</body>
+</html>

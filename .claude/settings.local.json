@@ -7,7 +7,14 @@
       "Bash(python:*)",
       "Bash(git fetch:*)",
       "Bash(gh run list:*)",
-      "Bash(where:*)"
+      "Bash(where:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(git stash:*)",
+      "Bash(git pull:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nFix GitHub sync button: stash before pull, process all artifacts\n\n- Stash local data files before git pull to avoid merge conflicts\n- Process ALL artifacts from recent runs (not just 3) to ensure complete data\n- Use departement_recherche as priority for correct department assignment\n- Use ville_recherche as fallback when ville is missing\n- Extract to temp directories to avoid overwriting local JSON\n- Clean up temp files after import\n- Show detailed import stats (JSON + Artifacts counts)\n- Replace deprecated st.experimental_rerun() with st.rerun()\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "Bash(pip install:*)"
     ]
   }
 }

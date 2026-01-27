@@ -218,40 +218,47 @@ def save_callback(artisan_data):
         else:
             adresse_clean = ''
         
-        # ✅ PRIORITÉ 1 : Utiliser le département recherché (le plus fiable)
+        # ✅ Stocker le département de recherche pour référence (mais ne pas l'utiliser comme département réel)
         departement_recherche = artisan_data.get('departement_recherche') or artisan_data.get('departement')
-        
+
         data = {
             'nom_entreprise': artisan_data.get('nom'),  # ✅ FIX : nom_entreprise au lieu de nom
             'telephone': artisan_data.get('telephone'),
             'site_web': artisan_data.get('site_web'),
+            'google_maps_url': artisan_data.get('google_maps_url'),  # URL directe vers la fiche Google Maps
             'adresse': adresse_clean,  # ✅ Adresse nettoyée
             'code_postal': artisan_data.get('code_postal'),
             'ville': artisan_data.get('ville'),
-            'departement': departement_recherche,  # ✅ Utiliser le département recherché en priorité
+            'departement': None,  # ✅ FIX: Sera dérivé du code_postal, pas du département recherché
             'note': artisan_data.get('note'),
             'nombre_avis': artisan_data.get('nb_avis') or artisan_data.get('nombre_avis'),  # ✅ Support des deux formats
             'ville_recherche': artisan_data.get('ville_recherche'),
+            'departement_recherche': departement_recherche,  # ✅ Garder trace du département de recherche
             'source': 'google_maps',
             'source_telephone': 'google_maps',
             'type_artisan': artisan_data.get('recherche') or artisan_data.get('type_artisan')  # ✅ Support des deux formats
         }
-        
-        # ✅ Extraire le code postal depuis l'adresse si manquant
+
+        # ✅ PRIORITÉ 1: Extraire le code postal depuis l'adresse si manquant
         if not data.get('code_postal') and data.get('adresse'):
             cp_match = re.search(r'\b(\d{5})\b', data['adresse'])
             if cp_match:
                 data['code_postal'] = cp_match.group(1)
-        
-        # ✅ PRIORITÉ 2 : Si pas de département recherché, extraire depuis le code postal
-        if not data.get('departement') and data.get('code_postal'):
+
+        # ✅ PRIORITÉ 2: Extraire le département depuis le code postal (la source la plus fiable)
+        if data.get('code_postal'):
             code_postal = str(data['code_postal']).strip()
-            if len(code_postal) >= 2:
+            # Valider que c'est un code postal français valide (5 chiffres)
+            if re.match(r'^\d{5}$', code_postal):
                 # Pour les départements d'outre-mer (97x, 98x), prendre les 3 premiers chiffres
                 if code_postal.startswith('97') or code_postal.startswith('98'):
                     data['departement'] = code_postal[:3]
                 else:
                     data['departement'] = code_postal[:2]
+
+        # ✅ FALLBACK: Utiliser le département recherché seulement si on n'a pas pu l'extraire du CP
+        if not data.get('departement') and departement_recherche:
+            data['departement'] = departement_recherche
         
         # ✅ Extraire la ville depuis l'adresse si manquante (amélioré)
         if not data.get('ville') and data.get('adresse'):

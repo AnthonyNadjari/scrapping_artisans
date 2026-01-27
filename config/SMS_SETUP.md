@@ -49,3 +49,5 @@ Ce système utilise l'API Free Mobile pour envoyer des SMS directement depuis l'
 Le fichier `config/sms_config.json` est dans `.gitignore` et ne sera **pas** commité dans Git pour protéger vos identifiants.
 
 
+
+
