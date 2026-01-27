@@ -10,6 +10,13 @@ from pathlib import Path
 from datetime import datetime
 import pandas as pd
 import requests
+from io import BytesIO
+try:
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, Alignment, PatternFill
+    EXCEL_AVAILABLE = True
+except ImportError:
+    EXCEL_AVAILABLE = False
 # ✅ Plus besoin de threading/ThreadPoolExecutor - GitHub Actions uniquement
 
 # Configuration de la page
@@ -18,6 +25,15 @@ st.set_page_config(page_title="Scraping Google Maps", page_icon="🔍", layout="
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from whatsapp_database.queries import ajouter_artisan, get_statistiques
+from whatsapp_database.models import init_database
+
+# ✅ Initialiser la base de données au démarrage de la page (ajoute les nouvelles colonnes si nécessaire)
+try:
+    init_database()
+except Exception as e:
+    # Ne pas bloquer si erreur, mais logger
+    import logging
+    logging.warning(f"Erreur initialisation BDD: {e}")
 
 # ✅ Import des fonctions de tracking (avec fallback si elles n'existent pas)
 try:
@@ -522,6 +538,20 @@ except Exception as e:
     import traceback
     st.code(traceback.format_exc())
 
+# ✅ SECTION : Tableau de bord stratégique de recherche
+try:
+    from whatsapp_database.scraping_analytics import (
+        get_metier_statistics, get_departement_statistics,
+        get_coverage_metrics, get_session_statistics,
+        get_priority_suggestions, generate_research_report
+    )
+    ANALYTICS_AVAILABLE = True
+except ImportError as e:
+    ANALYTICS_AVAILABLE = False
+    # Debug: afficher l'erreur en mode développement
+    import traceback
+    # st.warning(f"Module analytics non disponible: {e}")  # Commenté pour ne pas polluer l'UI
+
 # ✅ SECTION : Historique des scrapings par département (masqué si vide)
 from whatsapp_database.queries import get_scraping_history
 historique = get_scraping_history()
@@ -723,6 +753,331 @@ if departements_stats:
         st.metric("Villes scrapées", total_villes)
 else:
     st.empty()  # Pas de message si aucun scraping - affichage plus compact
+
+# ✅ NOUVELLE SECTION : Tableau de bord stratégique de recherche
+st.markdown("---")
+st.markdown("### 📊 Tableau de bord stratégique de recherche")
+
+if not ANALYTICS_AVAILABLE:
+    st.warning("⚠️ Le module d'analytics n'est pas disponible. Vérifiez que le fichier `whatsapp_database/scraping_analytics.py` existe.")
+    st.stop()
+
+if not historique or len(historique) == 0:
+    st.info("ℹ️ Aucun historique de scraping trouvé dans la base de données. Les statistiques apparaîtront après vos premiers scrapings qui seront enregistrés dans `scraping_history`.")
+    st.caption("💡 Note: Les scrapings effectués via GitHub Actions doivent être marqués dans la table `scraping_history` pour apparaître ici.")
+    
+    # Bouton pour forcer la réinitialisation de la BDD (utile si les colonnes manquent)
+    if st.button("🔄 Réinitialiser la structure de la base de données", help="Ajoute les nouvelles colonnes à la table scraping_history si elles manquent"):
+        try:
+            from whatsapp_database.models import init_database
+            init_database()
+            st.success("✅ Base de données réinitialisée ! Rafraîchissez la page.")
+            try:
+                st.rerun()
+            except:
+                st.experimental_rerun()
+        except Exception as e:
+            st.error(f"❌ Erreur: {e}")
+else:
+    # Tabs pour organiser les différentes vues
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "🎯 Vue d'ensemble", 
+        "📈 Par métier", 
+        "🗺️ Par département",
+        "📅 Sessions récentes",
+        "💡 Suggestions"
+    ])
+    
+    with tab1:
+        st.markdown("#### Vue d'ensemble globale")
+        
+        # Statistiques globales
+        try:
+            stats_metiers = get_metier_statistics()
+            stats_departements = get_departement_statistics()
+            
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("Métiers scrapés", len(stats_metiers))
+            with col2:
+                st.metric("Départements couverts", len(stats_departements))
+            with col3:
+                total_artisans = sum(s['artisans_trouves'] for s in stats_metiers)
+                st.metric("Artisans trouvés", f"{total_artisans:,}")
+            with col4:
+                total_villes = sum(s['villes_scrapees'] for s in stats_metiers)
+                st.metric("Villes scrapées", f"{total_villes:,}")
+            
+            # Graphique des métiers les plus scrapés
+            if stats_metiers:
+                st.markdown("#### Top métiers par nombre d'artisans trouvés")
+                df_metiers = pd.DataFrame(stats_metiers[:10])
+                st.bar_chart(df_metiers.set_index('metier')['artisans_trouves'])
+                
+        except Exception as e:
+            st.warning(f"⚠️ Erreur calcul statistiques: {e}")
+    
+    with tab2:
+        st.markdown("#### Statistiques par métier")
+        
+        try:
+            stats_metiers = get_metier_statistics()
+            
+            if stats_metiers:
+                # Tableau détaillé
+                df = pd.DataFrame(stats_metiers)
+                df['taux_couverture_moyen'] = df['taux_couverture_moyen'].apply(
+                    lambda x: f"{x:.1f}%" if x is not None else "N/A"
+                )
+                
+                st.dataframe(
+                    df[['metier', 'departements_couverts', 'villes_scrapees', 
+                        'artisans_trouves', 'taux_couverture_moyen']],
+                    use_container_width=True,
+                    hide_index=True
+                )
+                
+                # Export
+                csv = df.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    "📥 Télécharger en CSV",
+                    csv,
+                    f"stats_metiers_{datetime.now().strftime('%Y%m%d')}.csv",
+                    "text/csv"
+                )
+            else:
+                st.info("Aucune statistique disponible")
+                
+        except Exception as e:
+            st.warning(f"⚠️ Erreur: {e}")
+    
+    with tab3:
+        st.markdown("#### Statistiques par département")
+        
+        try:
+            stats_departements = get_departement_statistics()
+            
+            if stats_departements:
+                # Filtre par métier
+                metiers_list = sorted(list(set([h.get('metier', '') for h in historique if h.get('metier')])))
+                if metiers_list:
+                    metier_filter = st.selectbox(
+                        "Filtrer par métier",
+                        ["Tous"] + metiers_list,
+                        key="dept_metier_filter"
+                    )
+                    
+                    if metier_filter != "Tous":
+                        stats_departements = [s for s in stats_departements 
+                                            if any(h.get('metier') == metier_filter 
+                                                  for h in historique if h.get('departement') == s['departement'])]
+                
+                # Tableau
+                df = pd.DataFrame(stats_departements)
+                df['taux_couverture'] = df['taux_couverture'].apply(
+                    lambda x: f"{x:.1f}%" if x is not None else "N/A"
+                )
+                
+                st.dataframe(
+                    df[['departement', 'metiers_scrapes', 'villes_scrapees', 
+                        'villes_disponibles', 'taux_couverture', 'artisans_trouves']],
+                    use_container_width=True,
+                    hide_index=True
+                )
+                
+                # Export
+                csv = df.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    "📥 Télécharger en CSV",
+                    csv,
+                    f"stats_departements_{datetime.now().strftime('%Y%m%d')}.csv",
+                    "text/csv"
+                )
+            else:
+                st.info("Aucune statistique disponible")
+                
+        except Exception as e:
+            st.warning(f"⚠️ Erreur: {e}")
+    
+    with tab4:
+        st.markdown("#### Sessions de scraping récentes (30 derniers jours)")
+        
+        try:
+            sessions = get_session_statistics(days=30)
+            
+            if sessions:
+                df_sessions = pd.DataFrame(sessions)
+                df_sessions['duree_moyenne'] = df_sessions['duree_moyenne'].apply(
+                    lambda x: f"{x:.0f}s" if x and not pd.isna(x) else "N/A"
+                )
+                
+                st.dataframe(
+                    df_sessions,
+                    use_container_width=True,
+                    hide_index=True
+                )
+                
+                # Graphique d'évolution
+                if len(df_sessions) > 1:
+                    st.markdown("#### Évolution du nombre d'artisans trouvés")
+                    st.line_chart(df_sessions.set_index('date')['artisans_trouves'])
+            else:
+                st.info("Aucune session récente")
+                
+        except Exception as e:
+            st.warning(f"⚠️ Erreur: {e}")
+    
+    with tab5:
+        st.markdown("#### Suggestions de départements prioritaires")
+        st.caption("Départements partiellement couverts nécessitant un complément de scraping")
+        
+        try:
+            suggestions = get_priority_suggestions(limit=10)
+            
+            if suggestions:
+                df_suggestions = pd.DataFrame(suggestions)
+                df_suggestions['taux_couverture_actuel'] = df_suggestions['taux_couverture_actuel'].apply(
+                    lambda x: f"{x:.1f}%" if x is not None else "N/A"
+                )
+                df_suggestions['priorite_score'] = df_suggestions['priorite_score'].apply(
+                    lambda x: f"{x:.0f}"
+                )
+                
+                st.dataframe(
+                    df_suggestions[['departement', 'metier', 'taux_couverture_actuel', 
+                                   'villes_manquantes', 'raison', 'priorite_score']],
+                    use_container_width=True,
+                    hide_index=True
+                )
+            else:
+                st.success("✅ Tous les départements sont bien couverts !")
+                
+        except Exception as e:
+            st.warning(f"⚠️ Erreur: {e}")
+    
+    # Section Rapport complet
+    st.markdown("---")
+    st.markdown("#### 📄 Générer un rapport complet")
+    
+    col_report1, col_report2 = st.columns(2)
+    with col_report1:
+        metier_report = st.selectbox(
+            "Métier (optionnel)",
+            ["Tous"] + sorted(list(set([h.get('metier', '') for h in historique if h.get('metier')]))),
+            key="report_metier"
+        )
+    with col_report2:
+        dept_report = st.selectbox(
+            "Département (optionnel)",
+            ["Tous"] + sorted(list(set([h.get('departement', '') for h in historique if h.get('departement')]))),
+            key="report_dept"
+        )
+    
+    if st.button("📊 Générer rapport", key="generate_report"):
+        try:
+            with st.spinner("Génération du rapport..."):
+                report = generate_research_report(
+                    metier=metier_report if metier_report != "Tous" else None,
+                    departement=dept_report if dept_report != "Tous" else None
+                )
+                
+                st.success("✅ Rapport généré avec succès !")
+                
+                # Afficher le résumé
+                st.markdown("##### Résumé")
+                stats_gen = report['statistiques_generales']
+                col_r1, col_r2, col_r3, col_r4 = st.columns(4)
+                with col_r1:
+                    st.metric("Scrapings", stats_gen['total_scrapings'])
+                with col_r2:
+                    st.metric("Artisans", f"{stats_gen['total_artisans_trouves']:,}")
+                with col_r3:
+                    st.metric("Villes", stats_gen['villes_scrapees'])
+                with col_r4:
+                    st.metric("Départements", stats_gen['departements_couverts'])
+                
+                # Exports
+                col_exp1, col_exp2 = st.columns(2)
+                
+                with col_exp1:
+                    # Export JSON
+                    import json
+                    report_json = json.dumps(report, ensure_ascii=False, indent=2)
+                    st.download_button(
+                        "📥 Télécharger rapport JSON",
+                        report_json.encode('utf-8'),
+                        f"rapport_recherche_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                        "application/json"
+                    )
+                
+                with col_exp2:
+                    # Export Excel si disponible
+                    if EXCEL_AVAILABLE:
+                        try:
+                            wb = Workbook()
+                            ws = wb.active
+                            ws.title = "Résumé"
+                            
+                            # Style header
+                            header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+                            header_font = Font(bold=True, color="FFFFFF")
+                            
+                            # Feuille 1: Résumé
+                            ws.append(["Rapport de recherche"])
+                            ws.append(["Généré le", report['periode']['generated_at']])
+                            ws.append([])
+                            
+                            stats = report['statistiques_generales']
+                            ws.append(["Statistiques générales"])
+                            ws.append(["Total scrapings", stats['total_scrapings']])
+                            ws.append(["Artisans trouvés", stats['total_artisans_trouves']])
+                            ws.append(["Villes scrapées", stats['villes_scrapees']])
+                            ws.append(["Départements couverts", stats['departements_couverts']])
+                            ws.append(["Métiers scrapés", stats['metiers_scrapes']])
+                            ws.append(["Moyenne artisans/scraping", f"{stats['artisans_moyen_par_scraping']:.2f}"])
+                            
+                            # Feuille 2: Par métier
+                            if report['statistiques_par_metier']:
+                                ws2 = wb.create_sheet("Par métier")
+                                df_metiers = pd.DataFrame(report['statistiques_par_metier'])
+                                for r_idx, row in enumerate(df_metiers.itertuples(), start=1):
+                                    for c_idx, value in enumerate(row[1:], start=1):
+                                        cell = ws2.cell(row=r_idx, column=c_idx, value=value)
+                                        if r_idx == 1:
+                                            cell.fill = header_fill
+                                            cell.font = header_font
+                            
+                            # Feuille 3: Par département
+                            if report['statistiques_par_departement']:
+                                ws3 = wb.create_sheet("Par département")
+                                df_depts = pd.DataFrame(report['statistiques_par_departement'])
+                                for r_idx, row in enumerate(df_depts.itertuples(), start=1):
+                                    for c_idx, value in enumerate(row[1:], start=1):
+                                        cell = ws3.cell(row=r_idx, column=c_idx, value=value)
+                                        if r_idx == 1:
+                                            cell.fill = header_fill
+                                            cell.font = header_font
+                            
+                            # Sauvegarder en mémoire
+                            excel_buffer = BytesIO()
+                            wb.save(excel_buffer)
+                            excel_buffer.seek(0)
+                            
+                            st.download_button(
+                                "📊 Télécharger rapport Excel",
+                                excel_buffer.getvalue(),
+                                f"rapport_recherche_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                            )
+                        except Exception as e:
+                            st.warning(f"⚠️ Export Excel non disponible: {e}")
+                    else:
+                        st.info("💡 Installez openpyxl pour l'export Excel: `pip install openpyxl`")
+                
+        except Exception as e:
+            st.error(f"❌ Erreur génération rapport: {e}")
+            import traceback
+            st.code(traceback.format_exc())
 
 # ✅ Initialiser les variables GitHub Actions dans session_state AVANT de les utiliser
 if 'github_workflow_id' not in st.session_state:

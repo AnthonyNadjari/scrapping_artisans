@@ -35,11 +35,13 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Initialiser la base de données automatiquement
+# Initialiser la base de données automatiquement (ajoute les nouvelles colonnes si nécessaire)
 try:
     init_database()
-except:
-    pass  # Déjà initialisée
+except Exception as e:
+    # Ne pas bloquer si erreur, mais logger
+    import logging
+    logging.warning(f"Erreur initialisation BDD: {e}")
 
 # Header
 st.markdown("""

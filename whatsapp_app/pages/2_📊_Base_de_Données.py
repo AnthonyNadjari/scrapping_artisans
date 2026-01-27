@@ -21,8 +21,13 @@ from whatsapp.message_builder import detect_site_type
 from whatsapp.phone_utils import is_mobile, is_landline
 import sqlite3
 
-# Ensure database and tables exist
-init_database()
+# ✅ Ensure database and tables exist (ajoute les nouvelles colonnes si nécessaire)
+try:
+    init_database()
+except Exception as e:
+    # Ne pas bloquer si erreur, mais logger
+    import logging
+    logging.warning(f"Erreur initialisation BDD: {e}")
 import re
 
 st.title("📊 Base de Données - Artisans")

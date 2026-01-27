@@ -13,6 +13,15 @@ st.set_page_config(page_title="Messages SMS", page_icon="💬", layout="wide")
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from whatsapp_database.queries import get_artisans, marquer_message_envoye
+from whatsapp_database.models import init_database
+
+# ✅ Initialiser la base de données au démarrage (ajoute les nouvelles colonnes si nécessaire)
+try:
+    init_database()
+except Exception as e:
+    # Ne pas bloquer si erreur, mais logger
+    import logging
+    logging.warning(f"Erreur initialisation BDD: {e}")
 from whatsapp.message_builder import prepare_batch, detect_site_type
 from whatsapp.phone_utils import is_mobile, is_landline, format_display
 # Utiliser sms_free_providers pour services gratuits (Twilio Trial, TextBelt, etc.)

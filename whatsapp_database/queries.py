@@ -494,16 +494,53 @@ def get_artisans(filtres: Optional[Dict] = None, limit: Optional[int] = None) ->
     conn.close()
     return [dict(row) for row in rows]
 
-def mark_scraping_done(metier: str, departement: str, ville: str, results_count: int = 0):
-    """Marque une combinaison métier/département/ville comme scrapée"""
+def mark_scraping_done(metier: str, departement: str, ville: str, results_count: int = 0,
+                      session_id: Optional[str] = None, duration_seconds: Optional[int] = None,
+                      status: str = 'completed', notes: Optional[str] = None):
+    """
+    Marque une combinaison métier/département/ville comme scrapée
+    
+    Args:
+        metier: Type d'artisan
+        departement: Département
+        ville: Ville
+        results_count: Nombre de résultats trouvés
+        session_id: ID de session (optionnel)
+        duration_seconds: Durée en secondes (optionnel)
+        status: Statut ('completed', 'partial', 'failed', 'skipped')
+        notes: Notes libres (optionnel)
+    """
     conn = get_connection()
     cursor = conn.cursor()
     
     try:
+        # Vérifier si l'enregistrement existe déjà
         cursor.execute("""
-            INSERT OR REPLACE INTO scraping_history (metier, departement, ville, scraped_at, results_count)
-            VALUES (?, ?, ?, CURRENT_TIMESTAMP, ?)
-        """, (metier, departement, ville, results_count))
+            SELECT id FROM scraping_history 
+            WHERE metier = ? AND departement = ? AND ville = ?
+        """, (metier, departement, ville))
+        existing = cursor.fetchone()
+        
+        if existing:
+            # Mettre à jour
+            cursor.execute("""
+                UPDATE scraping_history 
+                SET scraped_at = CURRENT_TIMESTAMP, 
+                    results_count = ?,
+                    session_id = COALESCE(?, session_id),
+                    duration_seconds = COALESCE(?, duration_seconds),
+                    status = COALESCE(?, status),
+                    notes = COALESCE(?, notes)
+                WHERE id = ?
+            """, (results_count, session_id, duration_seconds, status, notes, existing[0]))
+        else:
+            # Insérer
+            cursor.execute("""
+                INSERT INTO scraping_history 
+                (metier, departement, ville, scraped_at, results_count, session_id, duration_seconds, status, notes)
+                VALUES (?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?)
+            """, (metier, departement, ville, results_count, session_id, duration_seconds, status, notes))
+        
         conn.commit()
     except Exception as e:
         print(f"Erreur marquage scraping: {e}")

@@ -101,9 +101,27 @@ def init_database():
             ville TEXT NOT NULL,
             scraped_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             results_count INTEGER DEFAULT 0,
+            session_id TEXT,
+            duration_seconds INTEGER,
+            status TEXT DEFAULT 'completed',
+            notes TEXT,
             UNIQUE(metier, departement, ville)
         )
     """)
+    
+    # Migration : Ajouter les nouvelles colonnes si elles n'existent pas
+    nouvelles_colonnes_history = [
+        ("session_id", "TEXT"),
+        ("duration_seconds", "INTEGER"),
+        ("status", "TEXT"),
+        ("notes", "TEXT"),
+    ]
+    
+    for colonne, type_col in nouvelles_colonnes_history:
+        try:
+            cursor.execute(f"ALTER TABLE scraping_history ADD COLUMN {colonne} {type_col}")
+        except sqlite3.OperationalError:
+            pass  # Colonne existe déjà
     
     # Ajouter les nouvelles colonnes si elles n'existent pas (migration)
     nouvelles_colonnes = [
@@ -147,6 +165,9 @@ def init_database():
     
     # ✅ Message silencieux (seulement en mode debug)
     # print(f"Base de donnees initialisee : {DB_PATH}")
+    
+    # ✅ Retourner True pour confirmer l'initialisation
+    return True
 
 def get_connection():
     """Retourne une connexion à la base de données"""
