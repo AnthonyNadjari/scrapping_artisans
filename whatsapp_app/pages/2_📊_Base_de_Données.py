@@ -325,7 +325,23 @@ with col_sync:
         if results_file.exists():
             try:
                 with open(results_file, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
+                    content = f.read()
+                
+                # ✅ FIX: Handle malformed JSON with extra data
+                try:
+                    data = json.loads(content)
+                except json.JSONDecodeError as e:
+                    if "Extra data" in str(e):
+                        # Parse only the first JSON object
+                        error_pos = e.pos if hasattr(e, 'pos') else len(content)
+                        truncated = content[:error_pos].rstrip()
+                        if not truncated.endswith('}'):
+                            last_brace = truncated.rfind('}')
+                            if last_brace > 0:
+                                truncated = truncated[:last_brace+1]
+                        data = json.loads(truncated)
+                    else:
+                        raise
 
                 results_list = []
                 if isinstance(data, dict) and 'results' in data:
@@ -401,21 +417,44 @@ with col_sync:
 
                                                             artifact_file = temp_extract_dir / "scraping_results_github_actions.json"
                                                             if artifact_file.exists():
-                                                                with open(artifact_file, 'r', encoding='utf-8') as f:
-                                                                    artifact_data = json.load(f)
-
-                                                                art_results = []
-                                                                if isinstance(artifact_data, dict) and 'results' in artifact_data:
-                                                                    art_results = artifact_data.get('results', [])
-                                                                elif isinstance(artifact_data, list):
-                                                                    art_results = artifact_data
-
-                                                                for info in art_results:
+                                                                try:
+                                                                    with open(artifact_file, 'r', encoding='utf-8') as f:
+                                                                        content = f.read()
+                                                                    
+                                                                    # ✅ FIX: Handle malformed JSON with extra data
+                                                                    # Try to find the end of the first valid JSON object
                                                                     try:
-                                                                        all_records_to_import.append(transform_to_artisan(info))
-                                                                        artifacts_count += 1
-                                                                    except:
-                                                                        pass
+                                                                        artifact_data = json.loads(content)
+                                                                    except json.JSONDecodeError as e:
+                                                                        # If "Extra data" error, try to parse only the first JSON object
+                                                                        if "Extra data" in str(e):
+                                                                            # Find the position of the error and parse only up to that point
+                                                                            error_pos = e.pos if hasattr(e, 'pos') else len(content)
+                                                                            # Try to find the last valid closing brace
+                                                                            truncated = content[:error_pos].rstrip()
+                                                                            if not truncated.endswith('}'):
+                                                                                # Find the last }
+                                                                                last_brace = truncated.rfind('}')
+                                                                                if last_brace > 0:
+                                                                                    truncated = truncated[:last_brace+1]
+                                                                            artifact_data = json.loads(truncated)
+                                                                        else:
+                                                                            raise
+
+                                                                    art_results = []
+                                                                    if isinstance(artifact_data, dict) and 'results' in artifact_data:
+                                                                        art_results = artifact_data.get('results', [])
+                                                                    elif isinstance(artifact_data, list):
+                                                                        art_results = artifact_data
+
+                                                                    for info in art_results:
+                                                                        try:
+                                                                            all_records_to_import.append(transform_to_artisan(info))
+                                                                            artifacts_count += 1
+                                                                        except:
+                                                                            pass
+                                                                except Exception as json_err:
+                                                                    st.warning(f"⚠️ Erreur parsing JSON artifact: {json_err}")
                                                         finally:
                                                             try:
                                                                 zip_path.unlink()
