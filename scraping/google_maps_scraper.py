@@ -3309,6 +3309,28 @@ class GoogleMapsScraper:
                     if info and (info.get('nom') or info.get('telephone') or info.get('site_web') or info.get('adresse')):
                         info['recherche'] = recherche
                         info['ville_recherche'] = ville
+                        
+                        # ✅ FIX : Capturer l'URL Google Maps depuis le href de l'élément si non capturée
+                        if not info.get('google_maps_url'):
+                            try:
+                                if elem.tag_name == 'a':
+                                    href = elem.get_attribute('href')
+                                    if href and '/maps/place/' in href:
+                                        info['google_maps_url'] = href
+                                        logger.debug(f"  [{i}] URL Google Maps capturée depuis href")
+                            except:
+                                pass
+                        
+                        # ✅ FIX : Si toujours pas d'URL, essayer depuis l'URL courante
+                        if not info.get('google_maps_url'):
+                            try:
+                                current_url = self.driver.current_url
+                                if current_url and '/maps/' in current_url:
+                                    info['google_maps_url'] = current_url
+                                    logger.debug(f"  [{i}] URL Google Maps capturée depuis URL courante")
+                            except:
+                                pass
+                        
                         resultats.append(info)
                         self.scraped_count += 1
                         
