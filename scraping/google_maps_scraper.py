@@ -1754,6 +1754,7 @@ class GoogleMapsScraper:
         """
         info = {
             'nom': None,
+            'google_maps_url': None,  # ✅ AJOUTÉ: URL directe vers la fiche Google Maps
             'telephone': None,
             'site_web': None,
             'adresse': None,
@@ -1762,6 +1763,15 @@ class GoogleMapsScraper:
             'note': None,
             'nb_avis': None
         }
+        
+        # ✅ Capturer l'URL Google Maps depuis l'URL courante
+        try:
+            current_url = self.driver.current_url
+            if current_url and '/maps/place/' in current_url:
+                info['google_maps_url'] = current_url
+                logger.info(f"  [{index}] ✅ URL Maps capturée depuis page: {current_url[:80]}...")
+        except Exception as e:
+            logger.debug(f"  [{index}] Erreur capture URL page: {e}")
         
         # ✅ DEBUG désactivé pour améliorer les performances
         # if index == 1:
@@ -2035,6 +2045,7 @@ class GoogleMapsScraper:
         """
         info = {
             'nom': None,
+            'google_maps_url': None,  # ✅ AJOUTÉ: URL directe vers la fiche Google Maps
             'telephone': None,
             'site_web': None,
             'adresse': None,
@@ -2043,6 +2054,24 @@ class GoogleMapsScraper:
             'note': None,
             'nb_avis': None
         }
+        
+        # ✅ Capturer l'URL Google Maps depuis le href de l'élément AVANT de cliquer
+        try:
+            if element.tag_name == 'a':
+                href = element.get_attribute('href')
+                if href and '/maps/place/' in href:
+                    info['google_maps_url'] = href
+                    logger.info(f"  [{index}] ✅ URL Maps capturée depuis élément: {href[:80]}...")
+            else:
+                # Chercher un lien dans l'élément
+                links = element.find_elements(By.CSS_SELECTOR, 'a[href*="/maps/place/"]')
+                if links:
+                    href = links[0].get_attribute('href')
+                    if href:
+                        info['google_maps_url'] = href
+                        logger.info(f"  [{index}] ✅ URL Maps capturée depuis sous-élément: {href[:80]}...")
+        except Exception as e:
+            logger.debug(f"  [{index}] Erreur capture URL: {e}")
         
         # ✅ DEBUG : Sauvegarder la structure pour le premier établissement
         if index == 1:
@@ -3310,26 +3339,49 @@ class GoogleMapsScraper:
                         info['recherche'] = recherche
                         info['ville_recherche'] = ville
                         
-                        # ✅ FIX : Capturer l'URL Google Maps depuis le href de l'élément si non capturée
+                        # ✅ FIX AMÉLIORÉ : Capturer l'URL Google Maps avec plusieurs méthodes
                         if not info.get('google_maps_url'):
+                            # Méthode 1: Depuis le href de l'élément
                             try:
-                                if elem.tag_name == 'a':
-                                    href = elem.get_attribute('href')
-                                    if href and '/maps/place/' in href:
+                                href = elem.get_attribute('href')
+                                if href:
+                                    logger.info(f"  [{i}] Element href: {href[:100]}...")
+                                    if '/maps/place/' in href or '/maps/' in href:
                                         info['google_maps_url'] = href
-                                        logger.debug(f"  [{i}] URL Google Maps capturée depuis href")
-                            except:
-                                pass
+                                        logger.info(f"  [{i}] ✅ URL capturée depuis href")
+                            except Exception as e:
+                                logger.debug(f"  [{i}] Erreur href: {e}")
                         
-                        # ✅ FIX : Si toujours pas d'URL, essayer depuis l'URL courante
+                        # Méthode 2: Depuis l'URL courante du navigateur
                         if not info.get('google_maps_url'):
                             try:
                                 current_url = self.driver.current_url
-                                if current_url and '/maps/' in current_url:
+                                logger.info(f"  [{i}] Current URL: {current_url[:100]}...")
+                                if current_url and '/maps/place/' in current_url:
                                     info['google_maps_url'] = current_url
-                                    logger.debug(f"  [{i}] URL Google Maps capturée depuis URL courante")
-                            except:
-                                pass
+                                    logger.info(f"  [{i}] ✅ URL capturée depuis URL courante")
+                            except Exception as e:
+                                logger.debug(f"  [{i}] Erreur current_url: {e}")
+                        
+                        # Méthode 3: Chercher un lien dans l'élément parent
+                        if not info.get('google_maps_url'):
+                            try:
+                                # Essayer de trouver le lien dans les parents
+                                parent = elem
+                                for _ in range(3):  # Remonter jusqu'à 3 niveaux
+                                    try:
+                                        parent = parent.find_element(By.XPATH, '..')
+                                        links = parent.find_elements(By.CSS_SELECTOR, 'a[href*="/maps/place/"]')
+                                        if links:
+                                            href = links[0].get_attribute('href')
+                                            if href:
+                                                info['google_maps_url'] = href
+                                                logger.info(f"  [{i}] ✅ URL capturée depuis parent: {href[:80]}...")
+                                                break
+                                    except:
+                                        break
+                            except Exception as e:
+                                logger.debug(f"  [{i}] Erreur parent: {e}")
                         
                         resultats.append(info)
                         self.scraped_count += 1
